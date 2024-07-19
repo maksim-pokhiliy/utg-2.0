@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useCallback, useState } from "react";
 
-import { NavLink } from "./NavLink";
+import { NavLink } from "@root/app/components/layout/NavBar/NavLink";
 
 const navbarMainItems = [
   { ref: "/", label: "HOME" },

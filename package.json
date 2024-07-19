@@ -2,13 +2,18 @@
   "name": "utg-2.0",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "deploy": "yarn build && firebase deploy",
+    "lint": "next lint",
+    "populate-firestore": "node firebase/scripts/populateFirestore.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.2.0",
     "flowbite-react": "^0.10.1",
     "next": "14.2.5",
     "react": "^18",

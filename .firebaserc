@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "ukrainian-tactical-gear",
+    "production": "ukrainian-tactical-gear"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
