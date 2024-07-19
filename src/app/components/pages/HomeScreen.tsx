@@ -93,10 +93,28 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
 
           <a
             href="/shop"
-            className="btn-main rounded-2xl text-base px-8 py-2.5"
+            className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
           >
             Get Merch
           </a>
+
+          {categories.map((category) => {
+            return (
+              <div key={category.id} className="mt-10 sm:mt-[300px]">
+                <a href="/shop" className="h-auto max-w-full inline-block">
+                  <Image
+                    src={category.image}
+                    width={800}
+                    height={800}
+                    alt={category.title}
+                  />
+                </a>
+                <span className="font-bold text-2xl sm:text-5xl block text-center mt-[-15px] sm:mt-[-30px] text-black relative z-10">
+                  <a href="/shop">{category.id}</a>
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
