@@ -8,8 +8,7 @@
     "build": "next build",
     "start": "next start",
     "deploy": "yarn build && firebase deploy",
-    "lint": "next lint",
-    "populate-firestore": "node firebase/scripts/populateFirestore.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

@@ -65,10 +65,10 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
               style={{ objectFit: "cover", objectPosition: "start" }}
               className="w-full max-h-[500px] overflow-hidden px-10 sm:px-0"
               src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/hero%2Futg-hero-3.JPG?alt=media&token=fe0afb92-8c0f-44fc-8c0d-0a5fbfe6a2a5"
+              alt="UTG"
               quality={100}
               width={1000}
               height={1000}
-              alt="UTG"
               priority
             />
           </div>
@@ -77,17 +77,17 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         <Image
           className="absolute inset-x-2/4 -translate-x-2/4 -translate-y-[20%] bottom-0 top-[30%] hidden sm:block"
           src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/IMG-0253.PNG?alt=media&token=b2855721-c087-4bea-bdb9-0345dcf8b57f"
+          alt="UTG"
           quality={100}
           width={320}
           height={320}
-          alt="UTG"
           priority
         />
       </div>
 
-      <div className="flex gap-2 sm:gap-14 px-14 flex-col sm:flex-row">
+      <div className="px-10 pb-10">
         <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-          <h1 className="uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-10">
+          <h1 className="uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
             Merch
           </h1>
 
@@ -98,23 +98,31 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
             Get Merch
           </a>
 
-          {categories.map((category) => {
-            return (
-              <div key={category.id} className="mt-10 sm:mt-[300px]">
-                <a href="/shop" className="h-auto max-w-full inline-block">
-                  <Image
-                    src={category.image}
-                    width={800}
-                    height={800}
-                    alt={category.title}
-                  />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
+            {categories.map((category) => (
+              <div key={category.id} className="mt-10 group">
+                <a href="/shop" className="block h-auto w-full">
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{ paddingBottom: "100%" }}
+                  >
+                    <Image
+                      src={category.image}
+                      alt={category.title}
+                      quality={100}
+                      layout="fill"
+                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-75 group-hover:shadow-lg"
+                      priority
+                    />
+                  </div>
                 </a>
-                <span className="font-bold text-2xl sm:text-5xl block text-center mt-[-15px] sm:mt-[-30px] text-black relative z-10">
+
+                <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
                   <a href="/shop">{category.id}</a>
                 </span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
     </div>
