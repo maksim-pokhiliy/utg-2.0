@@ -60,7 +60,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
             </div>
           </div>
 
-          <div className="basis-1/2">
+          <div className="basis-1/2 pt-20 sm:pt-0">
             <Image
               style={{ objectFit: "cover", objectPosition: "start" }}
               className="w-full max-h-[500px] overflow-hidden px-10 sm:px-0"
