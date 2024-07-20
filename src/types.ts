@@ -1,9 +1,3 @@
-export interface ICategory {
-  id: string;
-  title: string;
-  image: string;
-}
-
 export interface IProduct {
   id: string;
   title: string;
@@ -14,10 +8,17 @@ export interface IProduct {
   availability: boolean;
 }
 
+export interface ICategory {
+  id: string;
+  title: string;
+  image: string;
+  products: IProduct[];
+}
+
 export interface IApiResponse<T> {
   error?: string;
   details?: string;
   categories?: ICategory[];
-  products?: IProduct[];
+  category?: ICategory;
   product?: IProduct;
 }

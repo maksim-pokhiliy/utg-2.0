@@ -3,7 +3,7 @@ import Image from "next/image";
 
 import { ICategory } from "@root/types";
 
-import { NavLink } from "@root/app/components/layout/NavBar/NavLink";
+import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 interface IHomeScreenProps {
   categories: ICategory[];
@@ -92,7 +92,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
           </h1>
 
           <a
-            href="/shop"
+            href="/categories"
             className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
           >
             Get Merch
@@ -101,7 +101,10 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
             {categories.map((category) => (
               <div key={category.id} className="mt-10 group">
-                <a href="/shop" className="block h-auto w-full">
+                <a
+                  href={`/category/${category.id.toLowerCase()}`}
+                  className="block h-auto w-full"
+                >
                   <div
                     className="relative w-full overflow-hidden"
                     style={{ paddingBottom: "100%" }}
@@ -110,15 +113,17 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                       src={category.image}
                       alt={category.title}
                       quality={100}
-                      layout="fill"
-                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-75 group-hover:shadow-lg"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
                       priority
+                      fill
                     />
                   </div>
                 </a>
 
                 <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
-                  <a href="/shop">{category.id}</a>
+                  <a href={`/category/${category.id.toLowerCase()}`}>
+                    {category.title}
+                  </a>
                 </span>
               </div>
             ))}

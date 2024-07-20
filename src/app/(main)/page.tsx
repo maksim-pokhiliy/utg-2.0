@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { IApiResponse, ICategory } from "@root/types";
 
-import HomeScreen from "@root/app/components/pages/HomeScreen";
+import HomeScreen from "@root/components/pages/HomeScreen";
 
 export default function Home() {
   const [categories, setCategories] = useState<ICategory[]>([]);
