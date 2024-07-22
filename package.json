@@ -7,7 +7,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "deploy": "yarn build && firebase deploy",
     "lint": "next lint"
   },
   "dependencies": {
