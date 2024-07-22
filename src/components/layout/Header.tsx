@@ -1,4 +1,5 @@
 import NavBar from "@root/components/layout/NavBar/NavBar";
+import CartBag from "@root/components/ui/CartBag";
 
 export default function Header() {
   return (
@@ -7,6 +8,10 @@ export default function Header() {
         <h2 className="flex-1 text-xl">
           <a href="/">UTG</a>
         </h2>
+
+        <div>
+          <CartBag />
+        </div>
 
         <div>
           <NavBar />

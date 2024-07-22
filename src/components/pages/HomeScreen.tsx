@@ -92,7 +92,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
           </h1>
 
           <a
-            href="/categories"
+            href="/category"
             className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
           >
             Get Merch

@@ -2,11 +2,11 @@ import Image from "next/image";
 
 import { ICategory } from "@root/types";
 
-interface IHomeScreenProps {
+interface ICategoryScreenProps {
   category: ICategory | null;
 }
 
-export default function CategoryScreen({ category }: IHomeScreenProps) {
+export default function CategoryScreen({ category }: ICategoryScreenProps) {
   return (
     <div className="mx-auto pb-10 md:pb-20">
       <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
@@ -19,7 +19,7 @@ export default function CategoryScreen({ category }: IHomeScreenProps) {
             return (
               <li key={product.id} className="relative group">
                 <a
-                  href={`/product/${product.id}`}
+                  href={`/category/${category.id.toLowerCase()}/${product.id}`}
                   className="block h-auto w-full"
                 >
                   <div
@@ -39,7 +39,9 @@ export default function CategoryScreen({ category }: IHomeScreenProps) {
                   {product.availability ? (
                     <a
                       className="btn-main absolute -mt-10 left-0 cursor-pointer"
-                      href={`/product/${product.id}`}
+                      href={`/category/${category.id.toLowerCase()}/${
+                        product.id
+                      }`}
                     >
                       Buy Now
                     </a>

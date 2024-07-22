@@ -9,7 +9,7 @@ import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 const navbarMainItems = [
   { ref: "/", label: "HOME" },
-  { ref: "/shop", label: "MERCH" },
+  { ref: "/category", label: "MERCH" },
 ];
 
 const StyledNavLink = ({

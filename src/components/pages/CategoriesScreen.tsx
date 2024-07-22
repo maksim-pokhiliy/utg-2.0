@@ -2,11 +2,13 @@ import Image from "next/image";
 
 import { ICategory } from "@root/types";
 
-interface IHomeScreenProps {
+interface ICategoriesScreenProps {
   categories: ICategory[];
 }
 
-export default function CategoriesScreen({ categories }: IHomeScreenProps) {
+export default function CategoriesScreen({
+  categories,
+}: ICategoriesScreenProps) {
   return (
     <div className="mx-auto pb-10 md:pb-20">
       <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[650px] md:h-[720px]">
