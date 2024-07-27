@@ -1,7 +1,9 @@
 import Image from "next/image";
 
 import { IProduct } from "@root/types";
-import LoadingContainer from "../ui/LoadingContainer";
+
+import LoadingContainer from "@root/components/ui/LoadingContainer";
+import ProductSidebar from "../ui/ProductSidebar";
 
 interface IProductScreenProps {
   isLoading: boolean;
@@ -17,7 +19,7 @@ export default function ProductScreen({
       <div className="mx-auto px-10 my-12">
         {product ? (
           <div className="full-w overflow-hidden max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-10">
               <div className="box-border flex flex-col basis-1/2 group">
                 <div className="h-100 max-w-xl">
                   <div
@@ -37,7 +39,7 @@ export default function ProductScreen({
               </div>
 
               <div className="flex flex-col w-full h-full basis-1/2 text-left">
-                {/* <ProductSidebar product={product} /> */}
+                <ProductSidebar product={product} />
               </div>
             </div>
           </div>

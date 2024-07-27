@@ -1,114 +1,89 @@
 "use client";
 
-import Image from "next/image";
-import { useRecoilState } from "recoil";
+import React from "react";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 
-import { cartState } from "@root/recoil/atoms";
+import { cartState, sidebarState } from "@root/recoil/atoms";
 
-export default function CartView() {
-  const [cart, setCart] = useRecoilState(cartState);
+import CartItem from "@root/components/ui/Cart/CartItem";
+
+export const CartView = () => {
+  const cart = useRecoilValue(cartState);
+
+  const setIsSidebarOpen = useSetRecoilState(sidebarState);
+
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const subtotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
 
-  const removeFromCart = (index: number) => {
-    const newCart = [...cart];
+  return cart.length ? (
+    <div>
+      <div className="flex-1">
+        <div className="relative bg-black">
+          <button
+            onClick={closeSidebar}
+            aria-label="Close"
+            className="hover:text-accent-5 absolute transition ease-in-out duration-150 focus:outline-none mr-6 top-[32px]"
+          >
+            <svg
+              className="w-6 h-6 text-site ml-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 4.5l7.5 7.5-7.5 7.5"
+              />
+            </svg>
+          </button>
 
-    newCart.splice(index, 1);
+          <span className="font-bold text-2xl text-center text-white block p-6">
+            Cart
+          </span>
+        </div>
 
-    setCart(newCart);
-  };
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-4 overflow-y-auto">
-        {cart.length > 0 ? (
-          <ul className="space-y-4">
-            {cart.map((item, index) => (
-              <li key={index} className="flex items-center justify-between">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  width={50}
-                  height={50}
-                  className="rounded"
-                />
-
-                <div className="flex-1 ml-4">
-                  <h3 className="text-sm font-bold">{item.title}</h3>
-
-                  <p className="text-sm text-gray-500">
-                    ${item.price.toFixed(2)}
-                  </p>
-
-                  <p className="text-sm text-gray-500">Color: {item.color}</p>
-
-                  <div className="flex items-center mt-1">
-                    <select
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const newCart = [...cart];
-                        newCart[index].quantity = parseInt(e.target.value);
-                        setCart(newCart);
-                      }}
-                      className="border border-gray-300 rounded p-1"
-                    >
-                      {[1, 2, 3, 4, 5].map((qty) => (
-                        <option key={qty} value={qty}>
-                          {qty}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => removeFromCart(index)}
-                  className="text-gray-600"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path d="M18.36 6.64a1 1 0 00-1.41 0L12 11.59 7.05 6.64a1 1 0 00-1.41 1.41L10.59 13l-4.95 4.95a1 1 0 001.41 1.41L12 14.41l4.95 4.95a1 1 0 001.41-1.41L13.41 13l4.95-4.95a1 1 0 000-1.41z" />
-                  </svg>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full">
-            <h2 className="pt-6 text-2xl font-bold tracking-wide text-center">
-              Your cart is empty
-            </h2>
-
-            <p className="text-accent-3 px-10 text-center pt-2">
-              Add products to your cart in{" "}
-              <a href="/category">
-                <span>here</span>
-              </a>
-            </p>
-          </div>
-        )}
+        <ul className="sm:px-6 p-4 space-y-6 sm:py-0 sm:space-y-0 sm:divide-y sm:divide-accent-2 border-accent-2">
+          {cart.map((item, index) => (
+            <CartItem key={index} item={item} />
+          ))}
+        </ul>
       </div>
 
-      {cart.length > 0 && (
-        <div className="flex-shrink-0 px-6 py-6 border-t bg-white">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-bold">Subtotal</span>
+      <div className="flex-shrink-0 px-6 py-6 sm:px-6 sticky z-20 bottom-0 w-full right-0 left-0 border-t text-md bg-site">
+        <ul className="pb-2">
+          <li className="flex justify-between py-1">
+            <span>Subtotal</span>
 
-            <span className="text-lg font-bold">${subtotal.toFixed(2)}</span>
-          </div>
+            <span>${subtotal.toFixed(2)}</span>
+          </li>
+        </ul>
 
+        <div>
           <button className="btn-main w-full text-lg">
             Proceed to Checkout
           </button>
         </div>
-      )}
+      </div>
+    </div>
+  ) : (
+    <div className="flex-1 px-4 flex flex-col justify-center items-center">
+      <h2 className="pt-6 text-2xl font-bold tracking-wide text-center">
+        Your cart is empty
+      </h2>
+
+      <p className="text-accent-3 px-10 text-center pt-2">
+        Add products to your cart in <a href="/shop">here</a>
+      </p>
     </div>
   );
-}
+};
+
+export default CartView;

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { ICategory } from "@root/types";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
-import LoadingContainer from "../ui/LoadingContainer";
+import LoadingContainer from "@root/components/ui/LoadingContainer";
 
 interface IHomeScreenProps {
   isLoading: boolean;

@@ -1,17 +1,19 @@
 import { atom } from "recoil";
 
-export interface CartItem {
+import { persistAtom } from "@root/recoil";
+
+export interface ICartItem {
   id: string;
   title: string;
   price: number;
   quantity: number;
   image: string;
-  color?: string;
 }
 
-export const cartState = atom<CartItem[]>({
+export const cartState = atom<ICartItem[]>({
   key: "cartState",
   default: [],
+  effects_UNSTABLE: [persistAtom],
 });
 
 export const sidebarState = atom({

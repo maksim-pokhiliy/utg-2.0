@@ -18,7 +18,8 @@
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
-    "recoil": "^0.7.7"
+    "recoil": "^0.7.7",
+    "recoil-persist": "^5.1.0"
   },
   "devDependencies": {
     "@types/body-scroll-lock": "^3.1.2",
