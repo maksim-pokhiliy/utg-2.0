@@ -4,8 +4,10 @@ import Image from "next/image";
 import { ICategory } from "@root/types";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
+import LoadingContainer from "../ui/LoadingContainer";
 
 interface IHomeScreenProps {
+  isLoading: boolean;
   categories: ICategory[];
 }
 
@@ -25,7 +27,10 @@ const StyledNavLink = ({
   />
 );
 
-export default function HomeScreen({ categories }: IHomeScreenProps) {
+export default function HomeScreen({
+  isLoading,
+  categories,
+}: IHomeScreenProps) {
   return (
     <div className="mx-auto relative">
       <div className="relative">
@@ -85,51 +90,53 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         />
       </div>
 
-      <div className="px-10 pb-10">
-        <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-          <h1 className="uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
-            Merch
-          </h1>
+      <LoadingContainer isLoading={isLoading}>
+        <div className="px-10 pb-10">
+          <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
+            <h1 className="uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
+              Merch
+            </h1>
 
-          <a
-            href="/category"
-            className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
-          >
-            Get Merch
-          </a>
+            <a
+              href="/category"
+              className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
+            >
+              Get Merch
+            </a>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
-            {categories.map((category) => (
-              <div key={category.id} className="mt-10 group">
-                <a
-                  href={`/category/${category.id.toLowerCase()}`}
-                  className="block h-auto w-full"
-                >
-                  <div
-                    className="relative w-full overflow-hidden"
-                    style={{ paddingBottom: "100%" }}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
+              {categories.map((category) => (
+                <div key={category.id} className="mt-10 group">
+                  <a
+                    href={`/category/${category.id.toLowerCase()}`}
+                    className="block h-auto w-full"
                   >
-                    <Image
-                      src={category.image}
-                      alt={category.title}
-                      quality={100}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
-                      priority
-                      fill
-                    />
-                  </div>
-                </a>
-
-                <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
-                  <a href={`/category/${category.id.toLowerCase()}`}>
-                    {category.title}
+                    <div
+                      className="relative w-full overflow-hidden"
+                      style={{ paddingBottom: "100%" }}
+                    >
+                      <Image
+                        src={category.image}
+                        alt={category.title}
+                        quality={100}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
+                        priority
+                        fill
+                      />
+                    </div>
                   </a>
-                </span>
-              </div>
-            ))}
+
+                  <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
+                    <a href={`/category/${category.id.toLowerCase()}`}>
+                      {category.title}
+                    </a>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </LoadingContainer>
     </div>
   );
 }

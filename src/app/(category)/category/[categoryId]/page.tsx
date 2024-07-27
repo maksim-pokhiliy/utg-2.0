@@ -11,6 +11,7 @@ export default function Categories() {
   const params = useParams();
 
   const [category, setCategory] = useState<ICategory | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -22,11 +23,15 @@ export default function Categories() {
         setCategory(response.category ?? null);
       } catch (error) {
         console.error("fetchCategories error: ", error);
+      } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
       }
     };
 
     fetchCategories();
   }, [params.categoryId]);
 
-  return <CategoryScreen category={category} />;
+  return <CategoryScreen isLoading={isLoading} category={category} />;
 }

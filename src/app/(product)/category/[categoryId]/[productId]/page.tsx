@@ -11,6 +11,7 @@ export default function Categories() {
   const params = useParams();
 
   const [product, setProduct] = useState<IProduct | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -22,11 +23,15 @@ export default function Categories() {
         setProduct(response.product ?? null);
       } catch (error) {
         console.error("fetchCategories error: ", error);
+      } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
       }
     };
 
     fetchCategories();
   }, [params.categoryId, params.productId]);
 
-  return <ProductScreen product={product} />;
+  return <ProductScreen isLoading={isLoading} product={product} />;
 }

@@ -8,6 +8,7 @@ import CategoriesScreen from "@root/components/pages/CategoriesScreen";
 
 export default function Categories() {
   const [categories, setCategories] = useState<ICategory[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -19,11 +20,15 @@ export default function Categories() {
         setCategories(response.categories ?? []);
       } catch (error) {
         console.error("fetchCategories error: ", error);
+      } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
       }
     };
 
     fetchCategories();
   }, []);
 
-  return <CategoriesScreen categories={categories} />;
+  return <CategoriesScreen isLoading={isLoading} categories={categories} />;
 }
