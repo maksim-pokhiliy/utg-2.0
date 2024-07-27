@@ -11,6 +11,7 @@ const navbarMainItems = [
   { ref: "/", label: "HOME" },
   { ref: "/category", label: "MERCH" },
   { ref: "/reports", label: "REPORTS" },
+  { ref: "/about", label: "ABOUT" },
 ];
 
 const StyledNavLink = ({
@@ -86,7 +87,7 @@ export default function NavBar() {
           </h2>
         </div>
 
-        <ul className="flex flex-col items-center gap-4 justify-end mt-10 sm:mt-[100px]">
+        <ul className="flex flex-col items-center gap-4 justify-end mt-10 sm:mt-[60px]">
           {navbarMainItems.map(({ ref, label }) => (
             <li key={ref} className="relative">
               <StyledNavLink

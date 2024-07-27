@@ -18,19 +18,6 @@ export default function CategoriesScreen({
       <div className="mx-auto pb-10 md:pb-20">
         <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
           <h1 className="uppercase text-3xl md:text-6xl">Merch</h1>
-
-          {/* <p className="text-sm md:text-base mx-auto px-8 md:max-w-[60%] my-10">
-          This site was created exclusively as a volunteer project. The idea
-          appeared due to numerous requests from subscribers to make merch and
-          as another opportunity to collect a resource to cover the needs of the
-          under-boss’s special unit.
-        </p>
-
-        <p className="text-sm md:text-base mx-auto px-8 md:max-w-[60%] my-10">
-          All proceeds from the sale will be used to purchase equipment,
-          consumables, and repair equipment. After the start of sales, another
-          section with reports will appear here.
-        </p> */}
         </div>
 
         <div className="full-w overflow-hidden mx-auto text-center mt-[-200px] md:mt-[-220px] px-10">
