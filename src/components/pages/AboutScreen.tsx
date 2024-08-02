@@ -1,27 +1,25 @@
 "use client";
 
+import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
+import { dictionaryState } from "@root/recoil/atoms";
+
 export default function AboutScreen() {
+  const dictionary = useRecoilValue(dictionaryState);
+
   return (
     <div className="mx-auto pb-10 md:pb-20">
       <div className="bg-black text-custom-1 text-center py-4 md:py-10">
-        <h1 className="uppercase text-3xl md:text-6xl">about</h1>
+        <h1 className="font-bold uppercase text-3xl md:text-6xl">
+          {dictionary.about}
+        </h1>
       </div>
 
       <div className="p-10 sm:px-14">
-        <p className="text-sm md:text-base">
-          This site was created exclusively as a volunteer project. The idea
-          appeared due to numerous requests from subscribers to make merch and
-          as another opportunity to collect a resource to cover the needs of the
-          under-boss’s special unit.
-        </p>
+        <p className="text-sm md:text-base">{dictionary.site_created}</p>
 
-        <p className="text-sm md:text-base mt-10">
-          All proceeds from the sale will be used to purchase equipment,
-          consumables, and repair equipment. After the start of sales, another
-          section with reports will appear here.
-        </p>
+        <p className="text-sm md:text-base mt-10">{dictionary.all_proceeds}</p>
 
         <div
           className="relative w-full overflow-hidden"

@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 
 import { IProduct } from "@root/types";
-import { cartState, ICartItem } from "@root/recoil/atoms";
+import { cartState, dictionaryState, ICartItem } from "@root/recoil/atoms";
 
 interface IProductSidebarProps {
   product: IProduct | null;
 }
 
 export default function ProductSidebar({ product }: IProductSidebarProps) {
+  const dictionary = useRecoilValue(dictionaryState);
   const [cart, setCart] = useRecoilState(cartState);
+
   const [quantity, setQuantity] = useState<number>(1);
 
   const addToCart = () => {
@@ -51,7 +53,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       </p>
 
       <div className="mt-4 mb-6">
-        <span className="text-xs tracking-wide">Quantity</span>
+        <span className="text-xs tracking-wide">{dictionary.quantity}</span>
 
         <div className="mt-2">
           <div className="h-7 flex flex-row relative w-16 border-gray-300 border bg-white">
@@ -60,7 +62,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
                 className="text-xs px-2 w-full h-full border-0 focus:outline-none select-none pointer-events-auto"
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 pattern="[0-9]*"
-                aria-label="Quantity"
+                aria-label={dictionary.quantity}
                 value={quantity}
                 type="number"
                 min={1}
@@ -118,19 +120,15 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       {product?.availability ? (
         <div>
           <button
-            aria-label="Add to Cart"
+            aria-label={dictionary.add}
             className="btn-main w-full my-1 rounded-2xl"
             type="button"
             onClick={addToCart}
           >
-            Add to Cart
+            {dictionary.add}
           </button>
         </div>
       ) : null}
-
-      <p className="pb-4 break-words w-full max-w-xl mt-6">
-        {product?.description}
-      </p>
     </div>
   );
 }

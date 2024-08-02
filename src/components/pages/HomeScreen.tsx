@@ -1,7 +1,9 @@
+import { useRecoilValue } from "recoil";
 import { LinkProps } from "next/link";
 import Image from "next/image";
 
 import { ICategory } from "@root/types";
+import { dictionaryState } from "@root/recoil/atoms";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 import LoadingContainer from "@root/components/ui/LoadingContainer";
@@ -31,6 +33,8 @@ export default function HomeScreen({
   isLoading,
   categories,
 }: IHomeScreenProps) {
+  const dictionary = useRecoilValue(dictionaryState);
+
   return (
     <div className="mx-auto relative">
       <div className="relative">
@@ -93,21 +97,21 @@ export default function HomeScreen({
       <LoadingContainer isLoading={isLoading}>
         <div className="px-10 pb-10">
           <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-            <h1 className="uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
-              Merch
+            <h1 className="font-bold uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
+              {dictionary?.merch}
             </h1>
 
-            <a
+            <NavLink
               href="/category"
               className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
             >
-              Get Merch
-            </a>
+              {dictionary?.get}
+            </NavLink>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
               {categories.map((category) => (
                 <div key={category.id} className="mt-10 group">
-                  <a
+                  <NavLink
                     href={`/category/${category.id.toLowerCase()}`}
                     className="block h-auto w-full"
                   >
@@ -124,12 +128,12 @@ export default function HomeScreen({
                         fill
                       />
                     </div>
-                  </a>
+                  </NavLink>
 
                   <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
-                    <a href={`/category/${category.id.toLowerCase()}`}>
-                      {category.title}
-                    </a>
+                    <NavLink href={`/category/${category.id.toLowerCase()}`}>
+                      {dictionary?.[category.title]}
+                    </NavLink>
                   </span>
                 </div>
               ))}

@@ -1,6 +1,7 @@
-import { atom } from "recoil";
+import { atom, selector } from "recoil";
 
 import { persistAtom } from "@root/recoil";
+import { getDictionary } from "@root/app/[lang]/dictionaries";
 
 export interface ICartItem {
   id: string;
@@ -19,4 +20,14 @@ export const cartState = atom<ICartItem[]>({
 export const sidebarState = atom({
   key: "sidebarState",
   default: false,
+});
+
+export const languageState = atom({
+  key: "languageState",
+  default: "uk",
+});
+
+export const dictionaryState = atom<Record<string, string>>({
+  key: "dictionaryState",
+  default: {},
 });

@@ -4,14 +4,17 @@ import type { LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useCallback, useState } from "react";
+import { useRecoilValue } from "recoil";
+
+import { dictionaryState } from "@root/recoil/atoms";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 const navbarMainItems = [
-  { ref: "/", label: "HOME" },
-  { ref: "/category", label: "MERCH" },
-  { ref: "/reports", label: "REPORTS" },
-  { ref: "/about", label: "ABOUT" },
+  { ref: "/", label: "home" },
+  { ref: "/category", label: "merch" },
+  { ref: "/reports", label: "reports" },
+  { ref: "/about", label: "about" },
 ];
 
 const StyledNavLink = ({
@@ -34,6 +37,8 @@ const StyledNavLink = ({
 
 export default function NavBar() {
   const pathname = usePathname();
+
+  const dictionary = useRecoilValue(dictionaryState);
 
   const [isMenuShown, setIsMenuShown] = useState(false);
   const [linkRef, setLinkRef] = useState<LinkProps["href"]>(pathname!);
@@ -91,7 +96,7 @@ export default function NavBar() {
           {navbarMainItems.map(({ ref, label }) => (
             <li key={ref} className="relative">
               <StyledNavLink
-                className="text-lg"
+                className="text-lg uppercase"
                 isActive={ref === linkRef}
                 href={ref}
                 onClick={() => {
@@ -99,7 +104,7 @@ export default function NavBar() {
                   setIsMenuShown(false);
                 }}
               >
-                {label}
+                {dictionary[label]}
               </StyledNavLink>
             </li>
           ))}

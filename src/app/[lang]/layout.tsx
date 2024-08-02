@@ -4,16 +4,25 @@ import RecoilProvider from "@root/providers/RecoilProvider";
 import SidebarUI from "@root/components/ui/Sidebar/SidebarUI";
 
 import "@root/app/globals.css";
+import { getDictionary } from "./dictionaries";
 
-export default function RootLayout({
+export async function generateStaticParams() {
+  return [{ lang: "uk" }, { lang: "en" }];
+}
+
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: { lang: string };
 }>) {
+  const dictionary = await getDictionary(params.lang);
+
   return (
-    <html lang="en">
+    <html lang={params.lang}>
       <body className="text-black bg-site min-h-screen flex flex-col">
-        <RecoilProvider>
+        <RecoilProvider dictionary={dictionary}>
           <Header />
 
           <main className="block flex-1 bg-site h-full">{children}</main>

@@ -1,17 +1,19 @@
 "use client";
 
 import React, { ChangeEvent, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import Image from "next/image";
 
-import { ICartItem, cartState } from "@root/recoil/atoms";
+import { ICartItem, cartState, dictionaryState } from "@root/recoil/atoms";
 
 interface CartItemProps {
   item: ICartItem;
 }
 
 export const CartItem = ({ item }: CartItemProps) => {
+  const dictionary = useRecoilValue(dictionaryState);
   const [cart, setCart] = useRecoilState(cartState);
+
   const [quantity, setQuantity] = useState<number>(item.quantity);
 
   const updateCart = (newQuantity: number) => {
@@ -74,7 +76,7 @@ export const CartItem = ({ item }: CartItemProps) => {
                   className="text-xs px-2 w-full h-full border-0 focus:outline-none select-none pointer-events-auto"
                   onChange={handleQuantityChange}
                   pattern="[0-9]*"
-                  aria-label="Quantity"
+                  aria-label={dictionary.quantity}
                   value={quantity}
                   type="number"
                   min={1}

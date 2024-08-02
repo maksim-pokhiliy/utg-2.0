@@ -3,12 +3,14 @@
 import React from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
-import { cartState, sidebarState } from "@root/recoil/atoms";
+import { cartState, dictionaryState, sidebarState } from "@root/recoil/atoms";
 
 import CartItem from "@root/components/ui/Cart/CartItem";
+import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 export const CartView = () => {
   const cart = useRecoilValue(cartState);
+  const dictionary = useRecoilValue(dictionaryState);
 
   const setIsSidebarOpen = useSetRecoilState(sidebarState);
 
@@ -46,7 +48,7 @@ export const CartView = () => {
           </button>
 
           <span className="font-bold text-2xl text-center text-white block p-6">
-            Cart
+            {dictionary.cart}
           </span>
         </div>
 
@@ -60,7 +62,7 @@ export const CartView = () => {
       <div className="flex-shrink-0 px-6 py-6 sm:px-6 sticky z-20 bottom-0 w-full right-0 left-0 border-t text-md bg-site">
         <ul className="pb-2">
           <li className="flex justify-between py-1">
-            <span>Subtotal</span>
+            <span>{dictionary.total}</span>
 
             <span>${subtotal.toFixed(2)}</span>
           </li>
@@ -68,7 +70,7 @@ export const CartView = () => {
 
         <div>
           <button className="btn-main w-full text-lg">
-            Proceed to Checkout
+            {dictionary.proceed}
           </button>
         </div>
       </div>
@@ -76,11 +78,14 @@ export const CartView = () => {
   ) : (
     <div className="flex-1 px-4 flex flex-col justify-center items-center">
       <h2 className="pt-6 text-2xl font-bold tracking-wide text-center">
-        Your cart is empty
+        {dictionary.empty_cart}
       </h2>
 
       <p className="text-accent-3 px-10 text-center pt-2">
-        Add products to your cart in <a href="/shop">here</a>
+        {dictionary.add_to_cart}{" "}
+        <NavLink href="/category" className="underline hover:no-underline">
+          {dictionary.here}
+        </NavLink>
       </p>
     </div>
   );

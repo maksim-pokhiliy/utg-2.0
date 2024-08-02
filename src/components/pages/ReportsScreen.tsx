@@ -3,6 +3,9 @@
 import Image from "next/image";
 import { EffectCreative } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { useRecoilValue } from "recoil";
+
+import { dictionaryState } from "@root/recoil/atoms";
 
 import "swiper/css";
 import "swiper/css/effect-creative";
@@ -19,10 +22,14 @@ const images = [
 ];
 
 export default function ReportsScreen() {
+  const dictionary = useRecoilValue(dictionaryState);
+
   return (
     <div className="mx-auto pb-10 md:pb-20">
       <div className="bg-black text-custom-1 text-center py-4 md:py-10">
-        <h1 className="uppercase text-3xl md:text-6xl">reports</h1>
+        <h1 className="font-bold uppercase text-3xl md:text-6xl">
+          {dictionary.reports}
+        </h1>
       </div>
 
       <div className="p-10 sm:px-14">

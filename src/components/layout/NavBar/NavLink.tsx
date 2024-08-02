@@ -1,14 +1,25 @@
 "use client";
 
 import Link, { LinkProps } from "next/link";
+import { useRecoilValue } from "recoil";
+
+import { languageState } from "@root/recoil/atoms";
 
 export type NavLinkProps = LinkProps & {
   children: React.ReactNode;
-  className: string;
+  className?: string;
 };
 
 export function NavLink(props: NavLinkProps) {
-  const { children, ...linkProps } = props;
+  const { children, href, ...linkProps } = props;
 
-  return <Link {...linkProps}>{props.children}</Link>;
+  const locale = useRecoilValue(languageState);
+
+  const localizedHref = `/${locale}${href}`;
+
+  return (
+    <Link href={localizedHref} {...linkProps}>
+      {props.children}
+    </Link>
+  );
 }

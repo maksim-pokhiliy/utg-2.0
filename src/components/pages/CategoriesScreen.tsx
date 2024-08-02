@@ -1,8 +1,11 @@
+import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
 import { ICategory } from "@root/types";
+import { dictionaryState } from "@root/recoil/atoms";
 
 import LoadingContainer from "@root/components/ui/LoadingContainer";
+import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 interface ICategoriesScreenProps {
   isLoading: boolean;
@@ -13,18 +16,22 @@ export default function CategoriesScreen({
   isLoading,
   categories,
 }: ICategoriesScreenProps) {
+  const dictionary = useRecoilValue(dictionaryState);
+
   return (
     <LoadingContainer isLoading={isLoading}>
       <div className="mx-auto pb-10 md:pb-20">
         <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
-          <h1 className="uppercase text-3xl md:text-6xl">Merch</h1>
+          <h1 className="font-bold uppercase text-3xl md:text-6xl">
+            {dictionary?.merch}
+          </h1>
         </div>
 
         <div className="full-w overflow-hidden mx-auto text-center mt-[-200px] md:mt-[-220px] px-10">
-          <ul className="grid md:grid-cols-3 gap-8 grid-flow-row">
+          <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 grid-flow-row">
             {categories.map((category) => (
               <li key={category.id} className="relative group">
-                <a
+                <NavLink
                   href={`/category/${category.id.toLowerCase()}`}
                   className="block h-auto w-full"
                 >
@@ -41,12 +48,12 @@ export default function CategoriesScreen({
                       fill
                     />
                   </div>
-                </a>
+                </NavLink>
 
                 <span className="font-bold text-2xl md:text-5xl block text-center text-black mt-2">
-                  <a href={`/category/${category.id.toLowerCase()}`}>
-                    {category.title}
-                  </a>
+                  <NavLink href={`/category/${category.id.toLowerCase()}`}>
+                    {dictionary?.[category.title]}
+                  </NavLink>
                 </span>
               </li>
             ))}
