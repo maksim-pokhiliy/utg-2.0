@@ -2,7 +2,13 @@ import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
 import { ICategory } from "@root/types";
-import { dictionaryState } from "@root/recoil/atoms";
+import { formatPrice } from "@root/utils/formatPrice";
+
+import {
+  dictionaryState,
+  exchangeCoefficientState,
+  languageState,
+} from "@root/recoil/atoms";
 
 import LoadingContainer from "@root/components/ui/LoadingContainer";
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
@@ -17,6 +23,8 @@ export default function CategoryScreen({
   category,
 }: ICategoryScreenProps) {
   const dictionary = useRecoilValue(dictionaryState);
+  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const locale = useRecoilValue(languageState);
 
   return (
     <LoadingContainer isLoading={isLoading}>
@@ -53,27 +61,23 @@ export default function CategoryScreen({
                     </div>
 
                     {product.availability ? (
-                      <NavLink
-                        className="btn-main absolute -mt-10 left-0 cursor-pointer"
-                        href={`/category/${category.id.toLowerCase()}/${
-                          product.id
-                        }`}
-                      >
+                      <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
                         {dictionary?.order}
-                      </NavLink>
+                      </span>
                     ) : (
-                      <button
-                        className="btn-main absolute -mt-10 left-0 cursor-pointer"
-                        disabled
-                      >
+                      <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
                         {dictionary?.out}
-                      </button>
+                      </span>
                     )}
 
                     <div className="p-2 text-left">
                       <span>{product.title}</span>
+
                       <br />
-                      <span className="text-xs">{product.price}</span>
+
+                      <span className="text-xs">
+                        {formatPrice(product.price * coefficient, locale)}
+                      </span>
                     </div>
                   </NavLink>
                 </li>

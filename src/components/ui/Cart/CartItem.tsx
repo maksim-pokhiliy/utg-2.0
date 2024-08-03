@@ -4,15 +4,25 @@ import React, { ChangeEvent, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import Image from "next/image";
 
-import { ICartItem, cartState, dictionaryState } from "@root/recoil/atoms";
+import {
+  ICartItem,
+  cartState,
+  dictionaryState,
+  exchangeCoefficientState,
+  languageState,
+} from "@root/recoil/atoms";
+import { formatPrice } from "@root/utils/formatPrice";
 
 interface CartItemProps {
   item: ICartItem;
 }
 
 export const CartItem = ({ item }: CartItemProps) => {
-  const dictionary = useRecoilValue(dictionaryState);
   const [cart, setCart] = useRecoilState(cartState);
+
+  const dictionary = useRecoilValue(dictionaryState);
+  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const locale = useRecoilValue(languageState);
 
   const [quantity, setQuantity] = useState<number>(item.quantity);
 
@@ -67,7 +77,9 @@ export const CartItem = ({ item }: CartItemProps) => {
             <span className="pb-1 text-gray-500">{item.title}</span>
           </div>
 
-          <span>${(item.price * item.quantity).toFixed(2)}</span>
+          <span>
+            {formatPrice(item.price * item.quantity * coefficient, locale)}
+          </span>
 
           <div className="mt-3">
             <div className="h-7 flex flex-row relative w-16 border-gray-300 border bg-white">

@@ -22,7 +22,7 @@ export const sidebarState = atom({
   default: false,
 });
 
-export const languageState = atom({
+export const languageState = atom<"uk" | "en">({
   key: "languageState",
   default: "uk",
 });
@@ -30,4 +30,14 @@ export const languageState = atom({
 export const dictionaryState = atom<Record<string, string>>({
   key: "dictionaryState",
   default: {},
+});
+
+export const exchangeRatesState = atom<Record<string, number>>({
+  key: "exchangeRatesState",
+  default: {},
+});
+
+export const exchangeCoefficientState = atom<number>({
+  key: "exchangeCoefficientState",
+  default: 0,
 });
