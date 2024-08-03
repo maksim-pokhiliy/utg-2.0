@@ -3,7 +3,10 @@ export const currencyMap = {
   en: "USD",
 };
 
-export const formatPrice = (price: number, locale: "uk" | "en") => {
+export const formatPrice = (
+  price: number,
+  locale: keyof typeof currencyMap
+) => {
   const currency = currencyMap[locale];
 
   return new Intl.NumberFormat(locale, {

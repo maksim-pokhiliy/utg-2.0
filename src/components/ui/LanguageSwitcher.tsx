@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { languageState } from "@root/recoil/atoms";
+import { currencyMap } from "@root/utils/formatPrice";
 
 const languages = [
   { code: "en", label: "EN" },
@@ -17,7 +18,7 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const currentLocale = pathname.split("/")[1];
+    const currentLocale = pathname.split("/")[1] as keyof typeof currencyMap;
 
     if (languages.some((lang) => lang.code === currentLocale)) {
       setLanguage(currentLocale);
@@ -30,7 +31,7 @@ export default function LanguageSwitcher() {
     const lang = event.target.value;
     const newPath = pathname.replace(`/${language}`, `/${lang}`);
 
-    setLanguage(lang);
+    setLanguage(lang as keyof typeof currencyMap);
     router.push(newPath);
   };
 

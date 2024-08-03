@@ -1,7 +1,7 @@
-import { atom, selector } from "recoil";
+import { atom } from "recoil";
 
 import { persistAtom } from "@root/recoil";
-import { getDictionary } from "@root/app/[lang]/dictionaries";
+import { currencyMap } from "@root/utils/formatPrice";
 
 export interface ICartItem {
   id: string;
@@ -22,7 +22,7 @@ export const sidebarState = atom({
   default: false,
 });
 
-export const languageState = atom<"uk" | "en">({
+export const languageState = atom<keyof typeof currencyMap>({
   key: "languageState",
   default: "uk",
 });
