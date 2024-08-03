@@ -56,7 +56,7 @@ export const CartView = () => {
         </button>
 
         <span className="font-bold text-2xl text-center text-white block p-6">
-          {dictionary.cart}
+          {dictionary.cart.cart}
         </span>
       </div>
 
@@ -73,7 +73,7 @@ export const CartView = () => {
           <div className="flex-shrink-0 px-6 py-6 sm:px-6 sticky z-20 bottom-0 w-full right-0 left-0 border-t text-md bg-site">
             <ul className="pb-2">
               <li className="flex justify-between py-1">
-                <span>{dictionary.total}</span>
+                <span>{dictionary.cart.total}</span>
 
                 <span>{formatPrice(subtotal * coefficient, locale)}</span>
               </li>
@@ -81,7 +81,7 @@ export const CartView = () => {
 
             <div>
               <button className="btn-main w-full text-lg">
-                {dictionary.proceed}
+                {dictionary.cart.proceed}
               </button>
             </div>
           </div>
@@ -89,13 +89,13 @@ export const CartView = () => {
       ) : (
         <div className="flex-1 px-4 flex flex-col justify-center items-center">
           <h2 className="pt-6 text-2xl font-bold tracking-wide text-center">
-            {dictionary.empty_cart}
+            {dictionary.cart.empty_cart}
           </h2>
 
           <p className="text-accent-3 px-10 text-center pt-2">
-            {dictionary.add_to_cart}{" "}
+            {dictionary.cart.add_to_cart}{" "}
             <NavLink href="/category" className="underline hover:no-underline">
-              {dictionary.here}
+              {dictionary.cart.here}
             </NavLink>
           </p>
         </div>

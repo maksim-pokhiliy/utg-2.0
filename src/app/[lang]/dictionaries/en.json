@@ -1,22 +1,36 @@
 {
-  "merch": "merch",
-  "get": "Get Merch",
-  "Patches": "Patches",
-  "Stickers": "Stickers",
-  "T-Shirts": "T-Shirts",
-  "order": "Order Now",
-  "out": "Out Of Stock",
-  "home": "home",
-  "reports": "reports",
-  "about": "about",
-  "add": "Add to Cart",
-  "quantity": "Quantity",
-  "cart": "Cart",
-  "total": "Total",
-  "empty_cart": "Your cart is empty",
-  "add_to_cart": "Add products to your cart in",
-  "here": "here",
-  "proceed": "Proceed to Checkout",
-  "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",
-  "all_proceeds": "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. After the start of sales, another section with reports will appear here."
+  "shared": {
+    "merch": "merch",
+    "about": "about",
+    "home": "home",
+    "reports": "reports",
+    "quantity": "Quantity"
+  },
+  "main": {
+    "get": "Get Merch"
+  },
+  "categories": {
+    "Patches": "Patches",
+    "Stickers": "Stickers",
+    "T-Shirts": "T-Shirts"
+  },
+  "category": {
+    "order": "Order Now",
+    "out": "Out Of Stock"
+  },
+  "product": {
+    "add": "Add to Cart"
+  },
+  "cart": {
+    "cart": "Cart",
+    "total": "Total",
+    "proceed": "Proceed to Checkout",
+    "empty_cart": "Your cart is empty",
+    "add_to_cart": "Add products to your cart in",
+    "here": "here"
+  },
+  "about": {
+    "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",
+    "all_proceeds": "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. After the start of sales, another section with reports will appear here."
+  }
 }

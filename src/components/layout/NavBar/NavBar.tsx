@@ -104,7 +104,7 @@ export default function NavBar() {
                   setIsMenuShown(false);
                 }}
               >
-                {dictionary[label]}
+                {dictionary.shared[label]}
               </StyledNavLink>
             </li>
           ))}

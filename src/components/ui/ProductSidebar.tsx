@@ -64,7 +64,9 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       </p>
 
       <div className="mt-4 mb-6">
-        <span className="text-xs tracking-wide">{dictionary.quantity}</span>
+        <span className="text-xs tracking-wide">
+          {dictionary.shared.quantity}
+        </span>
 
         <div className="mt-2">
           <div className="h-7 flex flex-row relative w-16 border-gray-300 border bg-white">
@@ -73,7 +75,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
                 className="text-xs px-2 w-full h-full border-0 focus:outline-none select-none pointer-events-auto"
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 pattern="[0-9]*"
-                aria-label={dictionary.quantity}
+                aria-label={dictionary.shared.quantity}
                 value={quantity}
                 type="number"
                 min={1}
@@ -131,12 +133,12 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       {product.availability ? (
         <div>
           <button
-            aria-label={dictionary.add}
+            aria-label={dictionary.product.add}
             className="btn-main w-full my-1 rounded-2xl"
             type="button"
             onClick={addToCart}
           >
-            {dictionary.add}
+            {dictionary.product.add}
           </button>
         </div>
       ) : null}

@@ -88,7 +88,7 @@ export const CartItem = ({ item }: CartItemProps) => {
                   className="text-xs px-2 w-full h-full border-0 focus:outline-none select-none pointer-events-auto"
                   onChange={handleQuantityChange}
                   pattern="[0-9]*"
-                  aria-label={dictionary.quantity}
+                  aria-label={dictionary.shared.quantity}
                   value={quantity}
                   type="number"
                   min={1}

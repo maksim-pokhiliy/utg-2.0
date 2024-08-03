@@ -31,7 +31,7 @@ export default function CategoryScreen({
       <div className="mx-auto pb-10 md:pb-20">
         <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
           <h1 className="font-bold uppercase text-3xl md:text-6xl">
-            {dictionary?.[category?.title ?? ""]}
+            {dictionary?.categories[category?.title ?? ""]}
           </h1>
         </div>
 
@@ -62,11 +62,11 @@ export default function CategoryScreen({
 
                     {product.availability ? (
                       <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
-                        {dictionary?.order}
+                        {dictionary?.category.order}
                       </span>
                     ) : (
                       <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
-                        {dictionary?.out}
+                        {dictionary?.category.out}
                       </span>
                     )}
 

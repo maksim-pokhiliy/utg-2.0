@@ -12,7 +12,7 @@ import { currencyMap } from "@root/utils/formatPrice";
 
 interface IRecoilProviderProps {
   lang: keyof typeof currencyMap;
-  dictionary: Record<string, string>;
+  dictionary: Record<string, Record<string, string>>;
   exchangeRates: Record<string, number>;
   children: ReactNode;
 }

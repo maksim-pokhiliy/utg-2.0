@@ -27,7 +27,7 @@ export const languageState = atom<keyof typeof currencyMap>({
   default: "uk",
 });
 
-export const dictionaryState = atom<Record<string, string>>({
+export const dictionaryState = atom<Record<string, Record<string, string>>>({
   key: "dictionaryState",
   default: {},
 });
