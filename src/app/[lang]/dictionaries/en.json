@@ -30,8 +30,11 @@
     "here": "here",
     "customer_details": "Customer details",
     "first_name": "First Name",
+    "first_name_placeholder": "John",
     "last_name": "Last Name",
+    "last_name_placeholder": "Wick",
     "telephone": "Phone Number / Telegram Nickname",
+    "telephone_placeholder": "555-0100",
     "delivery_details": "Delivery details",
     "country": "Country",
     "country_placeholder": "Ukraine",
@@ -41,8 +44,11 @@
     "city_placeholder": "Lviv",
     "address": "Address",
     "address_placeholder": "Fairy Tale City Street 1",
+    "additional": "Additional Information",
     "place_order": "Place Order",
-    "review": "Review your details above and continue when you're ready."
+    "review": "Review your details above and continue when you're ready.",
+    "order_success": "The order has been placed successfully",
+    "order_error": "Error when placing an order"
   },
   "about": {
     "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",

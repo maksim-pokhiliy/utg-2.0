@@ -9,6 +9,7 @@ export interface ICartItem {
   price: number;
   quantity: number;
   image: string;
+  productUrl: string;
 }
 
 const loadStateFromLocalStorage =

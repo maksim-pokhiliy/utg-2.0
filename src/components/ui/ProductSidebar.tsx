@@ -36,6 +36,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       price: product.price,
       quantity: quantity,
       image: product.image,
+      productUrl: window.location.href,
     };
 
     const existingItemIndex =

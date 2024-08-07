@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import { usePathname } from "next/navigation";
 
 import { formatPrice } from "@root/utils/formatPrice";
 
@@ -16,7 +17,20 @@ import {
 import CartItem from "@root/components/ui/Cart/CartItem";
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+
+  return ref.current;
+}
+
 export const CartView = () => {
+  const pathname = usePathname();
+  const previousPathname = usePrevious(pathname);
+
   const cart = useRecoilValue(cartState);
   const dictionary = useRecoilValue(dictionaryState);
   const coefficient = useRecoilValue(exchangeCoefficientState);
@@ -29,6 +43,12 @@ export const CartView = () => {
   const total =
     cart.reduce((total, item) => total + item.price * item.quantity, 0) *
     coefficient;
+
+  useEffect(() => {
+    if (previousPathname && previousPathname !== pathname) {
+      closeSidebar();
+    }
+  }, [pathname, previousPathname]);
 
   return (
     <div className="h-full flex flex-col text-base bg-accent-0 shadow-xl overflow-y-auto overflow-x-hidden">

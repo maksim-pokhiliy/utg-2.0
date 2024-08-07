@@ -1,10 +1,11 @@
 "use client";
 
-import { useRecoilValue } from "recoil";
-import { Button, HR, Label, TextInput } from "flowbite-react";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { Button, HR, Label, Textarea, TextInput } from "flowbite-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { currencyMap, formatPrice } from "@root/utils/formatPrice";
+import useNotification from "@root/hooks/useNotification";
 
 import {
   cartState,
@@ -17,10 +18,14 @@ import CartItem from "../ui/Cart/CartItem";
 import { NavLink } from "../layout/NavBar/NavLink";
 
 export default function CheckoutScreen() {
-  const cart = useRecoilValue(cartState);
+  const notyf = useNotification();
+
+  const [cart, setCart] = useRecoilState(cartState);
   const dictionary = useRecoilValue(dictionaryState);
   const coefficient = useRecoilValue(exchangeCoefficientState);
   const locale = useRecoilValue(languageState);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState({
     first_name: "",
@@ -30,6 +35,7 @@ export default function CheckoutScreen() {
     state: "",
     city: "",
     address: "",
+    additional: "",
   });
 
   const currency = currencyMap[locale];
@@ -40,31 +46,35 @@ export default function CheckoutScreen() {
     cart.reduce((total, item) => total + item.price * item.quantity, 0) *
     coefficient;
 
-  const handleFormChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleFormChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const products = cart.map((product) => ({
-      ...product,
-      currency,
-      price: (product.price * coefficient).toFixed(2),
-    }));
+    try {
+      setIsLoading(true);
 
-    const payload = {
-      ...form,
-      products,
-      currency,
-      total: total.toFixed(2),
-    };
+      const payload = {
+        ...form,
+        cart,
+        locale,
+        total: total.toFixed(2),
+      };
 
-    const response = await fetch("/api/place_order/", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }).then((data) => data.json());
+      await fetch("/api/place_order/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }).then((data) => data.json());
 
-    console.log("===========================", response);
+      // setCart([]);
+      notyf.notifySuccess(dictionary.cart.order_success);
+    } catch (error) {
+      notyf.notifyError(dictionary.cart.order_error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,7 +102,7 @@ export default function CheckoutScreen() {
                 name="first_name"
                 value={form.first_name}
                 className="mb-4"
-                placeholder="John"
+                placeholder={dictionary.cart.first_name_placeholder}
                 type="text"
                 onChange={handleFormChange}
                 required
@@ -107,7 +117,7 @@ export default function CheckoutScreen() {
                 name="last_name"
                 value={form.last_name}
                 className="mb-4"
-                placeholder="Wick"
+                placeholder={dictionary.cart.last_name_placeholder}
                 type="text"
                 onChange={handleFormChange}
                 required
@@ -122,7 +132,7 @@ export default function CheckoutScreen() {
                 name="telephone"
                 value={form.telephone}
                 className="mb-8"
-                placeholder="555-0100"
+                placeholder={dictionary.cart.telephone_placeholder}
                 type="tel"
                 onChange={handleFormChange}
                 required
@@ -185,16 +195,35 @@ export default function CheckoutScreen() {
                 id="address"
                 name="address"
                 value={form.address}
-                className="mb-8"
+                className="mb-4"
                 placeholder={dictionary.cart.address_placeholder}
                 type="text"
                 onChange={handleFormChange}
                 required
               />
 
+              <Label className="mb-2 block" htmlFor="additional">
+                {dictionary.cart.additional}
+              </Label>
+
+              <Textarea
+                id="additional"
+                name="additional"
+                value={form.additional}
+                className="mb-8"
+                placeholder={dictionary.cart.additional}
+                onChange={handleFormChange}
+                rows={6}
+              />
+
               <p className="mb-4 text-xs">{dictionary.cart.review}</p>
 
-              <Button className="w-full" type="submit">
+              <Button
+                className="w-full bg-zinc-800 hover:bg-zinc-900"
+                isProcessing={isLoading}
+                disabled={isLoading}
+                type="submit"
+              >
                 {dictionary.cart.place_order}
               </Button>
             </form>
