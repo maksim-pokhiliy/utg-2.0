@@ -27,6 +27,14 @@ export default async function RootLayout({
 
   return (
     <html lang={params.lang}>
+      <head>
+        <link
+          rel="icon"
+          href="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/favicon.ico?alt=media&token=844ef49c-72e8-4010-9b3c-3c52db421735"
+          sizes="any"
+        />
+      </head>
+
       <body className="text-black bg-site min-h-screen flex flex-col">
         <RecoilProvider
           lang={params.lang}

@@ -1,7 +1,11 @@
-"use client";
-
-import { Spinner } from "flowbite-react";
+import { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { Spinner } from "flowbite-react";
+
+export const metadata: Metadata = {
+  title: "UTG | Checkout",
+  description: "Donate and fight with us",
+};
 
 const CheckoutScreen = dynamic(
   () => import("@root/components/pages/CheckoutScreen"),
