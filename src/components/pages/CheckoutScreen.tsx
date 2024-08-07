@@ -68,7 +68,7 @@ export default function CheckoutScreen() {
         body: JSON.stringify(payload),
       }).then((data) => data.json());
 
-      // setCart([]);
+      setCart([]);
       notyf.notifySuccess(dictionary.cart.order_success);
     } catch (error) {
       notyf.notifyError(dictionary.cart.order_error);
