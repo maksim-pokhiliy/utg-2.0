@@ -1,7 +1,7 @@
-import { atom } from "recoil";
+import { atom, AtomEffect } from "recoil";
 
-import { persistAtom } from "@root/recoil";
 import { currencyMap } from "@root/utils/formatPrice";
+import { CART_STATE_KEY } from "@root/utils/constants/recoil";
 
 export interface ICartItem {
   id: string;
@@ -11,10 +11,35 @@ export interface ICartItem {
   image: string;
 }
 
+const loadStateFromLocalStorage =
+  <T>(key: string): AtomEffect<T> =>
+  ({ setSelf }) => {
+    if (typeof window !== "undefined") {
+      const savedState = localStorage.getItem(key);
+
+      if (savedState !== null) {
+        setSelf(JSON.parse(savedState));
+      }
+    }
+  };
+
+const saveStateToLocalStorage =
+  <T>(key: string): AtomEffect<T> =>
+  ({ onSet }) => {
+    if (typeof window !== "undefined") {
+      onSet((newState) => {
+        localStorage.setItem(key, JSON.stringify(newState));
+      });
+    }
+  };
+
 export const cartState = atom<ICartItem[]>({
-  key: "cartState",
+  key: CART_STATE_KEY,
   default: [],
-  effects_UNSTABLE: [persistAtom],
+  effects: [
+    loadStateFromLocalStorage<ICartItem[]>(CART_STATE_KEY),
+    saveStateToLocalStorage<ICartItem[]>(CART_STATE_KEY),
+  ],
 });
 
 export const sidebarState = atom({

@@ -27,10 +27,29 @@
     "proceed": "Proceed to Checkout",
     "empty_cart": "Your cart is empty",
     "add_to_cart": "Add products to your cart in",
-    "here": "here"
+    "here": "here",
+    "customer_details": "Customer details",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "telephone": "Phone Number / Telegram Nickname",
+    "delivery_details": "Delivery details",
+    "country": "Country",
+    "country_placeholder": "Ukraine",
+    "state": "Region / State",
+    "state_placeholder": "Lviv Region",
+    "city": "City",
+    "city_placeholder": "Lviv",
+    "address": "Address",
+    "address_placeholder": "Fairy Tale City Street 1",
+    "place_order": "Place Order",
+    "review": "Review your details above and continue when you're ready."
   },
   "about": {
     "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",
     "all_proceeds": "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. After the start of sales, another section with reports will appear here."
+  },
+  "checkout": {
+    "checkout": "checkout",
+    "summary": "Order summary"
   }
 }

@@ -38,7 +38,8 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       image: product.image,
     };
 
-    const existingItemIndex = cart.findIndex((item) => item.id === product.id);
+    const existingItemIndex =
+      cart.findIndex((item) => item.id === product.id) ?? -1;
 
     if (existingItemIndex >= 0) {
       const newCart = [...cart];

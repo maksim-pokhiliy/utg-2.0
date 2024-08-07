@@ -3,6 +3,8 @@
 import React from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
+import { formatPrice } from "@root/utils/formatPrice";
+
 import {
   cartState,
   dictionaryState,
@@ -13,7 +15,6 @@ import {
 
 import CartItem from "@root/components/ui/Cart/CartItem";
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
-import { formatPrice } from "@root/utils/formatPrice";
 
 export const CartView = () => {
   const cart = useRecoilValue(cartState);
@@ -25,10 +26,9 @@ export const CartView = () => {
 
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  const subtotal = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const total =
+    cart.reduce((total, item) => total + item.price * item.quantity, 0) *
+    coefficient;
 
   return (
     <div className="h-full flex flex-col text-base bg-accent-0 shadow-xl overflow-y-auto overflow-x-hidden">
@@ -75,14 +75,14 @@ export const CartView = () => {
               <li className="flex justify-between py-1">
                 <span>{dictionary.cart.total}</span>
 
-                <span>{formatPrice(subtotal * coefficient, locale)}</span>
+                <span>{formatPrice(total, locale)}</span>
               </li>
             </ul>
 
             <div>
-              <button className="btn-main w-full text-lg">
+              <NavLink href="/checkout" className="btn-main w-full text-lg">
                 {dictionary.cart.proceed}
-              </button>
+              </NavLink>
             </div>
           </div>
         </div>

@@ -3,12 +3,13 @@
 import { ReactNode } from "react";
 import { MutableSnapshot, RecoilRoot } from "recoil";
 
+import { currencyMap } from "@root/utils/formatPrice";
+
 import {
   dictionaryState,
   exchangeCoefficientState,
   exchangeRatesState,
 } from "@root/recoil/atoms";
-import { currencyMap } from "@root/utils/formatPrice";
 
 interface IRecoilProviderProps {
   lang: keyof typeof currencyMap;

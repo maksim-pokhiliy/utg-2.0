@@ -1,7 +1,7 @@
 "use client";
 
-import { useRecoilState, useRecoilValue } from "recoil";
 import { useEffect, useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
 
 import { cartState, sidebarState } from "@root/recoil/atoms";
 
@@ -15,7 +15,8 @@ export default function CartBag() {
     setIsClient(true);
   }, []);
 
-  const itemsCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const itemsCount =
+    cart.reduce((count, item) => count + item.quantity, 0) ?? 0;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

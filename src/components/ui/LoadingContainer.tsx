@@ -4,11 +4,13 @@ import { Spinner } from "flowbite-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ILoadingContainerProps {
+  size?: string;
   isLoading: boolean;
   children: Readonly<React.ReactNode>;
 }
 
 export default function LoadingContainer({
+  size = "lg",
   isLoading,
   children,
 }: ILoadingContainerProps) {
@@ -16,7 +18,7 @@ export default function LoadingContainer({
     <AnimatePresence>
       {isLoading ? (
         <div className="w-full flex items-center justify-center py-10">
-          <Spinner className="fill-zinc-900" size="lg" />
+          <Spinner className="fill-zinc-900" size={size} />
         </div>
       ) : (
         <motion.div
