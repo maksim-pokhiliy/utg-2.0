@@ -12,8 +12,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log("===========================", response);
-
     return NextResponse.json(response);
   } catch (error) {
     const errorMessage =
