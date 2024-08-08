@@ -47,7 +47,7 @@
     "additional": "Additional Information",
     "place_order": "Place Order",
     "review": "Review your details above and continue when you're ready.",
-    "order_success": "The order has been placed successfully",
+    "order_success": "Thank you for your order! Our manager will contact you shortly",
     "order_error": "Error when placing an order"
   },
   "about": {
