@@ -30,7 +30,7 @@ export default async function RootLayout({
       <head>
         <link
           rel="icon"
-          href="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/favicon.ico?alt=media&token=844ef49c-72e8-4010-9b3c-3c52db421735"
+          href="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/hero%2Ffavicon.ico?alt=media&token=22d59388-3243-4d61-8e4b-19e1f887405b"
           sizes="any"
         />
       </head>
