@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getCategorySlugs, getCategoryView, resolveLocale } from "@root/data";
+import { getCategorySlugs, getCategoryView } from "@root/data";
+import { resolveLocale } from "@root/utils/locale";
 
 import CategoryScreen from "@root/components/pages/CategoryScreen";
 

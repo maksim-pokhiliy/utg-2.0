@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-import { resolveLocale } from "@root/data";
+import { resolveLocale } from "@root/utils/locale";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 

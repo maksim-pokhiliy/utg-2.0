@@ -1,15 +1,26 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-import { resolveLocale } from "@root/data";
+import { resolveLocale } from "@root/utils/locale";
 
 const messages = {
   uk: { title: "Щось пішло не так", retry: "Спробувати ще раз" },
   en: { title: "Something went wrong", retry: "Try again" },
 };
 
-export default function Error({ reset }: { error: Error; reset: () => void }) {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
   const pathname = usePathname();
   const message = messages[resolveLocale(pathname.split("/")[1])];
 
