@@ -36,13 +36,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
     console.error("Error placing order:", error);
 
     return NextResponse.json(
-      { error: "Failed to place order", details: errorMessage },
+      { error: "Failed to place order" },
       { status: 500 }
     );
   }
