@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
 
@@ -36,7 +39,18 @@ const cartStorage: PersistStorage<Pick<CartStore, "items">> = {
     }
 
     try {
-      return { state: { items: JSON.parse(raw) as ICartItem[] }, version: 0 };
+      const parsed = JSON.parse(raw);
+
+      if (!Array.isArray(parsed)) {
+        return null;
+      }
+
+      const items = parsed.map((item) => ({
+        ...item,
+        quantity: normalizeQuantity(item.quantity),
+      })) as ICartItem[];
+
+      return { state: { items }, version: 0 };
     } catch {
       return null;
     }
@@ -63,6 +77,7 @@ export const useCartStore = create<CartStore>()(
       items: [],
       addItem: (item) =>
         set((state) => {
+          const quantity = normalizeQuantity(item.quantity);
           const exists = state.items.some(
             (cartItem) => cartItem.id === item.id
           );
@@ -73,14 +88,16 @@ export const useCartStore = create<CartStore>()(
                 cartItem.id === item.id
                   ? {
                       ...cartItem,
-                      quantity: cartItem.quantity + item.quantity,
+                      quantity: normalizeQuantity(
+                        cartItem.quantity + quantity
+                      ),
                     }
                   : cartItem
               ),
             };
           }
 
-          return { items: [...state.items, item] };
+          return { items: [...state.items, { ...item, quantity }] };
         }),
       setQuantity: (id, quantity) =>
         set((state) => ({
@@ -104,3 +121,27 @@ export const useCartStore = create<CartStore>()(
     }
   )
 );
+
+export const selectItemCount = (state: Pick<CartStore, "items">): number =>
+  state.items.reduce((count, item) => count + item.quantity, 0);
+
+export const selectSubtotal = (state: Pick<CartStore, "items">): number =>
+  state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+export const useCartHydrated = (): boolean => {
+  const [hydrated, setHydrated] = useState(() =>
+    useCartStore.persist.hasHydrated()
+  );
+
+  useEffect(() => {
+    const unsubscribe = useCartStore.persist.onFinishHydration(() =>
+      setHydrated(true)
+    );
+
+    setHydrated(useCartStore.persist.hasHydrated());
+
+    return unsubscribe;
+  }, []);
+
+  return hydrated;
+};

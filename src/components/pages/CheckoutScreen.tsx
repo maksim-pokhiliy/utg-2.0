@@ -5,7 +5,12 @@ import { ChangeEvent, FormEvent, useState } from "react";
 
 import { formatPrice } from "@root/utils/formatPrice";
 import useNotification from "@root/hooks/useNotification";
-import { useCartStore } from "@root/store/cart";
+import {
+  useCartStore,
+  useCartHydrated,
+  selectItemCount,
+  selectSubtotal,
+} from "@root/store/cart";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
 import CartItem from "../ui/Cart/CartItem";
@@ -16,6 +21,7 @@ export default function CheckoutScreen() {
 
   const cart = useCartStore((state) => state.items);
   const clear = useCartStore((state) => state.clear);
+  const hydrated = useCartHydrated();
   const dictionary = useDictionary();
   const money = useMoney();
   const locale = useLocale();
@@ -33,12 +39,9 @@ export default function CheckoutScreen() {
     additional: "",
   });
 
-  const summary = cart.reduce((total, item) => total + item.quantity, 0);
+  const summary = useCartStore(selectItemCount);
 
-  const total = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const total = useCartStore(selectSubtotal);
 
   const handleFormChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -88,7 +91,7 @@ export default function CheckoutScreen() {
         </h1>
       </div>
 
-      {cart.length ? (
+      {!hydrated ? null : cart.length ? (
         <div className="p-10 lg:px-14">
           <div className="flex flex-col-reverse lg:flex-row gap-10 lg:gap-20 items-start relative">
             <form className="w-full lg:basis-1/2" onSubmit={handleSubmit}>

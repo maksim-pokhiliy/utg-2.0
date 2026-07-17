@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { formatPrice } from "@root/utils/formatPrice";
-import { useCartStore } from "@root/store/cart";
+import { useCartStore, selectSubtotal } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
@@ -32,7 +32,7 @@ export const CartView = () => {
 
   const closeSidebar = useSidebarStore((state) => state.close);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = useCartStore(selectSubtotal);
 
   useEffect(() => {
     if (previousPathname && previousPathname !== pathname) {

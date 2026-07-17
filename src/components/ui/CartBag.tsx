@@ -1,12 +1,10 @@
 "use client";
 
-import { useCartStore } from "@root/store/cart";
+import { useCartStore, selectItemCount } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 
 export default function CartBag() {
-  const itemsCount = useCartStore((state) =>
-    state.items.reduce((count, item) => count + item.quantity, 0)
-  );
+  const itemsCount = useCartStore(selectItemCount);
   const toggle = useSidebarStore((state) => state.toggle);
 
   return (

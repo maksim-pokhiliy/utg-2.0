@@ -38,6 +38,7 @@ export default function QuantityStepper({
 
     if (Number.isInteger(parsed) && parsed >= 1) {
       onChange(parsed);
+      setDraft(String(parsed));
     } else {
       setDraft(String(value));
     }
