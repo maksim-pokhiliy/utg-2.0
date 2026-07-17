@@ -1,0 +1,28 @@
+# production-polish — plan
+
+Each code step ships as one executor run (`/feature small`, `/feature`, or `/upgrade`)
+in its own tab, producing one PR against `master`. The planner writes the step prompt,
+reviews the executor's plan & design, then reviews the PR.
+
+The **design track** (D1/D2) runs in Claude Design from planner-written briefs
+(`design-*-prompt.md`), in parallel with code steps 1–3 — it touches no code. Its output
+gates steps 4a–4c: no visual implementation before the prototypes are ratified (D-4).
+
+| #  | Step | Mechanism | Gate (how it's accepted) | Status |
+| -- | ---- | --------- | ------------------------ | ------ |
+| 0  | Quick wins: kill fake 1s delays, fix place_order response bug, env-tolerant boot/build, dead code, `.env.example`, minimal honest README | `/feature small` | build green without `.env.local`; failed order keeps cart + shows error; no `setTimeout(1000)` left | active |
+| 1  | Rescue / de-Firebase (D-7) + RSC migration: typed static catalog module from recovered 1.0 data (incl. descriptions/sizes), images from `extracted/assets/` into `public/`, server-component pages reading the module directly, drop categories API routes + `firebase-admin` + Firebase env + `firebase.json`/`.firebaserc`, `generateMetadata`, collapse route groups, `error.tsx`/`not-found.tsx`, rates fetch with revalidate + force-UAH terminal fallback (D-8), fix DEF-8 | `/feature` | prod fully works with zero Firebase dependencies; catalog in page source; no `firebasestorage` URLs anywhere; rates-down → correct UAH display on both locales | pending |
+| 2  | State: Recoil → Zustand (cart+sidebar only), cart bug pack (state mutation, index keys, quantity desync/zero), typed dictionaries, re-enable `react-hooks/exhaustive-deps` | `/feature` | recoil gone from package.json; cart edge cases correct; lint rule on and green | pending |
+| 3  | Next 14 → 16 + React 19 upgrade | `/upgrade` | build+smoke green on Next 16/React 19 | pending |
+| D1 | Design system primitives in Claude Design: tokens, type (Cyrillic-capable), buttons/inputs/cards/badges/drawer/toasts per D-4 direction | design | planner+user review; visual language ratified | ✅ done |
+| D2 | Screen prototypes in Claude Design (all surfaces incl. 404, mobile-first, real recovered content + verbatim-fixed strings), built on D1 system | design | every surface approved by user+planner | ✅ done (D-4 fully ratified) |
+| 4a | Port the design system: shadcn/ui init (Tailwind 3→4 happens here — shadcn init rebuilds the styling layer anyway), CSS-var tokens pulled verbatim from the design project via DesignSync, `next/font` (drop Wix CDN fonts), all primitives as owned shadcn-style components, header/footer; retire Flowbite/notyf/body-scroll-lock (D-9), drop framer-motion (DEF-17) | `/feature` | no external font/CDN requests; tokens byte-match the design project; primitives cover the D1 inventory; header/footer shipped | pending — after step 3 |
+| 4b | Implement screens per the approved kit, composing ONLY ported 4a primitives (no per-page styling): home/catalog/category/product, size selector, skeletons, image `sizes`/`priority`/`quality` hygiene; reports carousel → shadcn Carousel (drop swiper) | `/feature` | screens match kit; zero one-off styled controls; sizes selectable; no full-size image overfetch | pending |
+| 4c | Implement cart/checkout per D2: form validation, order confirmation state, flow polish | `/feature` | invalid phone blocked; explicit confirmation after order | pending |
+| 5  | SEO pack: metadata/OG per page+locale, sitemap, robots, JSON-LD Product, hreflang, local favicon + `public/` | `/feature small` | Lighthouse SEO ≥ 90; rich-results test passes for product | pending |
+| 6  | Tests + CI: Vitest+RTL (store, money, checkout form), Playwright happy path, GitHub Actions | `/feature` | CI green on PR; suites cover cart/checkout logic | pending |
+| 7  | README + repo presentation: screenshots, stack, architecture, badges | `/feature small` | README presentable to a cold reader | pending |
+
+Open design details deferred to their step: exchange-rate caching strategy (step 1),
+Zustand store shape (step 2), design direction ratification D-4 (before 4a), test matrix
+(step 6).
