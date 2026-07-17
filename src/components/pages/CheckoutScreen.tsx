@@ -63,10 +63,19 @@ export default function CheckoutScreen() {
         total: total.toFixed(2),
       };
 
-      await fetch("/api/place_order/", {
+      const response = await fetch("/api/place_order/", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
-      }).then((data) => data.json());
+      });
+
+      if (!response.ok) {
+        notyf.notifyError(dictionary.cart.order_error);
+
+        return;
+      }
 
       setCart([]);
       notyf.notifySuccess(dictionary.cart.order_success);
