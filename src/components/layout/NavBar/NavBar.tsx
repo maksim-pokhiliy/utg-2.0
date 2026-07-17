@@ -80,7 +80,7 @@ export default function NavBar() {
           <div className="h-[140px] w-[180px] overflow-hidden sm:h-[200px] sm:w-auto mx-auto">
             <Image
               className="mx-auto z-10"
-              src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/IMG-0253.PNG?alt=media&token=b2855721-c087-4bea-bdb9-0345dcf8b57f"
+              src="/logo.png"
               width={240}
               height={240}
               alt="UTG"

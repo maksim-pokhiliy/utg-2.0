@@ -4,14 +4,14 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { Button, HR, Label, Textarea, TextInput } from "flowbite-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
-import { currencyMap, formatPrice } from "@root/utils/formatPrice";
+import { formatPrice } from "@root/utils/formatPrice";
 import useNotification from "@root/hooks/useNotification";
 
 import {
   cartState,
   dictionaryState,
-  exchangeCoefficientState,
   languageState,
+  moneyState,
 } from "@root/recoil/atoms";
 
 import CartItem from "../ui/Cart/CartItem";
@@ -22,7 +22,7 @@ export default function CheckoutScreen() {
 
   const [cart, setCart] = useRecoilState(cartState);
   const dictionary = useRecoilValue(dictionaryState);
-  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const money = useRecoilValue(moneyState);
   const locale = useRecoilValue(languageState);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -38,13 +38,12 @@ export default function CheckoutScreen() {
     additional: "",
   });
 
-  const currency = currencyMap[locale];
-
   const summary = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const total =
-    cart.reduce((total, item) => total + item.price * item.quantity, 0) *
-    coefficient;
+  const total = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   const handleFormChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -60,7 +59,7 @@ export default function CheckoutScreen() {
         ...form,
         cart,
         locale,
-        total: total.toFixed(2),
+        total: (total * money.coefficient).toFixed(2),
       };
 
       const response = await fetch("/api/place_order/", {
@@ -252,7 +251,9 @@ export default function CheckoutScreen() {
 
               <div className="flex items-center justify-between">
                 <span className="text-xl">{dictionary.cart.total}:</span>
-                <span className="text-xl">{formatPrice(total, locale)}</span>
+                <span className="text-xl">
+                  {formatPrice(total, money, locale)}
+                </span>
               </div>
             </div>
           </div>

@@ -1,21 +1,18 @@
+"use client";
+
 import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
-import { ICategory } from "@root/types";
+import { CategorySummary } from "@root/data";
 import { dictionaryState } from "@root/recoil/atoms";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
-import LoadingContainer from "@root/components/ui/LoadingContainer";
 
 interface IHomeScreenProps {
-  isLoading: boolean;
-  categories: ICategory[];
+  categories: CategorySummary[];
 }
 
-export default function HomeScreen({
-  isLoading,
-  categories,
-}: IHomeScreenProps) {
+export default function HomeScreen({ categories }: IHomeScreenProps) {
   const dictionary = useRecoilValue(dictionaryState);
 
   return (
@@ -50,24 +47,11 @@ export default function HomeScreen({
               </div>
             </div>
           </div>
-
-          <div className="basis-1/2 pt-20 sm:pt-0">
-            <Image
-              style={{ objectFit: "cover", objectPosition: "start" }}
-              className="w-full max-h-[500px] overflow-hidden px-10 sm:px-0"
-              src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/hero%2Futg-hero-3.JPG?alt=media&token=fe0afb92-8c0f-44fc-8c0d-0a5fbfe6a2a5"
-              alt="UTG"
-              quality={100}
-              width={1000}
-              height={1000}
-              priority
-            />
-          </div>
         </div>
 
         <Image
           className="absolute inset-x-2/4 -translate-x-2/4 -translate-y-[20%] bottom-0 top-[30%] hidden sm:block"
-          src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/IMG-0253.PNG?alt=media&token=b2855721-c087-4bea-bdb9-0345dcf8b57f"
+          src="/logo.png"
           alt="UTG"
           quality={100}
           width={320}
@@ -76,53 +60,51 @@ export default function HomeScreen({
         />
       </div>
 
-      <LoadingContainer isLoading={isLoading}>
-        <div className="px-10 pb-10">
-          <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-            <h1 className="font-bold uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
-              {dictionary?.shared.merch}
-            </h1>
+      <div className="px-10 pb-10">
+        <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
+          <h1 className="font-bold uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
+            {dictionary?.shared.merch}
+          </h1>
 
-            <NavLink
-              href="/category"
-              className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
-            >
-              {dictionary?.main.get}
-            </NavLink>
+          <NavLink
+            href="/category"
+            className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
+          >
+            {dictionary?.main.get}
+          </NavLink>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
-              {categories.map((category) => (
-                <div key={category.id} className="mt-10 group">
-                  <NavLink
-                    href={`/category/${category.id.toLowerCase()}`}
-                    className="block h-auto w-full"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
+            {categories.map((category) => (
+              <div key={category.slug} className="mt-10 group">
+                <NavLink
+                  href={`/category/${category.slug}`}
+                  className="block h-auto w-full"
+                >
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{ paddingBottom: "100%" }}
                   >
-                    <div
-                      className="relative w-full overflow-hidden"
-                      style={{ paddingBottom: "100%" }}
-                    >
-                      <Image
-                        src={category.image}
-                        alt={category.title}
-                        quality={100}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
-                        priority
-                        fill
-                      />
-                    </div>
-                  </NavLink>
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      quality={100}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
+                      priority
+                      fill
+                    />
+                  </div>
+                </NavLink>
 
-                  <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
-                    <NavLink href={`/category/${category.id.toLowerCase()}`}>
-                      {dictionary?.categories[category.title]}
-                    </NavLink>
-                  </span>
-                </div>
-              ))}
-            </div>
+                <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
+                  <NavLink href={`/category/${category.slug}`}>
+                    {category.name}
+                  </NavLink>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      </LoadingContainer>
+      </div>
     </div>
   );
 }

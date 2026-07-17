@@ -4,6 +4,8 @@ import Negotiator from "negotiator";
 
 const locales = ["uk", "en"];
 
+const PUBLIC_FILE = /\.[^/]+$/;
+
 function getLocale(request: Request): string {
   const headers = {
     "accept-language": request.headers.get("accept-language") || "uk",
@@ -17,6 +19,10 @@ function getLocale(request: Request): string {
 
 export function middleware(request: Request) {
   const { pathname } = new URL(request.url);
+
+  if (PUBLIC_FILE.test(pathname)) {
+    return NextResponse.next();
+  }
 
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
