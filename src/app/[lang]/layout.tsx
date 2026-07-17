@@ -6,7 +6,9 @@ import RecoilProvider from "@root/providers/RecoilProvider";
 import SidebarUI from "@root/components/ui/Sidebar/SidebarUI";
 
 import "@root/app/globals.css";
-import { currencyMap } from "@root/utils/formatPrice";
+import { currencyMap, resolveMoney } from "@root/utils/formatPrice";
+
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return [{ lang: "uk" }, { lang: "en" }];
@@ -21,7 +23,8 @@ async function getConversionRates(): Promise<Record<string, number>> {
 
   try {
     const response = await fetch(
-      `${EXCHANGE_RATE_API_URL}/${EXCHANGE_RATE_API_KEY}/latest/UAH`
+      `${EXCHANGE_RATE_API_URL}/${EXCHANGE_RATE_API_KEY}/latest/UAH`,
+      { next: { revalidate: 3600 } }
     );
 
     if (!response.ok) {
@@ -47,23 +50,12 @@ export default async function RootLayout({
 }>) {
   const dictionary = await getDictionary(params.lang);
   const conversionRates = await getConversionRates();
+  const money = resolveMoney(params.lang, conversionRates);
 
   return (
     <html lang={params.lang}>
-      <head>
-        <link
-          rel="icon"
-          href="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/hero%2Ffavicon.ico?alt=media&token=22d59388-3243-4d61-8e4b-19e1f887405b"
-          sizes="any"
-        />
-      </head>
-
       <body className="text-black bg-site min-h-screen flex flex-col">
-        <RecoilProvider
-          lang={params.lang}
-          dictionary={dictionary}
-          exchangeRates={conversionRates}
-        >
+        <RecoilProvider dictionary={dictionary} money={money}>
           <Header />
 
           <main className="block flex-1 bg-site h-full">{children}</main>

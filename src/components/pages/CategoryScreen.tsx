@@ -6,8 +6,8 @@ import { formatPrice } from "@root/utils/formatPrice";
 
 import {
   dictionaryState,
-  exchangeCoefficientState,
   languageState,
+  moneyState,
 } from "@root/recoil/atoms";
 
 import LoadingContainer from "@root/components/ui/LoadingContainer";
@@ -23,7 +23,7 @@ export default function CategoryScreen({
   category,
 }: ICategoryScreenProps) {
   const dictionary = useRecoilValue(dictionaryState);
-  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const money = useRecoilValue(moneyState);
   const locale = useRecoilValue(languageState);
 
   return (
@@ -76,7 +76,7 @@ export default function CategoryScreen({
                       <br />
 
                       <span className="text-xs">
-                        {formatPrice(product.price * coefficient, locale)}
+                        {formatPrice(product.price, money, locale)}
                       </span>
                     </div>
                   </NavLink>

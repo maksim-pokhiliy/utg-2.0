@@ -9,8 +9,8 @@ import { formatPrice } from "@root/utils/formatPrice";
 import {
   cartState,
   dictionaryState,
-  exchangeCoefficientState,
   languageState,
+  moneyState,
   sidebarState,
 } from "@root/recoil/atoms";
 
@@ -33,16 +33,17 @@ export const CartView = () => {
 
   const cart = useRecoilValue(cartState);
   const dictionary = useRecoilValue(dictionaryState);
-  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const money = useRecoilValue(moneyState);
   const locale = useRecoilValue(languageState);
 
   const setIsSidebarOpen = useSetRecoilState(sidebarState);
 
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  const total =
-    cart.reduce((total, item) => total + item.price * item.quantity, 0) *
-    coefficient;
+  const total = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   useEffect(() => {
     if (previousPathname && previousPathname !== pathname) {
@@ -95,7 +96,7 @@ export const CartView = () => {
               <li className="flex justify-between py-1">
                 <span>{dictionary.cart.total}</span>
 
-                <span>{formatPrice(total, locale)}</span>
+                <span>{formatPrice(total, money, locale)}</span>
               </li>
             </ul>
 

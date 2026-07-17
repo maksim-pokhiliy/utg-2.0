@@ -11,8 +11,8 @@ import {
   ICartItem,
   cartState,
   dictionaryState,
-  exchangeCoefficientState,
   languageState,
+  moneyState,
 } from "@root/recoil/atoms";
 
 interface CartItemProps {
@@ -24,7 +24,7 @@ export const CartItem = ({ item, isEditable = true }: CartItemProps) => {
   const [cart, setCart] = useRecoilState(cartState);
 
   const dictionary = useRecoilValue(dictionaryState);
-  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const money = useRecoilValue(moneyState);
   const locale = useRecoilValue(languageState);
 
   const [quantity, setQuantity] = useState<number>(item.quantity);
@@ -110,14 +110,14 @@ export const CartItem = ({ item, isEditable = true }: CartItemProps) => {
 
             {!isEditable && (
               <span>
-                {formatPrice(item.price * item.quantity * coefficient, locale)}
+                {formatPrice(item.price * item.quantity, money, locale)}
               </span>
             )}
           </div>
 
           {isEditable && (
             <span>
-              {formatPrice(item.price * item.quantity * coefficient, locale)}
+              {formatPrice(item.price * item.quantity, money, locale)}
             </span>
           )}
 

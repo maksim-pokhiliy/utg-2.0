@@ -7,9 +7,9 @@ import { formatPrice } from "@root/utils/formatPrice";
 import {
   cartState,
   dictionaryState,
-  exchangeCoefficientState,
   ICartItem,
   languageState,
+  moneyState,
 } from "@root/recoil/atoms";
 
 interface IProductSidebarProps {
@@ -20,7 +20,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
   const [cart, setCart] = useRecoilState(cartState);
 
   const dictionary = useRecoilValue(dictionaryState);
-  const coefficient = useRecoilValue(exchangeCoefficientState);
+  const money = useRecoilValue(moneyState);
   const locale = useRecoilValue(languageState);
 
   const [quantity, setQuantity] = useState<number>(1);
@@ -62,7 +62,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
       </h2>
 
       <p className="text-md font-semibold inline-block tracking-wide py-1">
-        {formatPrice(product.price * coefficient, locale)}
+        {formatPrice(product.price, money, locale)}
       </p>
 
       <div className="mt-4 mb-6">

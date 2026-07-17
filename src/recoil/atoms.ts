@@ -1,6 +1,6 @@
 import { atom, AtomEffect } from "recoil";
 
-import { currencyMap } from "@root/utils/formatPrice";
+import { currencyMap, IMoney } from "@root/utils/formatPrice";
 import { CART_STATE_KEY } from "@root/utils/constants/recoil";
 
 export interface ICartItem {
@@ -58,7 +58,7 @@ export const dictionaryState = atom<Record<string, Record<string, string>>>({
   default: {},
 });
 
-export const exchangeCoefficientState = atom<number>({
-  key: "exchangeCoefficientState",
-  default: 0,
+export const moneyState = atom<IMoney>({
+  key: "moneyState",
+  default: { coefficient: 1, currency: "UAH" },
 });
