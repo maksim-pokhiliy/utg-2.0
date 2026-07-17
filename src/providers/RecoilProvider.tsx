@@ -26,7 +26,7 @@ export default function RecoilProvider({
   const initializeState = (snapshot: MutableSnapshot) => {
     const currency = currencyMap[lang];
     const rate = exchangeRates[currency];
-    const coefficient = Number.isFinite(rate) ? rate : 1;
+    const coefficient = Number.isFinite(rate) && rate > 0 ? rate : 1;
 
     snapshot.set(dictionaryState, dictionary);
     snapshot.set(exchangeCoefficientState, coefficient);

@@ -23,7 +23,12 @@ export async function POST(request: NextRequest) {
 
     const responseBody = await response.text();
 
-    return new NextResponse(responseBody, {
+    const isNullBodyStatus =
+      response.status === 204 ||
+      response.status === 205 ||
+      response.status === 304;
+
+    return new NextResponse(isNullBodyStatus ? null : responseBody, {
       status: response.status,
       headers: {
         "Content-Type":
