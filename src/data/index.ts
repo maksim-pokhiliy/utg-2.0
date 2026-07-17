@@ -14,4 +14,5 @@ export {
   getProductView,
   getCategorySlugs,
   getProductSlugs,
+  resolveLocale,
 } from "./catalog";

@@ -1,7 +1,9 @@
+"use client";
+
 import { useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 
-import { IProduct } from "@root/types";
+import { ProductView } from "@root/data";
 import { formatPrice } from "@root/utils/formatPrice";
 
 import {
@@ -13,7 +15,7 @@ import {
 } from "@root/recoil/atoms";
 
 interface IProductSidebarProps {
-  product: IProduct;
+  product: ProductView;
 }
 
 export default function ProductSidebar({ product }: IProductSidebarProps) {
@@ -31,7 +33,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
     }
 
     const newCartItem: ICartItem = {
-      id: product.id,
+      id: product.slug,
       title: product.title,
       price: product.price,
       quantity: quantity,
@@ -40,7 +42,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
     };
 
     const existingItemIndex =
-      cart.findIndex((item) => item.id === product.id) ?? -1;
+      cart.findIndex((item) => item.id === product.slug) ?? -1;
 
     if (existingItemIndex >= 0) {
       const newCart = [...cart];
@@ -81,7 +83,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
                 value={quantity}
                 type="number"
                 min={1}
-                disabled={!product.availability}
+                disabled={!product.isAvailable}
               />
             </label>
 
@@ -90,7 +92,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
                 className="flex p-0.5 items-center justify-center text-black disabled:text-gray-300"
-                disabled={!product.availability}
+                disabled={!product.isAvailable}
               >
                 <svg
                   className="w-2 h-2"
@@ -111,7 +113,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="flex p-0.5 items-center justify-center text-black disabled:text-gray-300"
-                disabled={!product.availability}
+                disabled={!product.isAvailable}
               >
                 <svg
                   className="w-2 h-2"
@@ -132,7 +134,7 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
         </div>
       </div>
 
-      {product.availability ? (
+      {product.isAvailable ? (
         <div>
           <button
             aria-label={dictionary.product.add}

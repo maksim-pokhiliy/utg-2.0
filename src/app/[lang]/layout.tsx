@@ -55,7 +55,7 @@ export default async function RootLayout({
   return (
     <html lang={params.lang}>
       <body className="text-black bg-site min-h-screen flex flex-col">
-        <RecoilProvider dictionary={dictionary} money={money}>
+        <RecoilProvider lang={params.lang} dictionary={dictionary} money={money}>
           <Header />
 
           <main className="block flex-1 bg-site h-full">{children}</main>

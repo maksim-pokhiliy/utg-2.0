@@ -26,4 +26,5 @@ export const formatPrice = (uahPrice: number, money: IMoney, locale: string) =>
   new Intl.NumberFormat(locale, {
     style: "currency",
     currency: money.currency,
+    currencyDisplay: "narrowSymbol",
   }).format(uahPrice * money.coefficient);

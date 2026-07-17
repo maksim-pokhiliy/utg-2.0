@@ -209,3 +209,6 @@ export const getProductSlugs = (categorySlug: string): string[] =>
   products
     .filter((product) => product.category === categorySlug)
     .map((product) => product.slug);
+
+export const resolveLocale = (lang: string): Locale =>
+  lang === "en" ? "en" : "uk";
