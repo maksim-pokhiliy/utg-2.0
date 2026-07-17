@@ -58,11 +58,6 @@ export const dictionaryState = atom<Record<string, Record<string, string>>>({
   default: {},
 });
 
-export const exchangeRatesState = atom<Record<string, number>>({
-  key: "exchangeRatesState",
-  default: {},
-});
-
 export const exchangeCoefficientState = atom<number>({
   key: "exchangeCoefficientState",
   default: 0,

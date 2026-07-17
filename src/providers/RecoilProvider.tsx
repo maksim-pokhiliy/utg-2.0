@@ -8,7 +8,6 @@ import { currencyMap } from "@root/utils/formatPrice";
 import {
   dictionaryState,
   exchangeCoefficientState,
-  exchangeRatesState,
 } from "@root/recoil/atoms";
 
 interface IRecoilProviderProps {
@@ -26,10 +25,10 @@ export default function RecoilProvider({
 }: IRecoilProviderProps) {
   const initializeState = (snapshot: MutableSnapshot) => {
     const currency = currencyMap[lang];
-    const coefficient = exchangeRates[currency];
+    const rate = exchangeRates[currency];
+    const coefficient = Number.isFinite(rate) && rate > 0 ? rate : 1;
 
     snapshot.set(dictionaryState, dictionary);
-    snapshot.set(exchangeRatesState, exchangeRates);
     snapshot.set(exchangeCoefficientState, coefficient);
   };
 

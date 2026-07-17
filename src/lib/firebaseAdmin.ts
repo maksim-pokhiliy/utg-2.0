@@ -1,21 +1,41 @@
 import admin from "firebase-admin";
-import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.local" });
-
-if (!admin.apps.length) {
-  const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  };
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  });
+export class FirebaseConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FirebaseConfigError";
+  }
 }
 
-const db = admin.firestore();
+let firestore: admin.firestore.Firestore | null = null;
 
-export { db };
+export const getDb = (): admin.firestore.Firestore => {
+  if (firestore) {
+    return firestore;
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+  if (!projectId || !privateKey || !clientEmail) {
+    throw new FirebaseConfigError(
+      "Firebase Admin credentials are not configured"
+    );
+  }
+
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        privateKey: privateKey.replace(/\\n/g, "\n"),
+        clientEmail,
+      }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    });
+  }
+
+  firestore = admin.firestore();
+
+  return firestore;
+};
