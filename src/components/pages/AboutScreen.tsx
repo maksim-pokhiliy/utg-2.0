@@ -28,7 +28,7 @@ export default function AboutScreen() {
           style={{ paddingBottom: "100%" }}
         >
           <Image
-            src="https://firebasestorage.googleapis.com/v0/b/ukrainian-tactical-gear.appspot.com/o/reports%2Fno_commercial.a708a4a2d69ed1a61c22.jpg?alt=media&token=d33f7fa1-10b2-4d1b-8fd5-b7e0a3976d1f"
+            src="/images/no_commercial.JPG"
             alt="no commercial"
             quality={100}
             className="absolute inset-0 w-full h-full object-cover mt-10"
