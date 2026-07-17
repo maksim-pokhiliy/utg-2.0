@@ -1,9 +1,12 @@
 import "server-only";
 
-const dictionaries = {
-  en: () => import("./dictionaries/en.json").then((module) => module.default),
-  uk: () => import("./dictionaries/uk.json").then((module) => module.default),
-};
+import type { Locale } from "@root/data";
+import type { Dictionary } from "@root/i18n/dictionary";
 
-export const getDictionary = async (locale: string) =>
-  dictionaries[locale as keyof typeof dictionaries]();
+import en from "./dictionaries/en.json";
+import uk from "./dictionaries/uk.json";
+
+const dictionaries = { uk, en } satisfies Record<Locale, Dictionary>;
+
+export const getDictionary = (locale: Locale): Dictionary =>
+  dictionaries[locale];

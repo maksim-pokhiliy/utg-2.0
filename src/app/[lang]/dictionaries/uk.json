@@ -9,11 +9,6 @@
   "main": {
     "get": "Замовити мерч"
   },
-  "categories": {
-    "Patches": "Патчі",
-    "Stickers": "Стікери",
-    "T-Shirts": "Футболки"
-  },
   "category": {
     "order": "Замовити",
     "out": "Немає в наявності"
