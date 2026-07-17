@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@root/lib/firebaseAdmin";
+import { FirebaseConfigError, getDb } from "@root/lib/firebaseAdmin";
 
 export async function GET(
   _: any,
@@ -8,6 +8,8 @@ export async function GET(
   const { categoryId } = params;
 
   try {
+    const db = getDb();
+
     const categoryDoc = await db
       .collection("categories")
       .doc(categoryId.toUpperCase())
@@ -41,6 +43,13 @@ export async function GET(
 
     return NextResponse.json({ category });
   } catch (error) {
+    if (error instanceof FirebaseConfigError) {
+      return NextResponse.json(
+        { error: "Catalog service is not configured" },
+        { status: 503 }
+      );
+    }
+
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
