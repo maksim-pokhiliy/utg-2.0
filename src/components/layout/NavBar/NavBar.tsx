@@ -4,13 +4,12 @@ import type { LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { useRecoilValue } from "recoil";
 
-import { dictionaryState } from "@root/recoil/atoms";
+import { useDictionary, type Dictionary } from "@root/i18n";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
-const navbarMainItems = [
+const navbarMainItems: { ref: string; label: keyof Dictionary["shared"] }[] = [
   { ref: "/", label: "home" },
   { ref: "/category", label: "merch" },
   { ref: "/reports", label: "reports" },
@@ -38,7 +37,7 @@ const StyledNavLink = ({
 export default function NavBar() {
   const pathname = usePathname();
 
-  const dictionary = useRecoilValue(dictionaryState);
+  const dictionary = useDictionary();
 
   const [isMenuShown, setIsMenuShown] = useState(false);
   const [linkRef, setLinkRef] = useState<LinkProps["href"]>(pathname!);

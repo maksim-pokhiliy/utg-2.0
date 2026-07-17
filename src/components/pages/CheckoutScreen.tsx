@@ -1,18 +1,12 @@
 "use client";
 
-import { useRecoilState, useRecoilValue } from "recoil";
 import { Button, HR, Label, Textarea, TextInput } from "flowbite-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { formatPrice } from "@root/utils/formatPrice";
 import useNotification from "@root/hooks/useNotification";
-
-import {
-  cartState,
-  dictionaryState,
-  languageState,
-  moneyState,
-} from "@root/recoil/atoms";
+import { useCartStore } from "@root/store/cart";
+import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
 import CartItem from "../ui/Cart/CartItem";
 import { NavLink } from "../layout/NavBar/NavLink";
@@ -20,10 +14,11 @@ import { NavLink } from "../layout/NavBar/NavLink";
 export default function CheckoutScreen() {
   const notyf = useNotification();
 
-  const [cart, setCart] = useRecoilState(cartState);
-  const dictionary = useRecoilValue(dictionaryState);
-  const money = useRecoilValue(moneyState);
-  const locale = useRecoilValue(languageState);
+  const cart = useCartStore((state) => state.items);
+  const clear = useCartStore((state) => state.clear);
+  const dictionary = useDictionary();
+  const money = useMoney();
+  const locale = useLocale();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -76,7 +71,7 @@ export default function CheckoutScreen() {
         return;
       }
 
-      setCart([]);
+      clear();
       notyf.notifySuccess(dictionary.cart.order_success);
     } catch (error) {
       notyf.notifyError(dictionary.cart.order_error);
@@ -243,8 +238,8 @@ export default function CheckoutScreen() {
 
               <HR className="my-4 bg-stone-400" />
 
-              {cart.map((item, index) => (
-                <CartItem key={index} item={item} isEditable={false} />
+              {cart.map((item) => (
+                <CartItem key={item.id} item={item} isEditable={false} />
               ))}
 
               <HR className="my-4 bg-stone-400" />

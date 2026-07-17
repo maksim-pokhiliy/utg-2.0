@@ -1,59 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
 
 import { ProductView } from "@root/data";
 import { formatPrice } from "@root/utils/formatPrice";
-
-import {
-  cartState,
-  dictionaryState,
-  ICartItem,
-  languageState,
-  moneyState,
-} from "@root/recoil/atoms";
+import { useCartStore, type ICartItem } from "@root/store/cart";
+import { useDictionary, useLocale, useMoney } from "@root/i18n";
+import QuantityStepper from "@root/components/ui/QuantityStepper";
 
 interface IProductSidebarProps {
   product: ProductView;
 }
 
 export default function ProductSidebar({ product }: IProductSidebarProps) {
-  const [cart, setCart] = useRecoilState(cartState);
+  const dictionary = useDictionary();
+  const money = useMoney();
+  const locale = useLocale();
 
-  const dictionary = useRecoilValue(dictionaryState);
-  const money = useRecoilValue(moneyState);
-  const locale = useRecoilValue(languageState);
+  const addItem = useCartStore((state) => state.addItem);
 
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState(1);
 
   const addToCart = () => {
-    if (!product) {
-      return;
-    }
-
-    const newCartItem: ICartItem = {
+    const item: ICartItem = {
       id: product.slug,
       title: product.title,
       price: product.price,
-      quantity: quantity,
+      quantity,
       image: product.image,
       productUrl: window.location.href,
     };
 
-    const existingItemIndex =
-      cart.findIndex((item) => item.id === product.slug) ?? -1;
-
-    if (existingItemIndex >= 0) {
-      const newCart = [...cart];
-
-      newCart[existingItemIndex].quantity += quantity;
-
-      setCart(newCart);
-    } else {
-      setCart([...cart, newCartItem]);
-    }
-
+    addItem(item);
     setQuantity(1);
   };
 
@@ -73,64 +51,12 @@ export default function ProductSidebar({ product }: IProductSidebarProps) {
         </span>
 
         <div className="mt-2">
-          <div className="h-7 flex flex-row relative w-16 border-gray-300 border bg-white">
-            <label className="w-full">
-              <input
-                className="text-xs px-2 w-full h-full border-0 focus:outline-none select-none pointer-events-auto"
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                pattern="[0-9]*"
-                aria-label={dictionary.shared.quantity}
-                value={quantity}
-                type="number"
-                min={1}
-                disabled={!product.isAvailable}
-              />
-            </label>
-
-            <div className="absolute right-1 top-[3px]">
-              <button
-                type="button"
-                onClick={() => setQuantity(quantity + 1)}
-                className="flex p-0.5 items-center justify-center text-black disabled:text-gray-300"
-                disabled={!product.isAvailable}
-              >
-                <svg
-                  className="w-2 h-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.5 15.75l7.5-7.5 7.5 7.5"
-                  />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="flex p-0.5 items-center justify-center text-black disabled:text-gray-300"
-                disabled={!product.isAvailable}
-              >
-                <svg
-                  className="w-2 h-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
+          <QuantityStepper
+            value={quantity}
+            onChange={setQuantity}
+            ariaLabel={dictionary.shared.quantity}
+            disabled={!product.isAvailable}
+          />
         </div>
       </div>
 

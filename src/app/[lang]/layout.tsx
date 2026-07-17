@@ -1,12 +1,14 @@
 import { getDictionary } from "./dictionaries";
 
+import type { Locale } from "@root/data";
 import Footer from "@root/components/layout/Footer";
 import Header from "@root/components/layout/Header";
-import RecoilProvider from "@root/providers/RecoilProvider";
 import SidebarUI from "@root/components/ui/Sidebar/SidebarUI";
+import CartHydration from "@root/components/ui/CartHydration";
+import { I18nProvider } from "@root/i18n";
 
 import "@root/app/globals.css";
-import { currencyMap, resolveMoney } from "@root/utils/formatPrice";
+import { resolveMoney } from "@root/utils/formatPrice";
 
 export const dynamicParams = false;
 
@@ -46,25 +48,25 @@ export default async function RootLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { lang: keyof typeof currencyMap };
+  params: { lang: Locale };
 }>) {
-  const [dictionary, conversionRates] = await Promise.all([
-    getDictionary(params.lang),
-    getConversionRates(),
-  ]);
+  const conversionRates = await getConversionRates();
+  const dictionary = getDictionary(params.lang);
   const money = resolveMoney(params.lang, conversionRates);
 
   return (
     <html lang={params.lang}>
       <body className="text-black bg-site min-h-screen flex flex-col">
-        <RecoilProvider lang={params.lang} dictionary={dictionary} money={money}>
+        <I18nProvider locale={params.lang} dictionary={dictionary} money={money}>
           <Header />
 
           <main className="block flex-1 bg-site h-full">{children}</main>
 
           <SidebarUI />
           <Footer />
-        </RecoilProvider>
+
+          <CartHydration />
+        </I18nProvider>
       </body>
     </html>
   );

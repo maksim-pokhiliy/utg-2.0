@@ -1,10 +1,9 @@
 "use client";
 
-import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
 import { CategorySummary } from "@root/data";
-import { dictionaryState } from "@root/recoil/atoms";
+import { useDictionary } from "@root/i18n";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
@@ -13,7 +12,7 @@ interface IHomeScreenProps {
 }
 
 export default function HomeScreen({ categories }: IHomeScreenProps) {
-  const dictionary = useRecoilValue(dictionaryState);
+  const dictionary = useDictionary();
 
   return (
     <div className="mx-auto relative">
@@ -63,14 +62,14 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
       <div className="px-10 pb-10">
         <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
           <h1 className="font-bold uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
-            {dictionary?.shared.merch}
+            {dictionary.shared.merch}
           </h1>
 
           <NavLink
             href="/category"
             className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
           >
-            {dictionary?.main.get}
+            {dictionary.main.get}
           </NavLink>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">

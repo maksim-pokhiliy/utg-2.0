@@ -1,10 +1,9 @@
 "use client";
 
-import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
 import { CategorySummary } from "@root/data";
-import { dictionaryState } from "@root/recoil/atoms";
+import { useDictionary } from "@root/i18n";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
@@ -15,13 +14,13 @@ interface ICategoriesScreenProps {
 export default function CategoriesScreen({
   categories,
 }: ICategoriesScreenProps) {
-  const dictionary = useRecoilValue(dictionaryState);
+  const dictionary = useDictionary();
 
   return (
     <div className="mx-auto pb-10 md:pb-20">
       <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
         <h1 className="font-bold uppercase text-3xl md:text-6xl">
-          {dictionary?.shared.merch}
+          {dictionary.shared.merch}
         </h1>
       </div>
 
