@@ -12,6 +12,32 @@ export async function generateStaticParams() {
   return [{ lang: "uk" }, { lang: "en" }];
 }
 
+async function getConversionRates(): Promise<Record<string, number>> {
+  const { EXCHANGE_RATE_API_URL, EXCHANGE_RATE_API_KEY } = process.env;
+
+  if (!EXCHANGE_RATE_API_URL || !EXCHANGE_RATE_API_KEY) {
+    return {};
+  }
+
+  try {
+    const response = await fetch(
+      `${EXCHANGE_RATE_API_URL}/${EXCHANGE_RATE_API_KEY}/latest/UAH`
+    );
+
+    if (!response.ok) {
+      return {};
+    }
+
+    const data = await response.json();
+
+    return data.conversion_rates ?? {};
+  } catch (error) {
+    console.error("Failed to fetch conversion rates:", error);
+
+    return {};
+  }
+}
+
 export default async function RootLayout({
   children,
   params,
@@ -20,10 +46,7 @@ export default async function RootLayout({
   params: { lang: keyof typeof currencyMap };
 }>) {
   const dictionary = await getDictionary(params.lang);
-
-  const conversionRates = await fetch(
-    `${process.env.EXCHANGE_RATE_API_URL}/${process.env.EXCHANGE_RATE_API_KEY}/latest/UAH`
-  ).then((data) => data.json());
+  const conversionRates = await getConversionRates();
 
   return (
     <html lang={params.lang}>
@@ -39,7 +62,7 @@ export default async function RootLayout({
         <RecoilProvider
           lang={params.lang}
           dictionary={dictionary}
-          exchangeRates={conversionRates.conversion_rates}
+          exchangeRates={conversionRates}
         >
           <Header />
 
