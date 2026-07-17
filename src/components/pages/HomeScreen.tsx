@@ -3,13 +3,13 @@
 import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
-import { CategoryView } from "@root/data";
+import { CategorySummary } from "@root/data";
 import { dictionaryState } from "@root/recoil/atoms";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 interface IHomeScreenProps {
-  categories: CategoryView[];
+  categories: CategorySummary[];
 }
 
 export default function HomeScreen({ categories }: IHomeScreenProps) {

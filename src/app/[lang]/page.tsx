@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getCategoryViews, resolveLocale } from "@root/data";
+import { getCategorySummaries, resolveLocale } from "@root/data";
 
 import HomeScreen from "@root/components/pages/HomeScreen";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function Home({ params }: { params: { lang: string } }) {
-  const categories = getCategoryViews(resolveLocale(params.lang));
+  const categories = getCategorySummaries(resolveLocale(params.lang));
 
   return <HomeScreen categories={categories} />;
 }

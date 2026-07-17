@@ -41,3 +41,9 @@ export interface CategoryView {
   image: string;
   products: ProductView[];
 }
+
+export interface CategorySummary {
+  slug: CategorySlug;
+  name: string;
+  image: string;
+}

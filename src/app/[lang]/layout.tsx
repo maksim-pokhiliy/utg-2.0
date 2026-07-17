@@ -48,8 +48,10 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { lang: keyof typeof currencyMap };
 }>) {
-  const dictionary = await getDictionary(params.lang);
-  const conversionRates = await getConversionRates();
+  const [dictionary, conversionRates] = await Promise.all([
+    getDictionary(params.lang),
+    getConversionRates(),
+  ]);
   const money = resolveMoney(params.lang, conversionRates);
 
   return (

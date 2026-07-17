@@ -2,6 +2,7 @@ import {
   CatalogCategory,
   CatalogProduct,
   CategorySlug,
+  CategorySummary,
   CategoryView,
   Locale,
   LocalizedText,
@@ -178,8 +179,12 @@ const localizeCategory = (
     .map((product) => localizeProduct(product, locale)),
 });
 
-export const getCategoryViews = (locale: Locale): CategoryView[] =>
-  categories.map((category) => localizeCategory(category, locale));
+export const getCategorySummaries = (locale: Locale): CategorySummary[] =>
+  categories.map((category) => ({
+    slug: category.slug,
+    name: category.name[locale],
+    image: category.image,
+  }));
 
 export const getCategoryView = (
   slug: string,

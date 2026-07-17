@@ -6,10 +6,11 @@ export type {
   CatalogCategory,
   ProductView,
   CategoryView,
+  CategorySummary,
 } from "./catalog.types";
 
 export {
-  getCategoryViews,
+  getCategorySummaries,
   getCategoryView,
   getProductView,
   getCategorySlugs,

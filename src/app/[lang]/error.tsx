@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 
+import { resolveLocale } from "@root/data";
+
 const messages = {
   uk: { title: "Щось пішло не так", retry: "Спробувати ще раз" },
   en: { title: "Something went wrong", retry: "Try again" },
@@ -9,8 +11,7 @@ const messages = {
 
 export default function Error({ reset }: { error: Error; reset: () => void }) {
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] === "en" ? "en" : "uk";
-  const message = messages[locale];
+  const message = messages[resolveLocale(pathname.split("/")[1])];
 
   return (
     <div className="mx-auto px-10 py-20 text-center">
