@@ -52,5 +52,8 @@
   "checkout": {
     "checkout": "checkout",
     "summary": "Order summary"
+  },
+  "footer": {
+    "mission": "A volunteer project: all merch proceeds buy equipment for a Ukrainian special-forces unit."
   }
 }

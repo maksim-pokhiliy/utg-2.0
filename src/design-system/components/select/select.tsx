@@ -6,16 +6,18 @@ import { input } from "../input/input";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   invalid?: boolean;
+  wrapperClassName?: string;
 }
 
 export function Select({
   invalid,
   className,
+  wrapperClassName,
   children,
   ...rest
 }: SelectProps): ReactElement {
   return (
-    <div className="relative block">
+    <div className={cn("relative block", wrapperClassName)}>
       <select
         className={cn(
           input({ invalid }),

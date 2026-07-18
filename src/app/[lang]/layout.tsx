@@ -4,9 +4,10 @@ import { getDictionary } from "./dictionaries";
 
 import Footer from "@root/components/layout/Footer";
 import Header from "@root/components/layout/Header";
-import SidebarUI from "@root/components/ui/Sidebar/SidebarUI";
-import CartHydration from "@root/components/ui/CartHydration";
+import CartDrawer from "@root/components/cart/CartDrawer";
+import CartHydration from "@root/components/cart/CartHydration";
 import { I18nProvider } from "@root/i18n";
+import { Toaster } from "@root/design-system";
 
 import "@root/app/globals.css";
 import { resolveMoney } from "@root/utils/formatPrice";
@@ -89,9 +90,10 @@ export default async function RootLayout({
 
           <main className="flex-1">{children}</main>
 
-          <SidebarUI />
           <Footer />
 
+          <CartDrawer />
+          <Toaster />
           <CartHydration />
         </I18nProvider>
       </body>
