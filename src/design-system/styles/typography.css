@@ -1,0 +1,42 @@
+.type-hero {
+  font: var(--type-hero);
+  letter-spacing: var(--display-tracking);
+  text-transform: uppercase;
+}
+
+.type-h1 {
+  font: var(--type-h1);
+  letter-spacing: var(--display-tracking);
+  text-transform: uppercase;
+}
+
+.type-h2 {
+  font: var(--type-h2);
+  letter-spacing: var(--display-tracking);
+  text-transform: uppercase;
+}
+
+.type-h3 {
+  font: var(--type-h3);
+  letter-spacing: var(--display-tracking);
+  text-transform: uppercase;
+}
+
+.type-body {
+  font: var(--type-body);
+}
+
+.type-small {
+  font: var(--type-small);
+}
+
+.type-caption {
+  font: var(--type-caption);
+  letter-spacing: var(--caps-tracking);
+  text-transform: uppercase;
+}
+
+.type-price {
+  font: var(--type-price);
+  font-variant-numeric: tabular-nums;
+}

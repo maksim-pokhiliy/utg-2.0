@@ -1,0 +1,110 @@
+@theme {
+  --color-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-paper: #fff9f6;
+  --color-paper-dim: #f3eae4;
+  --color-ink: #181512;
+  --color-ink-soft: #453e37;
+  --color-ink-faint: #6e655c;
+  --color-line: #d9cec5;
+  --color-flag-yellow: #ffc657;
+  --color-flag-blue: #5362ac;
+  --color-alarm: #b42318;
+  --color-white: #ffffff;
+
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-paper);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-paper);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-ink);
+  --color-primary-foreground: var(--color-paper);
+  --color-secondary: var(--color-flag-blue);
+  --color-secondary-foreground: var(--color-white);
+  --color-muted: var(--color-paper-dim);
+  --color-muted-foreground: var(--color-ink-faint);
+  --color-accent: var(--color-flag-yellow);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-alarm);
+  --color-destructive-foreground: var(--color-white);
+  --color-destructive-strong: #8e1b12;
+  --color-border: var(--color-ink);
+  --color-input: var(--color-ink);
+  --color-ring: var(--color-flag-blue);
+
+  --color-band: var(--color-ink);
+  --color-band-foreground: var(--color-paper);
+  --color-band-muted: #b7ada4;
+
+  --font-display: var(--font-oswald), "Arial Narrow", sans-serif;
+  --font-body: var(--font-ibm-plex-sans), "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "Courier New", monospace;
+}
+
+:root {
+  --text-hero: clamp(3.25rem, 11vw, 7.5rem);
+  --text-h1: clamp(2.5rem, 6vw, 4rem);
+  --text-h2: clamp(1.75rem, 4vw, 2.5rem);
+  --text-h3: 1.375rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-price: 1.0625rem;
+
+  --display-weight: 600;
+  --display-tracking: 0.015em;
+  --display-leading: 0.95;
+  --body-leading: 1.55;
+  --caps-tracking: 0.08em;
+
+  --type-hero: var(--display-weight) var(--text-hero) / var(--display-leading)
+    var(--font-display);
+  --type-h1: var(--display-weight) var(--text-h1) / var(--display-leading)
+    var(--font-display);
+  --type-h2: var(--display-weight) var(--text-h2) / 1 var(--font-display);
+  --type-h3: 500 var(--text-h3) / 1.1 var(--font-display);
+  --type-body: 400 var(--text-body) / var(--body-leading) var(--font-body);
+  --type-small: 400 var(--text-small) / 1.5 var(--font-body);
+  --type-caption: 500 var(--text-caption) / 1.4 var(--font-mono);
+  --type-price: 500 var(--text-price) / 1.2 var(--font-mono);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --container: 1200px;
+  --gutter: 24px;
+
+  --radius: 0px;
+
+  --rule-hair: 1px;
+  --rule: 2px;
+  --rule-heavy: 4px;
+
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --hit: 44px;
+  --scrim: rgba(24, 21, 18, 0.5);
+  --focus-ring: 2px solid var(--color-ring);
+  --focus-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 56px;
+  }
+}
