@@ -9,8 +9,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ children, onClose }: SidebarProps) {
-  const sidebarRef = useRef() as React.MutableRefObject<HTMLDivElement>;
-  const contentRef = useRef() as React.MutableRefObject<HTMLDivElement>;
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const onKeyDownSidebar = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.code === "Escape") {

@@ -1,6 +1,5 @@
 import { getDictionary } from "./dictionaries";
 
-import type { Locale } from "@root/data";
 import Footer from "@root/components/layout/Footer";
 import Header from "@root/components/layout/Header";
 import SidebarUI from "@root/components/ui/Sidebar/SidebarUI";
@@ -9,6 +8,7 @@ import { I18nProvider } from "@root/i18n";
 
 import "@root/app/globals.css";
 import { resolveMoney } from "@root/utils/formatPrice";
+import { resolveLocale } from "@root/utils/locale";
 
 export const dynamicParams = false;
 
@@ -48,16 +48,18 @@ export default async function RootLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { lang: Locale };
+  params: Promise<{ lang: string }>;
 }>) {
   const conversionRates = await getConversionRates();
-  const dictionary = getDictionary(params.lang);
-  const money = resolveMoney(params.lang, conversionRates);
+  const { lang } = await params;
+  const locale = resolveLocale(lang);
+  const dictionary = getDictionary(locale);
+  const money = resolveMoney(locale, conversionRates);
 
   return (
-    <html lang={params.lang}>
+    <html lang={locale}>
       <body className="text-black bg-site min-h-screen flex flex-col">
-        <I18nProvider locale={params.lang} dictionary={dictionary} money={money}>
+        <I18nProvider locale={locale} dictionary={dictionary} money={money}>
           <Header />
 
           <main className="block flex-1 bg-site h-full">{children}</main>

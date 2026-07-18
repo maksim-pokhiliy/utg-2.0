@@ -10,8 +10,9 @@ export const metadata: Metadata = {
   description: "Donate and fight with us",
 };
 
-export default function Categories({ params }: { params: { lang: string } }) {
-  const categories = getCategorySummaries(resolveLocale(params.lang));
+export default async function Categories({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  const categories = getCategorySummaries(resolveLocale(lang));
 
   return <CategoriesScreen categories={categories} />;
 }

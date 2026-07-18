@@ -22,6 +22,7 @@
 
 # skill scratch
 /.feature-dev/
+/.upgrade/
 
 # debug
 npm-debug.log*

@@ -17,7 +17,7 @@ function getLocale(request: Request): string {
   return match(languages, locales, defaultLocale);
 }
 
-export function middleware(request: Request) {
+export function proxy(request: Request) {
   const { pathname } = new URL(request.url);
 
   if (PUBLIC_FILE.test(pathname)) {
