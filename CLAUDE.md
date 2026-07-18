@@ -13,16 +13,16 @@ artifacts (`CLAUDE.md`, `initiatives/`) into PRs.
 
 ## Project
 
-E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 14 App Router, TypeScript (strict), Recoil, Tailwind + Flowbite React, and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. There are no tests and no CI.
+E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 16 App Router (Turbopack) + React 19, TypeScript (strict), Zustand + React context for state, Tailwind 3 + Flowbite React (both slated for replacement in the design-system step), and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. There are no tests and no CI.
 
 ## Commands
 
 Yarn is the package manager.
 
-- `yarn dev` — dev server on localhost:3000
+- `yarn dev` — dev server on localhost:3000 (Turbopack)
 - `yarn build` — production build
-- `yarn lint` / `yarn lint:fix` — ESLint (`next/core-web-vitals`; `react-hooks/exhaustive-deps` is disabled)
-- `yarn format` — Prettier over the repo
+- `yarn lint` / `yarn lint:fix` — ESLint 9 flat config (`eslint.config.mjs`): `next/core-web-vitals` with `react-hooks/exhaustive-deps` active; the two react-hooks v6 Compiler-era rules (`set-state-in-effect`, `refs`) are deliberately off — do not re-enable them casually, see DEF-18 in `initiatives/production-polish/deferred.md`
+- `yarn format` — Prettier over the repo (`initiatives/production-polish/extracted/` is excluded — documentary recovered sources stay verbatim)
 
 The app boots and builds with zero env vars (the exchange-rates fetch is guarded → prices fall back to UAH for both locales). `.env.example` documents the three optional keys: `EXCHANGE_RATE_API_URL`, `EXCHANGE_RATE_API_KEY` (USD conversion for `en`), `PLACE_ORDER_URL` (order relay — checkout returns 503 without it).
 
@@ -32,14 +32,14 @@ Path alias: `@root/*` → `src/*`.
 
 ### Routing & i18n
 
-- There is no `src/app/layout.tsx` — `src/app/[lang]/layout.tsx` is the root layout (renders `<html>`, loads the dictionary, fetches exchange rates with `revalidate: 3600`, mounts `RecoilProvider`). Every page URL is locale-prefixed; `dynamicParams = false` makes unknown locales 404.
-- `src/middleware.ts` redirects locale-less paths to `/uk/...` or `/en/...` via Accept-Language negotiation; `_next`, `api`, and public files (dot-containing paths) are excluded.
-- Dictionaries live in `src/app/[lang]/dictionaries/{uk,en}.json`, loaded server-side by `getDictionary` (`server-only`), then seeded into Recoil for client components.
+- There is no `src/app/layout.tsx` — `src/app/[lang]/layout.tsx` is the root layout (renders `<html>`, loads the dictionary, fetches exchange rates with `revalidate: 3600`, mounts `I18nProvider`). Every page URL is locale-prefixed; `dynamicParams = false` makes unknown locales 404. `params` are async (`Promise<{lang}>`) everywhere per Next 16.
+- `src/proxy.ts` (Next 16 name for middleware) redirects locale-less paths to `/uk/...` or `/en/...` via Accept-Language negotiation; `_next`, `api`, and public files are excluded.
+- Dictionaries live in `src/app/[lang]/dictionaries/{uk,en}.json`, loaded server-side by `getDictionary` (`server-only`), typed as `typeof en` with a `satisfies Record<Locale, Dictionary>` drift-guard (a missing uk key is a compile error), and delivered to client components via `I18nProvider`.
 - Catalog pages (`/`, `/category`, `/category/[categoryId]`, `/category/[categoryId]/[productId]`) are plain segments — server components with `generateStaticParams` + `generateMetadata`, fully SSG. `about`, `checkout`, `reports` are client/`*Screen`-based segments. `error.tsx`/`not-found.tsx` live under `[lang]`.
 
 ### Page pattern
 
-Catalog `page.tsx` files are server components: they read the catalog module synchronously, resolve the locale, and pass localized view objects as props to presentational `*Screen` components (`src/components/pages/`). Screens are still `"use client"` and read the dictionary from Recoil (`dictionaryState`), not props.
+Catalog `page.tsx` files are server components: they read the catalog module synchronously, resolve the locale, and pass localized view objects as props to presentational `*Screen` components (`src/components/pages/`). Screens are `"use client"` and read `{locale, dictionary, money}` from `src/i18n/` context hooks (`useDictionary`/`useMoney`/`useLocale`). Checkout is dynamically imported `ssr:false` via a thin client wrapper (redundant since the hydration guard — removal scheduled, DEF-19).
 
 ### Data
 
@@ -51,8 +51,9 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 
 ### State & money
 
-- Recoil atoms in `src/recoil/atoms.ts`: `cartState` (persists to localStorage via atom effects; storage key `utg-cart-v2` in `src/utils/constants/recoil.ts`), `sidebarState`, `languageState`, `dictionaryState`, `moneyState`-style coefficient/currency seeded by `RecoilProvider` from server props at hydration.
-- Prices are stored as UAH integers in the catalog. The layout resolves `{coefficient, currency}` server-side: with rates available `en` converts to USD; with rates unavailable both locales show real UAH amounts as `₴` (never `$` on a UAH magnitude). Known quirk: client-side locale switching does not re-seed Recoil (initializeState runs once) — money/dictionary can go stale until a hard navigation; the state-migration step fixes this.
+- Client state is exactly two Zustand stores (`src/store/`): `cart.ts` (persists to localStorage key `utg-cart-v2` as a RAW JSON array via a custom `PersistStorage` — not Zustand's envelope; `skipHydration` + `<CartHydration/>` rehydrates post-mount; quantities normalized ≥1 at every entry) and `sidebar.ts` (ephemeral). Cart line id = bare product slug — slugs must stay globally unique until DEF-3 makes identity composite.
+- Everything else (`locale`, `dictionary`, `money`) is server-resolved per request and flows through `I18nProvider` (`src/i18n/`) — re-renders with fresh props on locale navigation, so nothing goes stale.
+- Prices are stored as UAH integers in the catalog. The layout resolves `{coefficient, currency}` server-side: with rates available `en` converts to USD; with rates unavailable both locales show real UAH amounts as `₴` (never `$` on a UAH magnitude).
 
 ### Styling
 
@@ -61,4 +62,4 @@ Tailwind + Flowbite React (wired in `tailwind.config.ts`). Custom color tokens (
 ## Quirks
 
 - Production deploys to Vercel (project `utg`, domain ua-tactical-gear.com) from `master`.
-- `framer-motion` is an unused dependency (its last consumer was deleted); removal is scheduled for the design-system step.
+- `next dev` may rewrite `tsconfig.json` array formatting that Prettier then collapses back — if you see a parasitic tsconfig diff, run `yarn format` and move on.

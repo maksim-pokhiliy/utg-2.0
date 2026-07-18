@@ -9,7 +9,7 @@ Using the design system we just built (same tokens, type, primitives — do not 
 
 ## Screens
 
-1. **Home.** Typographic hero built from the wordmark "UKRAINIAN TACTICAL GEAR" + UTG logo asset — no hero photograph available (design must stand without one; include an optional photo slot variant for later). One-line mission statement: volunteer project, all proceeds equip a Ukrainian unit. Category tiles (Patches / Stickers / T-Shirts) with photos. Instagram link. This page must make both the *shop* and the *cause* obvious in five seconds.
+1. **Home.** Typographic hero built from the wordmark "UKRAINIAN TACTICAL GEAR" + UTG logo asset — no hero photograph available (design must stand without one; include an optional photo slot variant for later). One-line mission statement: volunteer project, all proceeds equip a Ukrainian unit. Category tiles (Patches / Stickers / T-Shirts) with photos. Instagram link. This page must make both the _shop_ and the _cause_ obvious in five seconds.
 2. **Catalog** (`/category`): the three category tiles as a grid under a black section band.
 3. **Category** (`/category/patches` etc.): product grid of cards (photo, title, price, availability badge); out-of-stock cards stay visible but clearly muted.
 4. **Product page**: square photo, title, price, description paragraph, size selector (chips: M / L / XL / 2XL — only for t-shirts), quantity stepper, add-to-cart primary CTA; the complete out-of-stock variant (no dead controls, honest message). Note: sizes exist in data but were never shown before — this is their debut.

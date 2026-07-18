@@ -8,16 +8,16 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 
 ## Index
 
-| ID  | Topic | Status |
-| --- | ----- | ------ |
-| D-1 | Foundation-before-visual step sequence | RATIFIED |
-| D-2 | Planner/executor execution model | RATIFIED |
-| D-3 | Track `initiatives/` + `CLAUDE.md` in git, or keep untracked | RATIFIED |
-| D-4 | Visual direction for steps 4a–4c | OPEN |
-| D-5 | Deploy target, live-shop status, env values | RATIFIED |
-| D-6 | Stack moves: Recoil→Zustand, Next 14→16 + React 19 | RATIFIED |
-| D-7 | Drop Firebase entirely; catalog as static in-repo config, images in `public/` | RATIFIED |
-| D-8 | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1 | RATIFIED |
+| ID  | Topic                                                                                   | Status   |
+| --- | --------------------------------------------------------------------------------------- | -------- |
+| D-1 | Foundation-before-visual step sequence                                                  | RATIFIED |
+| D-2 | Planner/executor execution model                                                        | RATIFIED |
+| D-3 | Track `initiatives/` + `CLAUDE.md` in git, or keep untracked                            | RATIFIED |
+| D-4 | Visual direction for steps 4a–4c                                                        | OPEN     |
+| D-5 | Deploy target, live-shop status, env values                                             | RATIFIED |
+| D-6 | Stack moves: Recoil→Zustand, Next 14→16 + React 19                                      | RATIFIED |
+| D-7 | Drop Firebase entirely; catalog as static in-repo config, images in `public/`           | RATIFIED |
+| D-8 | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1  | RATIFIED |
 | D-9 | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper) | RATIFIED |
 
 ---
@@ -37,7 +37,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 ### D-3 — Git tracking of planner artifacts
 
 - **Status:** RATIFIED (user delegated the call 2026-07-18; planner decided: track both).
-- **Decision.** `initiatives/` and `CLAUDE.md` are committed to the repo. Hygiene: `extracted/assets/` gitignored (binaries; `public/` is the asset SSOT), dead probe files pruned. Executors still never stage *changes* to these paths in feature PRs — they are planner-managed.
+- **Decision.** `initiatives/` and `CLAUDE.md` are committed to the repo. Hygiene: `extracted/assets/` gitignored (binaries; `public/` is the asset SSOT), dead probe files pruned. Executors still never stage _changes_ to these paths in feature PRs — they are planner-managed.
 - **Rationale (career lens, per delegation).** In 2026 the differentiating skill is disciplined AI-agent orchestration; this directory is a rare public, inspectable proof of it (charter → D-numbered decisions with rationale → gate reviews → honest deferred/journal trail) versus an unverifiable resume claim. The repo's most distinctive artifact should be visible, not hidden for the shrinking minority of AI-skeptic reviewers; step 7's README will frame it explicitly as a feature. `CLAUDE.md` is standard practice and doubles as crisp architecture docs.
 
 ### D-4 — Visual direction for the redesign (steps 4a–4c)
@@ -69,7 +69,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 
 - **Status:** RATIFIED (user delegated the library choice to planner recommendation, 2026-07-17).
 - **Decision.** Tailwind stays as the styling engine; shadcn/ui becomes the component layer (copied-in components, CSS-variable theming, Radix primitives underneath). Adopted in step 4a per the Claude Design system. Retired along the way: Flowbite React (forms/buttons → shadcn), notyf (toasts → Sonner), body-scroll-lock (Radix Dialog/Sheet handles scroll locking), swiper (reports carousel → shadcn/embla Carousel).
-- **Rationale.** It is not "Tailwind vs a library" — shadcn *is* Tailwind with owned code: no runtime CSS-in-JS, full restylability (brutalist zero-radius theming is trivial), accessibility solved by Radix, first-class Next.js App Router/RSC fit, and CSS-variable tokens map 1:1 to what Claude Design produces. Replaces four dated dependencies with a coherent single system; also the stack recruiters recognize in 2026. Alternatives rejected: Flowbite (status quo — dated, weak primitives), Mantine/Chakra/HeroUI (parallel styling systems pulling away from Tailwind), raw Radix (shadcn minus the leverage).
+- **Rationale.** It is not "Tailwind vs a library" — shadcn _is_ Tailwind with owned code: no runtime CSS-in-JS, full restylability (brutalist zero-radius theming is trivial), accessibility solved by Radix, first-class Next.js App Router/RSC fit, and CSS-variable tokens map 1:1 to what Claude Design produces. Replaces four dated dependencies with a coherent single system; also the stack recruiters recognize in 2026. Alternatives rejected: Flowbite (status quo — dated, weak primitives), Mantine/Chakra/HeroUI (parallel styling systems pulling away from Tailwind), raw Radix (shadcn minus the leverage).
 
 ### D-6 — Stack moves: Zustand and Next 16
 

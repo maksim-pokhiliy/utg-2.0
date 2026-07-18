@@ -41,3 +41,6 @@ next-env.d.ts
 
 # planner artifacts: binary assets already live in public/
 initiatives/production-polish/extracted/assets/
+
+# upgrade skill scratch
+/.upgrade/

@@ -29,5 +29,5 @@
 
 - The checkout → bot payload contract (documented in `extracted/bot-contract-index.js`): field names/shape must not change without an explicitly ratified decision.
 - Catalog business data (titles, prices, availability, sizes, descriptions): reproduce faithfully from the recovered sources in `extracted/` — never invent or "improve" it.
-- The shop takes real orders: every merged PR leaves the site fully functional (step 1 *restores* full function — see D-5 outage facts).
+- The shop takes real orders: every merged PR leaves the site fully functional (step 1 _restores_ full function — see D-5 outage facts).
 - Visual identity (black/military brutalism + Ukrainian flag accent colors): sharpen, don't replace — unless D-4 ratifies otherwise.
