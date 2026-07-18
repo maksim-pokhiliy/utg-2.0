@@ -1,5 +1,5 @@
 @import "tailwindcss";
 @import "../design-system/styles/theme.css";
-@import "../design-system/styles/base.css";
-@import "../design-system/styles/typography.css";
-@import "../design-system/styles/components.css";
+@import "../design-system/styles/base.css" layer(base);
+@import "../design-system/styles/typography.css" layer(components);
+@import "../design-system/styles/components.css" layer(components);
