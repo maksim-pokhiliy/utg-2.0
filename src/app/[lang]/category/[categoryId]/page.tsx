@@ -16,7 +16,9 @@ export function generateStaticParams() {
   return getCategorySlugs().map((categoryId) => ({ categoryId }));
 }
 
-export async function generateMetadata({ params }: ICategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: ICategoryPageProps): Promise<Metadata> {
   const { lang, categoryId } = await params;
   const category = getCategoryView(categoryId, resolveLocale(lang));
 

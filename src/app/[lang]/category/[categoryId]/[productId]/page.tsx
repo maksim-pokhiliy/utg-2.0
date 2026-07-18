@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import {
-  getCategorySlugs,
-  getProductSlugs,
-  getProductView,
-} from "@root/data";
+import { getCategorySlugs, getProductSlugs, getProductView } from "@root/data";
 
 import { resolveLocale } from "@root/utils/locale";
 
@@ -23,7 +19,9 @@ export function generateStaticParams() {
   );
 }
 
-export async function generateMetadata({ params }: IProductPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: IProductPageProps): Promise<Metadata> {
   const { lang, categoryId, productId } = await params;
   const product = getProductView(categoryId, productId, resolveLocale(lang));
 

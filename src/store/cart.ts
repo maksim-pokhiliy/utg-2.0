@@ -88,9 +88,7 @@ export const useCartStore = create<CartStore>()(
                 cartItem.id === item.id
                   ? {
                       ...cartItem,
-                      quantity: normalizeQuantity(
-                        cartItem.quantity + quantity
-                      ),
+                      quantity: normalizeQuantity(cartItem.quantity + quantity),
                     }
                   : cartItem
               ),

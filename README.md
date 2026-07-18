@@ -28,11 +28,11 @@ The app boots and builds with no environment variables at all — the catalog is
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `yarn dev` | Start the dev server on http://localhost:3000 |
-| `yarn build` | Production build |
-| `yarn start` | Serve the production build |
-| `yarn lint` | Run ESLint |
-| `yarn lint:fix` | Run ESLint with autofix |
-| `yarn format` | Format the repo with Prettier |
+| Command         | What it does                                  |
+| --------------- | --------------------------------------------- |
+| `yarn dev`      | Start the dev server on http://localhost:3000 |
+| `yarn build`    | Production build                              |
+| `yarn start`    | Serve the production build                    |
+| `yarn lint`     | Run ESLint                                    |
+| `yarn lint:fix` | Run ESLint with autofix                       |
+| `yarn format`   | Format the repo with Prettier                 |
