@@ -7,7 +7,7 @@ import { resolveLocale } from "@root/utils/locale";
 import CategoryScreen from "@root/components/pages/CategoryScreen";
 
 interface ICategoryPageProps {
-  params: { lang: string; categoryId: string };
+  params: Promise<{ lang: string; categoryId: string }>;
 }
 
 export const dynamicParams = false;
@@ -16,11 +16,9 @@ export function generateStaticParams() {
   return getCategorySlugs().map((categoryId) => ({ categoryId }));
 }
 
-export function generateMetadata({ params }: ICategoryPageProps): Metadata {
-  const category = getCategoryView(
-    params.categoryId,
-    resolveLocale(params.lang)
-  );
+export async function generateMetadata({ params }: ICategoryPageProps): Promise<Metadata> {
+  const { lang, categoryId } = await params;
+  const category = getCategoryView(categoryId, resolveLocale(lang));
 
   if (!category) {
     return { title: "UTG | Merch" };
@@ -32,11 +30,9 @@ export function generateMetadata({ params }: ICategoryPageProps): Metadata {
   };
 }
 
-export default function Category({ params }: ICategoryPageProps) {
-  const category = getCategoryView(
-    params.categoryId,
-    resolveLocale(params.lang)
-  );
+export default async function Category({ params }: ICategoryPageProps) {
+  const { lang, categoryId } = await params;
+  const category = getCategoryView(categoryId, resolveLocale(lang));
 
   if (!category) {
     notFound();
