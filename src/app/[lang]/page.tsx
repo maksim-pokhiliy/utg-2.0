@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { getCategorySummaries, resolveLocale } from "@root/data";
+import { getCategorySummaries } from "@root/data";
+import { resolveLocale } from "@root/utils/locale";
 
 import HomeScreen from "@root/components/pages/HomeScreen";
 

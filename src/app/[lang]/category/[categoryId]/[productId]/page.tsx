@@ -5,8 +5,9 @@ import {
   getCategorySlugs,
   getProductSlugs,
   getProductView,
-  resolveLocale,
 } from "@root/data";
+
+import { resolveLocale } from "@root/utils/locale";
 
 import ProductScreen from "@root/components/pages/ProductScreen";
 

@@ -1,12 +1,11 @@
 "use client";
 
-import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
-import { dictionaryState } from "@root/recoil/atoms";
+import { useDictionary } from "@root/i18n";
 
 export default function AboutScreen() {
-  const dictionary = useRecoilValue(dictionaryState);
+  const dictionary = useDictionary();
 
   return (
     <div className="mx-auto pb-10 md:pb-20">

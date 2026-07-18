@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { formatPrice } from "@root/utils/formatPrice";
-
-import {
-  cartState,
-  dictionaryState,
-  languageState,
-  moneyState,
-  sidebarState,
-} from "@root/recoil/atoms";
+import { useCartStore, selectSubtotal } from "@root/store/cart";
+import { useSidebarStore } from "@root/store/sidebar";
+import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
 import CartItem from "@root/components/ui/Cart/CartItem";
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
@@ -31,25 +25,20 @@ export const CartView = () => {
   const pathname = usePathname();
   const previousPathname = usePrevious(pathname);
 
-  const cart = useRecoilValue(cartState);
-  const dictionary = useRecoilValue(dictionaryState);
-  const money = useRecoilValue(moneyState);
-  const locale = useRecoilValue(languageState);
+  const cart = useCartStore((state) => state.items);
+  const dictionary = useDictionary();
+  const money = useMoney();
+  const locale = useLocale();
 
-  const setIsSidebarOpen = useSetRecoilState(sidebarState);
+  const closeSidebar = useSidebarStore((state) => state.close);
 
-  const closeSidebar = () => setIsSidebarOpen(false);
-
-  const total = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const total = useCartStore(selectSubtotal);
 
   useEffect(() => {
     if (previousPathname && previousPathname !== pathname) {
       closeSidebar();
     }
-  }, [pathname, previousPathname]);
+  }, [pathname, previousPathname, closeSidebar]);
 
   return (
     <div className="h-full flex flex-col text-base bg-accent-0 shadow-xl overflow-y-auto overflow-x-hidden">
@@ -85,8 +74,8 @@ export const CartView = () => {
         <div>
           <div className="flex-1">
             <ul className="sm:px-6 p-4 space-y-6 sm:py-0 sm:space-y-0 sm:divide-y sm:divide-accent-2 border-accent-2">
-              {cart.map((item, index) => (
-                <CartItem key={index} item={item} />
+              {cart.map((item) => (
+                <CartItem key={item.id} item={item} />
               ))}
             </ul>
           </div>

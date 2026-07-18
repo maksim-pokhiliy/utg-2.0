@@ -1,18 +1,17 @@
 "use client";
 
-import { useRecoilState, useRecoilValue } from "recoil";
 import { Button, HR, Label, Textarea, TextInput } from "flowbite-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { formatPrice } from "@root/utils/formatPrice";
 import useNotification from "@root/hooks/useNotification";
-
 import {
-  cartState,
-  dictionaryState,
-  languageState,
-  moneyState,
-} from "@root/recoil/atoms";
+  useCartStore,
+  useCartHydrated,
+  selectItemCount,
+  selectSubtotal,
+} from "@root/store/cart";
+import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
 import CartItem from "../ui/Cart/CartItem";
 import { NavLink } from "../layout/NavBar/NavLink";
@@ -20,10 +19,12 @@ import { NavLink } from "../layout/NavBar/NavLink";
 export default function CheckoutScreen() {
   const notyf = useNotification();
 
-  const [cart, setCart] = useRecoilState(cartState);
-  const dictionary = useRecoilValue(dictionaryState);
-  const money = useRecoilValue(moneyState);
-  const locale = useRecoilValue(languageState);
+  const cart = useCartStore((state) => state.items);
+  const clear = useCartStore((state) => state.clear);
+  const hydrated = useCartHydrated();
+  const dictionary = useDictionary();
+  const money = useMoney();
+  const locale = useLocale();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,12 +39,9 @@ export default function CheckoutScreen() {
     additional: "",
   });
 
-  const summary = cart.reduce((total, item) => total + item.quantity, 0);
+  const summary = useCartStore(selectItemCount);
 
-  const total = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const total = useCartStore(selectSubtotal);
 
   const handleFormChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -76,7 +74,7 @@ export default function CheckoutScreen() {
         return;
       }
 
-      setCart([]);
+      clear();
       notyf.notifySuccess(dictionary.cart.order_success);
     } catch (error) {
       notyf.notifyError(dictionary.cart.order_error);
@@ -93,7 +91,7 @@ export default function CheckoutScreen() {
         </h1>
       </div>
 
-      {cart.length ? (
+      {!hydrated ? null : cart.length ? (
         <div className="p-10 lg:px-14">
           <div className="flex flex-col-reverse lg:flex-row gap-10 lg:gap-20 items-start relative">
             <form className="w-full lg:basis-1/2" onSubmit={handleSubmit}>
@@ -243,8 +241,8 @@ export default function CheckoutScreen() {
 
               <HR className="my-4 bg-stone-400" />
 
-              {cart.map((item, index) => (
-                <CartItem key={index} item={item} isEditable={false} />
+              {cart.map((item) => (
+                <CartItem key={item.id} item={item} isEditable={false} />
               ))}
 
               <HR className="my-4 bg-stone-400" />

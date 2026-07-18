@@ -1,32 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
-
-import { cartState, sidebarState } from "@root/recoil/atoms";
+import { useCartStore, selectItemCount } from "@root/store/cart";
+import { useSidebarStore } from "@root/store/sidebar";
 
 export default function CartBag() {
-  const cart = useRecoilValue(cartState);
-  const [isSidebarOpen, setIsSidebarOpen] = useRecoilState(sidebarState);
-
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const itemsCount =
-    cart.reduce((count, item) => count + item.quantity, 0) ?? 0;
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const itemsCount = useCartStore(selectItemCount);
+  const toggle = useSidebarStore((state) => state.toggle);
 
   return (
     <button
-      onClick={toggleSidebar}
+      onClick={toggle}
       className="flex relative"
-      aria-label={`Cart items: ${isClient ? itemsCount : 0}`}
+      aria-label={`Cart items: ${itemsCount}`}
     >
       <svg
         className="w-8 h-8"
@@ -43,7 +28,7 @@ export default function CartBag() {
         />
       </svg>
 
-      {isClient && itemsCount > 0 && (
+      {itemsCount > 0 && (
         <span className="font-bold text-xs absolute top-[13px] right-[15px]">
           {itemsCount}
         </span>

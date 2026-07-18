@@ -9,11 +9,6 @@
   "main": {
     "get": "Get Merch"
   },
-  "categories": {
-    "Patches": "Patches",
-    "Stickers": "Stickers",
-    "T-Shirts": "T-Shirts"
-  },
   "category": {
     "order": "Order Now",
     "out": "Out Of Stock"

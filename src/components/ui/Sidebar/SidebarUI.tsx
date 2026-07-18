@@ -1,18 +1,15 @@
 "use client";
 
-import { useRecoilState } from "recoil";
-
 import Sidebar from "@root/components/ui/Sidebar/Sidebar";
-import { sidebarState } from "@root/recoil/atoms";
 import CartView from "@root/components/ui/Cart/CartView";
+import { useSidebarStore } from "@root/store/sidebar";
 
 export default function SidebarUI() {
-  const closeSidebar = () => setDisplaySidebar(false);
+  const isOpen = useSidebarStore((state) => state.isOpen);
+  const close = useSidebarStore((state) => state.close);
 
-  const [displaySidebar, setDisplaySidebar] = useRecoilState(sidebarState);
-
-  return displaySidebar ? (
-    <Sidebar onClose={closeSidebar}>
+  return isOpen ? (
+    <Sidebar onClose={close}>
       <CartView />
     </Sidebar>
   ) : null;

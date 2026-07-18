@@ -1,16 +1,10 @@
 "use client";
 
-import { useRecoilValue } from "recoil";
 import Image from "next/image";
 
 import { CategoryView } from "@root/data";
 import { formatPrice } from "@root/utils/formatPrice";
-
-import {
-  dictionaryState,
-  languageState,
-  moneyState,
-} from "@root/recoil/atoms";
+import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
 import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
@@ -19,9 +13,9 @@ interface ICategoryScreenProps {
 }
 
 export default function CategoryScreen({ category }: ICategoryScreenProps) {
-  const dictionary = useRecoilValue(dictionaryState);
-  const money = useRecoilValue(moneyState);
-  const locale = useRecoilValue(languageState);
+  const dictionary = useDictionary();
+  const money = useMoney();
+  const locale = useLocale();
 
   return (
     <div className="mx-auto pb-10 md:pb-20">
@@ -55,11 +49,11 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
 
                 {product.isAvailable ? (
                   <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
-                    {dictionary?.category.order}
+                    {dictionary.category.order}
                   </span>
                 ) : (
                   <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
-                    {dictionary?.category.out}
+                    {dictionary.category.out}
                   </span>
                 )}
 
