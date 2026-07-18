@@ -13,7 +13,7 @@ artifacts (`CLAUDE.md`, `initiatives/`) into PRs.
 
 ## Project
 
-E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 16 App Router (Turbopack) + React 19, TypeScript (strict), Zustand + React context for state, Tailwind 3 + Flowbite React (both slated for replacement in the design-system step), and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. There are no tests and no CI.
+E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 16 App Router (Turbopack) + React 19, TypeScript (strict), Zustand + React context for state, Tailwind 4 with a SEALED in-repo design system (`src/design-system/` — see below), and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. There are no tests and no CI.
 
 ## Commands
 
@@ -21,7 +21,7 @@ Yarn is the package manager.
 
 - `yarn dev` — dev server on localhost:3000 (Turbopack)
 - `yarn build` — production build
-- `yarn lint` / `yarn lint:fix` — ESLint 9 flat config (`eslint.config.mjs`): `next/core-web-vitals` with `react-hooks/exhaustive-deps` active; the two react-hooks v6 Compiler-era rules (`set-state-in-effect`, `refs`) are deliberately off — do not re-enable them casually, see DEF-18 in `initiatives/production-polish/deferred.md`
+- `yarn lint` / `yarn lint:fix` — ESLint 9 flat config (`eslint.config.mjs`): `next/core-web-vitals` with `react-hooks/exhaustive-deps` active; the two react-hooks v6 Compiler-era rules are deliberately off (DEF-18). The config also enforces the design-system seal with hard errors outside `src/design-system/`: no raw color values, no raw text-size utilities, no deep imports past the barrel, no raw `<button>`/`<a>` JSX, no Dialog-internals imports.
 - `yarn format` — Prettier over the repo (`initiatives/production-polish/extracted/` is excluded — documentary recovered sources stay verbatim)
 
 The app boots and builds with zero env vars (the exchange-rates fetch is guarded → prices fall back to UAH for both locales). `.env.example` documents the three optional keys: `EXCHANGE_RATE_API_URL`, `EXCHANGE_RATE_API_KEY` (USD conversion for `en`), `PLACE_ORDER_URL` (order relay — checkout returns 503 without it).
@@ -55,9 +55,12 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 - Everything else (`locale`, `dictionary`, `money`) is server-resolved per request and flows through `I18nProvider` (`src/i18n/`) — re-renders with fresh props on locale navigation, so nothing goes stale.
 - Prices are stored as UAH integers in the catalog. The layout resolves `{coefficient, currency}` server-side: with rates available `en` converts to USD; with rates unavailable both locales show real UAH amounts as `₴` (never `$` on a UAH magnitude).
 
-### Styling
+### Styling — the sealed design system (D-10)
 
-Tailwind + Flowbite React (wired in `tailwind.config.ts`). Custom color tokens (`site`, `custom-1`), the `btn-main` component class, and remote `@font-face` declarations live in `src/app/globals.css` and the Tailwind config.
+- `src/design-system/` is the ONLY styling authority: Tailwind 4 CSS-first theme (`styles/theme.css` — the default palette and text scale are WIPED; only UTG semantic tokens exist), shadcn-style primitives, and a single public barrel `index.ts`. App code imports from `@root/design-system` only; the global stylesheet reaches the layout via CSS `@import`, not JS.
+- Raw colors (hex/rgb/hsl/oklch) and raw font-size utilities exist ONLY inside the DS. App text renders through `Typography` (variants hero/h1/h2/h3/body/small/caption/price); page width through `Container` (maxWidth prop). Styled interactive elements are DS components (`Button`, `IconButton`, `TextTab`, `IconLink`); raw `<button>`/`<a>` outside the DS is a lint error. Composite patterns are closed intent-API exports (`Dialog` title/children/actions + size panel|full, `ConfirmDialog`) — building blocks stay internal. Layout containers (div/flex/gap/spacing) remain app-land.
+- Fonts self-hosted via `next/font/google`: Oswald (display, uppercase), IBM Plex Sans (body), IBM Plex Mono (prices/meta labels) — latin + cyrillic subsets, zero external font/CDN requests.
+- The visual spec is `initiatives/production-polish/design-export/` (verbatim from the ratified Claude Design project — read-only); violations of the seal fail `yarn lint`, and there is no `eslint-disable` escape hatch (comments are banned repo-wide).
 
 ## Quirks
 
