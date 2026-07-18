@@ -29,7 +29,10 @@ function ToastCard({
       <Icon
         name={isError ? "x" : "check"}
         size={20}
-        className={cn("shrink-0 mt-px", isError ? "text-white" : "text-flag-yellow")}
+        className={cn(
+          "shrink-0 mt-px",
+          isError ? "text-white" : "text-flag-yellow"
+        )}
       />
       <span>{children}</span>
     </div>

@@ -15,7 +15,11 @@ import {
   Typography,
 } from "@root/design-system";
 import { formatPrice } from "@root/utils/formatPrice";
-import { useCartStore, selectItemCount, selectSubtotal } from "@root/store/cart";
+import {
+  useCartStore,
+  selectItemCount,
+  selectSubtotal,
+} from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 import { NavLink } from "@root/components/layout/NavLink";
@@ -75,9 +79,7 @@ export default function CartDrawer(): ReactElement {
                   {dictionary.cart.total}
                 </Typography>
 
-                <Price size="big">
-                  {formatPrice(total, money, locale)}
-                </Price>
+                <Price size="big">{formatPrice(total, money, locale)}</Price>
               </div>
 
               <Button asChild variant="accent" block>

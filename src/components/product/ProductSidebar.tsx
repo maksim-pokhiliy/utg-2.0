@@ -2,7 +2,13 @@
 
 import { useState, type ReactElement } from "react";
 
-import { Badge, Button, Price, QuantityStepper, Typography } from "@root/design-system";
+import {
+  Badge,
+  Button,
+  Price,
+  QuantityStepper,
+  Typography,
+} from "@root/design-system";
 import { ProductView } from "@root/data";
 import { formatPrice } from "@root/utils/formatPrice";
 import { useCartStore, type ICartItem } from "@root/store/cart";

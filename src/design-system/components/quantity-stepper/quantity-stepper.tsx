@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type ReactElement } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type ReactElement,
+} from "react";
 
 import { cn } from "../../lib/cn";
 import { Icon } from "../icon/icon";

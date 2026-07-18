@@ -41,7 +41,9 @@ const dialogContent = cva(
   }
 );
 
-export type DialogSize = NonNullable<VariantProps<typeof dialogContent>["size"]>;
+export type DialogSize = NonNullable<
+  VariantProps<typeof dialogContent>["size"]
+>;
 
 interface DialogContentProps
   extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {

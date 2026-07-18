@@ -59,7 +59,11 @@ export function NavOverlay(): ReactElement {
               onClick={() => setOpen(false)}
               className="no-underline text-band-foreground hover:text-flag-yellow flex items-baseline gap-4"
             >
-              <Typography variant="caption" as="span" className="text-band-muted">
+              <Typography
+                variant="caption"
+                as="span"
+                className="text-band-muted"
+              >
                 {String(index + 1).padStart(2, "0")}
               </Typography>
               <Typography variant="h2" as="span">

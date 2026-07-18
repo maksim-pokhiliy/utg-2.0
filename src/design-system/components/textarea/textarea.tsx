@@ -29,5 +29,7 @@ export function Textarea({
   className,
   ...rest
 }: TextareaProps): ReactElement {
-  return <textarea className={cn(textarea({ invalid }), className)} {...rest} />;
+  return (
+    <textarea className={cn(textarea({ invalid }), className)} {...rest} />
+  );
 }

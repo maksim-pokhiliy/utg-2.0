@@ -5,7 +5,8 @@ const COLOR_LITERAL = "#[0-9a-fA-F]{3,8}\\b";
 const COLOR_FUNCTION = "(rgba?|hsla?|oklch)\\(";
 const PALETTE_UTILITY =
   "\\b(bg|text|border|ring|fill|stroke|from|via|to)-(black|white|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(-\\d{1,3})?\\b";
-const TYPE_UTILITY = "(\\btext-(xs|sm|base|lg|[2-9]?xl)\\b|text-\\[|leading-\\[)";
+const TYPE_UTILITY =
+  "(\\btext-(xs|sm|base|lg|[2-9]?xl)\\b|text-\\[|leading-\\[)";
 
 const COLOR_LITERAL_MSG =
   "Raw color value is sealed inside the design system — use a token utility (bg-ink, text-accent…) or a DS component.";
@@ -16,7 +17,10 @@ const TYPE_MSG =
 
 const sealSyntax = [
   { selector: `Literal[value=/${COLOR_LITERAL}/]`, message: COLOR_LITERAL_MSG },
-  { selector: `Literal[value=/${COLOR_FUNCTION}/]`, message: COLOR_LITERAL_MSG },
+  {
+    selector: `Literal[value=/${COLOR_FUNCTION}/]`,
+    message: COLOR_LITERAL_MSG,
+  },
   {
     selector: `TemplateElement[value.raw=/${COLOR_LITERAL}/]`,
     message: COLOR_LITERAL_MSG,
