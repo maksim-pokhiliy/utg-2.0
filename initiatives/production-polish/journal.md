@@ -132,3 +132,10 @@ Append-only. One entry per session/step.
 - D-10 addendum ratified mid-round from two user directives: (a) styled interactive elements (buttons, text-like links/tabs) are DS-owned — app-land raw <button>/<a> is an ESLint error; layout containers stay app-land; (b) composite patterns are exported as closed intent-API compositions (Dialog, ConfirmDialog), building blocks stay internal — "the DS exports intents, not constructors."
 - Executor judgment calls accepted: flat remove\_\* dictionary keys (2-level Dictionary type kept), stale-.next diagnosis for the phantom text-white error (this shared tree branch-hops daily).
 - Git hygiene note: planner docs (journal/handoff-prompt) rode the working tree through the user's PR-branch checkout; stash → master → pop → conflict-resolve → this commit. The shared-tree dance is now documented in the handoff prompt.
+
+## 2026-07-18 — 4b prompt issued; kit screens exported; carousel discovery
+
+- Kit screen compositions (Home/Category/Product/Reports+About+404) and the full copy table exported verbatim to `design-export/kit-screens-reference.md` (+ current `data.js` re-pulled: nf\* strings exist since the 404 build; kit also fixes the awkward legacy en about1 "under-boss's" → "the unit we support").
+- Discovery: the ratified kit replaced the reports CAROUSEL with a numbered figure grid — swiper dies in 4b without a replacement dependency (plan.md updated; better than the original "swiper → DS Carousel" plan).
+- `step-4b-screens-prompt.md` issued: new DS components (ProductCard, category tile, size-selector — the kit prototypes chips as raw buttons, which our own seal now forbids in app-land), screens per reference with NO loading states (SSG vs the kit's skeleton theater), DEF-3 composite cart id with size encoded in the line TITLE (payload keys sacred — no new fields; additive compat with old persisted carts), DEF-14 copy, DEF-20 sweep, image hygiene. Checkout untouched (4c).
+- This is the last run before the planner handoff (per user's plan: 4b merge → rotation).
