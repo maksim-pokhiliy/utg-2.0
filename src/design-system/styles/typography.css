@@ -40,3 +40,8 @@
   font: var(--type-price);
   font-variant-numeric: tabular-nums;
 }
+
+.type-price-big {
+  font: 600 1.5rem / 1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
