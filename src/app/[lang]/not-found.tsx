@@ -2,9 +2,9 @@
 
 import { usePathname } from "next/navigation";
 
+import { Button, Container, Typography } from "@root/design-system";
+import { NavLink } from "@root/components/layout/NavLink";
 import { resolveLocale } from "@root/utils/locale";
-
-import { NavLink } from "@root/components/layout/NavBar/NavLink";
 
 const messages = {
   uk: { title: "Сторінку не знайдено", home: "На головну" },
@@ -16,14 +16,18 @@ export default function NotFound() {
   const message = messages[resolveLocale(pathname.split("/")[1])];
 
   return (
-    <div className="mx-auto px-10 py-20 text-center">
-      <h1 className="font-bold uppercase text-4xl md:text-6xl mb-4">404</h1>
+    <Container className="py-20 text-center">
+      <Typography variant="hero" as="h1" className="mb-4">
+        404
+      </Typography>
 
-      <p className="text-lg mb-8">{message.title}</p>
+      <Typography variant="body" className="mb-8">
+        {message.title}
+      </Typography>
 
-      <NavLink href="/" className="btn-main rounded-2xl inline-block">
-        {message.home}
-      </NavLink>
-    </div>
+      <Button asChild variant="outline">
+        <NavLink href="/">{message.home}</NavLink>
+      </Button>
+    </Container>
   );
 }

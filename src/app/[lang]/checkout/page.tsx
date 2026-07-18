@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import CheckoutClient from "./CheckoutClient";
+import CheckoutScreen from "@root/components/pages/CheckoutScreen";
 
 export const metadata: Metadata = {
   title: "UTG | Checkout",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CheckoutPage() {
-  return <CheckoutClient />;
+  return <CheckoutScreen />;
 }

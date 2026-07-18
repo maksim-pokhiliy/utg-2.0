@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 
+import { Badge, Price, SectionBand, Typography } from "@root/design-system";
 import { CategoryView } from "@root/data";
 import { formatPrice } from "@root/utils/formatPrice";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 
-import { NavLink } from "@root/components/layout/NavBar/NavLink";
+import { NavLink } from "@root/components/layout/NavLink";
 
 interface ICategoryScreenProps {
   category: CategoryView;
@@ -19,18 +20,18 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
 
   return (
     <div className="mx-auto pb-10 md:pb-20">
-      <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
-        <h1 className="font-bold uppercase text-3xl md:text-6xl">
-          {category.name}
-        </h1>
-      </div>
+      <SectionBand
+        title={category.name}
+        center
+        className="h-[320px] md:h-[500px]"
+      />
 
       <div className="full-w overflow-hidden mx-auto text-center mt-[-200px] md:mt-[-220px] px-10">
         <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 grid-flow-row">
           {category.products.map((product) => (
             <li key={product.slug} className="relative group">
               <NavLink
-                className="block h-auto w-full"
+                className="block h-auto w-full no-underline text-ink"
                 href={`/category/${category.slug}/${product.slug}`}
               >
                 <div
@@ -48,23 +49,23 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
                 </div>
 
                 {product.isAvailable ? (
-                  <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
+                  <Badge variant="in" className="absolute -mt-10 left-0">
                     {dictionary.category.order}
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className="btn-main absolute -mt-10 left-0 cursor-pointer">
+                  <Badge variant="out" className="absolute -mt-10 left-0">
                     {dictionary.category.out}
-                  </span>
+                  </Badge>
                 )}
 
                 <div className="p-2 text-left">
-                  <span>{product.title}</span>
+                  <Typography variant="body" as="span">
+                    {product.title}
+                  </Typography>
 
                   <br />
 
-                  <span className="text-xs">
-                    {formatPrice(product.price, money, locale)}
-                  </span>
+                  <Price>{formatPrice(product.price, money, locale)}</Price>
                 </div>
               </NavLink>
             </li>

@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 
+import { SectionBand, Typography } from "@root/design-system";
 import { CategorySummary } from "@root/data";
 import { useDictionary } from "@root/i18n";
 
-import { NavLink } from "@root/components/layout/NavBar/NavLink";
+import { NavLink } from "@root/components/layout/NavLink";
 
 interface ICategoriesScreenProps {
   categories: CategorySummary[];
@@ -18,11 +19,11 @@ export default function CategoriesScreen({
 
   return (
     <div className="mx-auto pb-10 md:pb-20">
-      <div className="bg-black text-custom-1 text-center py-4 md:py-10 md:py-20 h-[320px] md:h-[500px]">
-        <h1 className="font-bold uppercase text-3xl md:text-6xl">
-          {dictionary.shared.merch}
-        </h1>
-      </div>
+      <SectionBand
+        title={dictionary.shared.merch}
+        center
+        className="h-[320px] md:h-[500px]"
+      />
 
       <div className="full-w overflow-hidden mx-auto text-center mt-[-200px] md:mt-[-220px] px-10">
         <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 grid-flow-row">
@@ -30,7 +31,7 @@ export default function CategoriesScreen({
             <li key={category.slug} className="relative group">
               <NavLink
                 href={`/category/${category.slug}`}
-                className="block h-auto w-full"
+                className="block h-auto w-full no-underline text-ink"
               >
                 <div
                   className="relative w-full overflow-hidden"
@@ -45,13 +46,15 @@ export default function CategoriesScreen({
                     fill
                   />
                 </div>
-              </NavLink>
 
-              <span className="font-bold text-2xl md:text-5xl block text-center text-black mt-2">
-                <NavLink href={`/category/${category.slug}`}>
+                <Typography
+                  variant="h2"
+                  as="span"
+                  className="block text-center mt-2"
+                >
                   {category.name}
-                </NavLink>
-              </span>
+                </Typography>
+              </NavLink>
             </li>
           ))}
         </ul>

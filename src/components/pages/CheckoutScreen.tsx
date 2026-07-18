@@ -1,10 +1,21 @@
 "use client";
 
-import { Button, HR, Label, Textarea, TextInput } from "flowbite-react";
-import { ChangeEvent, FormEvent, useState } from "react";
+import Image from "next/image";
+import { ChangeEvent, FormEvent, useState, type ReactElement } from "react";
 
+import {
+  Button,
+  Container,
+  Field,
+  Input,
+  Price,
+  SectionBand,
+  Separator,
+  Textarea,
+  Typography,
+  toast,
+} from "@root/design-system";
 import { formatPrice } from "@root/utils/formatPrice";
-import useNotification from "@root/hooks/useNotification";
 import {
   useCartStore,
   useCartHydrated,
@@ -12,13 +23,9 @@ import {
   selectSubtotal,
 } from "@root/store/cart";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
+import { NavLink } from "@root/components/layout/NavLink";
 
-import CartItem from "../ui/Cart/CartItem";
-import { NavLink } from "../layout/NavBar/NavLink";
-
-export default function CheckoutScreen() {
-  const notyf = useNotification();
-
+export default function CheckoutScreen(): ReactElement {
   const cart = useCartStore((state) => state.items);
   const clear = useCartStore((state) => state.clear);
   const hydrated = useCartHydrated();
@@ -69,206 +76,226 @@ export default function CheckoutScreen() {
       });
 
       if (!response.ok) {
-        notyf.notifyError(dictionary.cart.order_error);
+        toast.error(dictionary.cart.order_error);
 
         return;
       }
 
       clear();
-      notyf.notifySuccess(dictionary.cart.order_success);
-    } catch (error) {
-      notyf.notifyError(dictionary.cart.order_error);
+      toast.success(dictionary.cart.order_success);
+    } catch {
+      toast.error(dictionary.cart.order_error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="mx-auto pb-10 lg:pb-20">
-      <div className="bg-black text-custom-1 text-center py-4 lg:py-10">
-        <h1 className="font-bold uppercase text-3xl lg:text-6xl">
-          {dictionary.checkout.checkout}
-        </h1>
-      </div>
+    <div className="pb-10 lg:pb-20">
+      <SectionBand title={dictionary.checkout.checkout} center />
 
       {!hydrated ? null : cart.length ? (
-        <div className="p-10 lg:px-14">
+        <Container className="py-10">
           <div className="flex flex-col-reverse lg:flex-row gap-10 lg:gap-20 items-start relative">
             <form className="w-full lg:basis-1/2" onSubmit={handleSubmit}>
-              <p className="font-bold text-xl mb-4">
+              <Typography variant="h3" as="h2" className="mb-4">
                 {dictionary.cart.customer_details}
-              </p>
+              </Typography>
 
-              <Label className="mb-2 block" htmlFor="first_name">
-                {dictionary.cart.first_name} *
-              </Label>
+              <div className="flex flex-col gap-4">
+                <Field
+                  label={dictionary.cart.first_name}
+                  htmlFor="first_name"
+                  required
+                >
+                  <Input
+                    id="first_name"
+                    name="first_name"
+                    value={form.first_name}
+                    placeholder={dictionary.cart.first_name_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <TextInput
-                id="first_name"
-                name="first_name"
-                value={form.first_name}
-                className="mb-4"
-                placeholder={dictionary.cart.first_name_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
+                <Field
+                  label={dictionary.cart.last_name}
+                  htmlFor="last_name"
+                  required
+                >
+                  <Input
+                    id="last_name"
+                    name="last_name"
+                    value={form.last_name}
+                    placeholder={dictionary.cart.last_name_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <Label className="mb-2 block" htmlFor="last_name">
-                {dictionary.cart.last_name} *
-              </Label>
+                <Field
+                  label={dictionary.cart.telephone}
+                  htmlFor="telephone"
+                  required
+                >
+                  <Input
+                    id="telephone"
+                    name="telephone"
+                    type="tel"
+                    value={form.telephone}
+                    placeholder={dictionary.cart.telephone_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
+              </div>
 
-              <TextInput
-                id="last_name"
-                name="last_name"
-                value={form.last_name}
-                className="mb-4"
-                placeholder={dictionary.cart.last_name_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
-
-              <Label className="mb-2 block" htmlFor="telephone">
-                {dictionary.cart.telephone} *
-              </Label>
-
-              <TextInput
-                id="telephone"
-                name="telephone"
-                value={form.telephone}
-                className="mb-8"
-                placeholder={dictionary.cart.telephone_placeholder}
-                type="tel"
-                onChange={handleFormChange}
-                required
-              />
-
-              <p className="font-bold text-xl mb-4">
+              <Typography variant="h3" as="h2" className="mb-4 mt-8">
                 {dictionary.cart.delivery_details}
-              </p>
+              </Typography>
 
-              <Label className="mb-2 block" htmlFor="country">
-                {dictionary.cart.country} *
-              </Label>
+              <div className="flex flex-col gap-4">
+                <Field
+                  label={dictionary.cart.country}
+                  htmlFor="country"
+                  required
+                >
+                  <Input
+                    id="country"
+                    name="country"
+                    value={form.country}
+                    placeholder={dictionary.cart.country_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <TextInput
-                id="country"
-                name="country"
-                value={form.country}
-                className="mb-4"
-                placeholder={dictionary.cart.country_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
+                <Field label={dictionary.cart.state} htmlFor="state" required>
+                  <Input
+                    id="state"
+                    name="state"
+                    value={form.state}
+                    placeholder={dictionary.cart.state_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <Label className="mb-2 block" htmlFor="state">
-                {dictionary.cart.state} *
-              </Label>
+                <Field label={dictionary.cart.city} htmlFor="city" required>
+                  <Input
+                    id="city"
+                    name="city"
+                    value={form.city}
+                    placeholder={dictionary.cart.city_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <TextInput
-                id="state"
-                name="state"
-                value={form.state}
-                className="mb-4"
-                placeholder={dictionary.cart.state_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
+                <Field
+                  label={dictionary.cart.address}
+                  htmlFor="address"
+                  required
+                >
+                  <Input
+                    id="address"
+                    name="address"
+                    value={form.address}
+                    placeholder={dictionary.cart.address_placeholder}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </Field>
 
-              <Label className="mb-2 block" htmlFor="city">
-                {dictionary.cart.city} *
-              </Label>
+                <Field label={dictionary.cart.additional} htmlFor="additional">
+                  <Textarea
+                    id="additional"
+                    name="additional"
+                    value={form.additional}
+                    placeholder={dictionary.cart.additional}
+                    onChange={handleFormChange}
+                    rows={6}
+                  />
+                </Field>
+              </div>
 
-              <TextInput
-                id="city"
-                name="city"
-                value={form.city}
-                className="mb-4"
-                placeholder={dictionary.cart.city_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
+              <Typography variant="small" as="p" className="my-6">
+                {dictionary.cart.review}
+              </Typography>
 
-              <Label className="mb-2 block" htmlFor="address">
-                {dictionary.cart.address} *
-              </Label>
-
-              <TextInput
-                id="address"
-                name="address"
-                value={form.address}
-                className="mb-4"
-                placeholder={dictionary.cart.address_placeholder}
-                type="text"
-                onChange={handleFormChange}
-                required
-              />
-
-              <Label className="mb-2 block" htmlFor="additional">
-                {dictionary.cart.additional}
-              </Label>
-
-              <Textarea
-                id="additional"
-                name="additional"
-                value={form.additional}
-                className="mb-8"
-                placeholder={dictionary.cart.additional}
-                onChange={handleFormChange}
-                rows={6}
-              />
-
-              <p className="mb-4 text-xs">{dictionary.cart.review}</p>
-
-              <Button
-                className="w-full bg-zinc-800 hover:bg-zinc-900"
-                isProcessing={isLoading}
-                disabled={isLoading}
-                type="submit"
-              >
+              <Button type="submit" block loading={isLoading}>
                 {dictionary.cart.place_order}
               </Button>
             </form>
 
-            <div className="flex flex-col p-4 w-full lg:basis-1/2 static lg:sticky top-0 bg-stone-200">
-              <p>
+            <div className="flex flex-col w-full lg:basis-1/2 static lg:sticky top-0 bg-muted p-4">
+              <Typography variant="caption" as="p">
                 {dictionary.checkout.summary} ({summary})
-              </p>
+              </Typography>
 
-              <HR className="my-4 bg-stone-400" />
+              <Separator weight="hair" className="my-4" />
 
-              {cart.map((item) => (
-                <CartItem key={item.id} item={item} isEditable={false} />
-              ))}
+              <div className="flex flex-col">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 py-2">
+                    <div className="relative w-12 h-12 border border-ink shrink-0">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        quality={75}
+                        className="object-cover"
+                      />
+                    </div>
 
-              <HR className="my-4 bg-stone-400" />
+                    <div className="flex-1 flex items-center justify-between gap-2">
+                      <div className="flex flex-col">
+                        <Typography variant="small" as="span">
+                          {item.title}
+                        </Typography>
+
+                        <Typography
+                          variant="caption"
+                          as="span"
+                          className="text-ink-faint"
+                        >
+                          {dictionary.shared.quantity}: {item.quantity}
+                        </Typography>
+                      </div>
+
+                      <Price>
+                        {formatPrice(item.price * item.quantity, money, locale)}
+                      </Price>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Separator weight="hair" className="my-4" />
 
               <div className="flex items-center justify-between">
-                <span className="text-xl">{dictionary.cart.total}:</span>
-                <span className="text-xl">
-                  {formatPrice(total, money, locale)}
-                </span>
+                <Typography variant="caption" as="span">
+                  {dictionary.cart.total}
+                </Typography>
+
+                <Price size="big">{formatPrice(total, money, locale)}</Price>
               </div>
             </div>
           </div>
-        </div>
+        </Container>
       ) : (
-        <div className="flex-1 px-4 flex flex-col justify-center items-center">
-          <h2 className="pt-6 text-2xl font-bold tracking-wide text-center">
+        <Container className="py-10 flex flex-col items-center text-center gap-2">
+          <Typography variant="h3" as="p">
             {dictionary.cart.empty_cart}
-          </h2>
+          </Typography>
 
-          <p className="text-accent-3 px-10 text-center pt-2">
+          <Typography variant="small" as="p" className="text-ink-faint">
             {dictionary.cart.add_to_cart}{" "}
-            <NavLink href="/category" className="underline hover:no-underline">
+            <NavLink href="/category" className="text-flag-blue">
               {dictionary.cart.here}
             </NavLink>
-          </p>
-        </div>
+          </Typography>
+        </Container>
       )}
     </div>
   );
