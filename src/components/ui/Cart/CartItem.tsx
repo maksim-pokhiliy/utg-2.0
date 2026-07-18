@@ -41,7 +41,7 @@ export const CartItem = ({ item, isEditable = true }: CartItemProps) => {
           <Image
             src={item.image}
             alt={item.title}
-            quality={0}
+            quality={75}
             className="absolute inset-0 w-full h-full object-cover"
             priority
             fill
