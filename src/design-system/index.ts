@@ -10,8 +10,13 @@ export type { ButtonVariant, ButtonSize } from "./components/button/button";
 export { IconButton } from "./components/icon-button/icon-button";
 export type { IconButtonVariant } from "./components/icon-button/icon-button";
 
+export { TextTab } from "./components/text-tab/text-tab";
+
 export { Icon } from "./components/icon/icon";
 export type { IconName, IconSize } from "./components/icon/icon";
+
+export { IconLink } from "./components/icon-link/icon-link";
+export type { IconLinkVariant } from "./components/icon-link/icon-link";
 
 export { Badge } from "./components/badge/badge";
 export type { BadgeVariant } from "./components/badge/badge";
@@ -35,15 +40,9 @@ export { SectionBand } from "./components/section-band/section-band";
 
 export { toast, Toaster } from "./components/toast/toast";
 
-export {
-  Dialog,
-  DialogTrigger,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "./components/dialog/dialog";
+export { Dialog } from "./components/dialog/dialog";
 export type { DialogSize } from "./components/dialog/dialog";
+export { ConfirmDialog } from "./components/dialog/confirm-dialog";
 
 export {
   Sheet,

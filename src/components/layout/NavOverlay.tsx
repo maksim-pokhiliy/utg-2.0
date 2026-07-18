@@ -4,12 +4,9 @@ import { useState, type ReactElement } from "react";
 
 import {
   Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
   Icon,
   IconButton,
+  IconLink,
   Typography,
 } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
@@ -22,27 +19,17 @@ export function NavOverlay(): ReactElement {
   const [open, setOpen] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <IconButton aria-label="Menu">
-          <Icon name="menu" />
-        </IconButton>
-      </DialogTrigger>
+    <>
+      <IconButton aria-label="Menu" onClick={() => setOpen(true)}>
+        <Icon name="menu" />
+      </IconButton>
 
-      <DialogContent
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Menu"
         size="full"
-        className="bg-ink text-band-foreground flex flex-col"
       >
-        <DialogTitle className="sr-only">Menu</DialogTitle>
-
-        <div className="flex justify-end p-(--gutter)">
-          <DialogClose asChild>
-            <IconButton variant="band" aria-label="Close">
-              <Icon name="x" />
-            </IconButton>
-          </DialogClose>
-        </div>
-
         <nav className="flex-1 flex flex-col items-center justify-center gap-6">
           {NAV_ITEMS.map((item, index) => (
             <NavLink
@@ -64,17 +51,17 @@ export function NavOverlay(): ReactElement {
             </NavLink>
           ))}
 
-          <a
+          <IconLink
             href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noreferrer"
+            external
+            variant="band"
             aria-label="Instagram"
-            className="no-underline text-band-foreground hover:text-flag-yellow mt-8"
+            className="mt-8"
           >
             <Icon name="instagram" size={24} />
-          </a>
+          </IconLink>
         </nav>
-      </DialogContent>
-    </Dialog>
+      </Dialog>
+    </>
   );
 }

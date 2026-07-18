@@ -41,6 +41,17 @@ const sealSyntax = [
   },
 ];
 
+const RAW_ELEMENT_MSG =
+  "Raw interactive element is sealed — compose a DS control (Button, IconButton, TextTab, IconLink, Dialog) or a routing NavLink instead of a bare <button>/<a>.";
+
+const sealElements = [
+  {
+    selector: "JSXOpeningElement[name.name='button']",
+    message: RAW_ELEMENT_MSG,
+  },
+  { selector: "JSXOpeningElement[name.name='a']", message: RAW_ELEMENT_MSG },
+];
+
 export default defineConfig([
   ...nextVitals,
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
@@ -66,7 +77,7 @@ export default defineConfig([
           ],
         },
       ],
-      "no-restricted-syntax": ["error", ...sealSyntax],
+      "no-restricted-syntax": ["error", ...sealSyntax, ...sealElements],
     },
   },
 ]);

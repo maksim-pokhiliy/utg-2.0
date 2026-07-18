@@ -43,7 +43,11 @@
     "place_order": "Place Order",
     "review": "Review your details above and continue when you're ready.",
     "order_success": "Thank you for your order! Our manager will contact you shortly",
-    "order_error": "Error when placing an order"
+    "order_error": "Error when placing an order",
+    "remove_title": "Remove item?",
+    "remove_body": "{title} will be removed from your cart.",
+    "remove_cancel": "Cancel",
+    "remove_confirm": "Remove"
   },
   "about": {
     "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",

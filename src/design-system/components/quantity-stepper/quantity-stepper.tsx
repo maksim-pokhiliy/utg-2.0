@@ -66,7 +66,7 @@ export function QuantityStepper({
   );
 
   return (
-    <div className="inline-flex items-stretch border-2 border-ink bg-white">
+    <div className="inline-flex w-fit items-stretch border-2 border-ink bg-white">
       <button
         type="button"
         onClick={decrease}

@@ -1,16 +1,13 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { cva, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithoutRef, ReactElement } from "react";
+import { cva } from "class-variance-authority";
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
-
-export const Dialog = DialogPrimitive.Root;
-export const DialogTrigger = DialogPrimitive.Trigger;
-export const DialogClose = DialogPrimitive.Close;
-export const DialogTitle = DialogPrimitive.Title;
-export const DialogDescription = DialogPrimitive.Description;
+import { Icon } from "../icon/icon";
+import { IconButton } from "../icon-button/icon-button";
+import { Typography } from "../typography/typography";
 
 function DialogOverlay({
   className,
@@ -28,43 +25,91 @@ function DialogOverlay({
 }
 
 const dialogContent = cva(
-  "fixed z-[70] bg-paper border-2 border-ink focus:outline-none",
+  "fixed z-[70] focus:outline-none data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
   {
     variants: {
       size: {
         panel:
-          "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(440px,calc(100vw-32px))] data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
-        full: "inset-0 w-full h-full border-0 data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
+          "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(440px,calc(100vw-32px))] bg-paper border-2 border-ink",
+        full: "inset-0 w-full h-full bg-ink text-band-foreground flex flex-col",
       },
     },
     defaultVariants: { size: "panel" },
   }
 );
 
-export type DialogSize = NonNullable<
-  VariantProps<typeof dialogContent>["size"]
->;
+export type DialogSize = "panel" | "full";
 
-interface DialogContentProps
-  extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+interface DialogProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  actions?: ReactNode;
   size?: DialogSize;
 }
 
-export function DialogContent({
-  size,
-  className,
+export function Dialog({
+  open,
+  onClose,
+  title,
   children,
-  ...props
-}: DialogContentProps): ReactElement {
+  actions,
+  size = "panel",
+}: DialogProps): ReactElement {
   return (
-    <DialogPrimitive.Portal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        className={cn(dialogContent({ size }), className)}
-        {...props}
-      >
-        {children}
-      </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogOverlay />
+
+        <DialogPrimitive.Content
+          className={dialogContent({ size })}
+          aria-describedby={undefined}
+        >
+          {size === "full" ? (
+            <>
+              <DialogPrimitive.Title className="sr-only">
+                {title}
+              </DialogPrimitive.Title>
+
+              <div className="flex justify-end p-(--gutter)">
+                <DialogPrimitive.Close asChild>
+                  <IconButton variant="band" aria-label="Close">
+                    <Icon name="x" />
+                  </IconButton>
+                </DialogPrimitive.Close>
+              </div>
+
+              {children}
+            </>
+          ) : (
+            <>
+              <div className="bg-band text-band-foreground px-4 py-3">
+                <DialogPrimitive.Title asChild>
+                  <Typography variant="h3" as="h2">
+                    {title}
+                  </Typography>
+                </DialogPrimitive.Title>
+              </div>
+
+              <div className="flex flex-col gap-5 p-4">
+                {children}
+
+                {actions ? (
+                  <div className="flex justify-end gap-2">{actions}</div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }

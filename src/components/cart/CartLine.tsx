@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 
 import {
+  ConfirmDialog,
   Icon,
   IconButton,
   Price,
@@ -26,6 +27,8 @@ export default function CartLine({ item }: CartLineProps): ReactElement {
   const setQuantity = useCartStore((state) => state.setQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
     <div className="grid grid-cols-[64px_1fr] gap-3 py-4 border-b border-line">
       <div className="relative w-16 h-16 border border-ink">
@@ -46,7 +49,7 @@ export default function CartLine({ item }: CartLineProps): ReactElement {
 
           <IconButton
             aria-label="Remove"
-            onClick={() => removeItem(item.id)}
+            onClick={() => setConfirmOpen(true)}
             className="w-8 h-8 shrink-0"
           >
             <Icon name="trash-2" size={20} />
@@ -62,6 +65,17 @@ export default function CartLine({ item }: CartLineProps): ReactElement {
           ariaLabel={dictionary.shared.quantity}
         />
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => removeItem(item.id)}
+        title={dictionary.cart.remove_title}
+        body={dictionary.cart.remove_body.replace("{title}", item.title)}
+        cancelLabel={dictionary.cart.remove_cancel}
+        confirmLabel={dictionary.cart.remove_confirm}
+        destructive
+      />
     </div>
   );
 }

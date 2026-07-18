@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 
-import { Button, Container, Icon, Typography } from "@root/design-system";
+import {
+  Button,
+  Container,
+  Icon,
+  IconLink,
+  Typography,
+} from "@root/design-system";
 import { CategorySummary } from "@root/data";
 import { useDictionary } from "@root/i18n";
 
@@ -29,15 +35,9 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
               </Typography>
 
               <div className="flex gap-4 justify-center sm:justify-start">
-                <a
-                  href={INSTAGRAM_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Instagram"
-                  className="no-underline text-ink-soft hover:text-ink"
-                >
+                <IconLink href={INSTAGRAM_URL} external aria-label="Instagram">
                   <Icon name="instagram" />
-                </a>
+                </IconLink>
               </div>
             </div>
           </div>

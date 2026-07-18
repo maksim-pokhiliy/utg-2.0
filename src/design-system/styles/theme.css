@@ -43,6 +43,7 @@
   --color-band-foreground: var(--color-paper);
   --color-band-muted: #b7ada4;
   --color-band-hover: rgba(255, 249, 246, 0.15);
+  --color-band-line: rgba(255, 249, 246, 0.25);
   --color-scrim: rgba(24, 21, 18, 0.5);
 
   --font-display: var(--font-oswald), "Arial Narrow", sans-serif;
