@@ -1,0 +1,18 @@
+/* UTG base rules — element defaults every consumer page inherits. */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--background);color:var(--foreground);font:var(--type-body);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;text-transform:uppercase}
+h1{font:var(--type-h1);letter-spacing:var(--display-tracking)}
+h2{font:var(--type-h2);letter-spacing:var(--display-tracking)}
+h3{font:var(--type-h3);letter-spacing:var(--display-tracking)}
+p{margin:0}
+a{color:var(--flag-blue);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:var(--ink);text-decoration-thickness:2px}
+img{display:block;max-width:100%}
+button{font:inherit}
+::selection{background:var(--flag-yellow);color:var(--ink)}
+:focus-visible{outline:var(--focus-ring);outline-offset:var(--focus-offset)}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+@media (min-width:768px){:root{--gutter:56px}}

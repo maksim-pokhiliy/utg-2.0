@@ -1,0 +1,40 @@
+/* UTG color tokens. Light theme only. All pairs AA on their stated surface. */
+:root{
+  /* base palette */
+  --paper:#FFF9F6;            /* warm off-white — page surface (from utg 2.0 --custom-1) */
+  --paper-dim:#F3EAE4;        /* darker paper — muted surfaces, skeleton base */
+  --ink:#181512;              /* warm near-black — text, borders, bands, primary CTA */
+  --ink-soft:#453E37;         /* secondary text on paper (9.5:1) */
+  --ink-faint:#6E655C;        /* tertiary/meta text on paper (5.1:1) */
+  --line:#D9CEC5;             /* hairline on paper — decorative rules only, never text */
+  --flag-yellow:#FFC657;      /* accent — ONE cta moment / availability marks. Ink text only */
+  --flag-blue:#5362AC;        /* secondary accent — focus ring, links, rare marks. Paper text ok (5.4:1) */
+  --alarm:#B42318;            /* destructive/error (paper text 6.6:1) */
+  --white:#FFFFFF;            /* pure white — photo frames only */
+
+  /* shadcn/ui semantic aliases (drop into a Tailwind theme as-is) */
+  --background:var(--paper);
+  --foreground:var(--ink);
+  --card:var(--paper);
+  --card-foreground:var(--ink);
+  --popover:var(--paper);
+  --popover-foreground:var(--ink);
+  --primary:var(--ink);
+  --primary-foreground:var(--paper);
+  --secondary:var(--flag-blue);
+  --secondary-foreground:#FFFFFF;
+  --muted:var(--paper-dim);
+  --muted-foreground:var(--ink-faint);
+  --accent:var(--flag-yellow);
+  --accent-foreground:var(--ink);
+  --destructive:var(--alarm);
+  --destructive-foreground:#FFFFFF;
+  --border:var(--ink);        /* brutalism: structural borders are ink */
+  --input:var(--ink);
+  --ring:var(--flag-blue);
+
+  /* inverted section band */
+  --band:var(--ink);
+  --band-foreground:var(--paper);
+  --band-muted:#B7ADA4;       /* meta text on band (7:1 on ink) */
+}

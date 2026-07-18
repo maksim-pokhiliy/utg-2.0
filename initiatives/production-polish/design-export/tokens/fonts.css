@@ -1,0 +1,7 @@
+/* UTG webfonts — vendored from google/fonts (OFL). Full Ukrainian Cyrillic (є ї ґ і) verified. */
+/* REFERENCE ONLY for implementation: use next/font/google (Oswald variable; IBM Plex Sans; IBM Plex Mono 400/500/600) with latin+cyrillic subsets instead of these @font-face declarations. */
+@font-face{font-family:"Oswald";src:url("../assets/fonts/Oswald-Variable.ttf") format("truetype");font-weight:200 700;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../assets/fonts/IBMPlexSans-Variable.ttf") format("truetype");font-weight:100 700;font-stretch:85% 100%;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../assets/fonts/IBMPlexMono-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../assets/fonts/IBMPlexMono-Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../assets/fonts/IBMPlexMono-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap}

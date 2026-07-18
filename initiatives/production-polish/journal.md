@@ -86,6 +86,13 @@ Append-only. One entry per session/step.
 - Remaining before merge: user's browser gate R1 — flowbite checkout form interactively under React 19 (only surface not verifiable headless). Fallback ready: flowbite-react 0.12.17.
 - R1 passed by user; PR #5 squash-merged (`f3f79bf`). Step 3 CLOSED — the platform stack (Next 16 / React 19 / ESLint 9 / Turbopack) is final; 4a unblocked.
 - Post-merge hygiene by planner: user's local `yarn format` run surfaced that PR-5 code wasn't fully prettier-clean (line-width wraps) and that `next dev` had rewritten tsconfig arrays (the reviewer's predicted parasitic diff, in prettier↔next-dev form). Resolution: `.prettierignore` for `extracted/` (documentary sources stay verbatim), repo-wide format commit, CLAUDE.md rewritten to post-step-2+3 reality (Zustand/i18n context/proxy.ts/ESLint 9/DEF-18 warning for agents), `.upgrade/` gitignored.
+- Prod smoke on the Next-16 deploy: home/product/checkout/images all 200, uk product description renders. Platform migration invisible to users — as it should be.
+
+## 2026-07-18 — Design exported to repo; D-10 sealed-module; 4a prompt issued
+
+- Design system exported from the Claude Design project into `design-export/` (committed, prettier-ignored, read-only for executors): all 6 token CSS files verbatim (colors with shadcn aliases, fluid type scale, spacing/borders/motion, element base, **components.css — the full per-primitive visual spec**, fonts as reference), `system-readme.md` (visual language + content rules), `component-specs.md` (Header/Footer/SectionBand/CartDrawer/Toast intents). The 19 per-component prompt.md files were deliberately NOT pulled — components.css carries the complete visual truth; API design belongs to the implementation.
+- **D-10 RATIFIED** (user directive: «запечатана и обтянута колючей проволокой»): DS = sealed module in `src/design-system/` — single barrel API (deep imports lint-banned), raw colors only in the theme (Tailwind default palette wiped → non-token color classes don't compile), font sizes only inside (app text goes through variant-based `Typography`), `Container` with `maxWidth` owns page width. Enforcement = theme wipe + ESLint restricted imports + grep gates in every review from 4a on.
+- `step-4a-design-system-prompt.md` rewritten around D-10: sealed module + Tailwind 4/shadcn + next/font + full primitive set (+Typography/Container) + chrome (Header/Footer/CartDrawer-Sheet) + retirement of flowbite/notyf/body-scroll-lock + mechanical class sweeps (legacy palette/text utilities die with the wiped theme) + DEF-19. Page re-composition stays fenced for 4b/4c.
 
 ## 2026-07-17 — Review, roadmap, initiative bootstrap, step 0 issued
 

@@ -1,0 +1,33 @@
+/* UTG type tokens. Display = Oswald (condensed, uppercase). Body/UI = IBM Plex Sans. Paperwork/meta = IBM Plex Mono. */
+:root{
+  --font-display:"Oswald","Arial Narrow",sans-serif;
+  --font-body:"IBM Plex Sans","Helvetica Neue",sans-serif;
+  --font-mono:"IBM Plex Mono","Courier New",monospace;
+
+  /* scale (mobile-first fluid) */
+  --text-hero:clamp(3.25rem,11vw,7.5rem);      /* wordmark hero */
+  --text-h1:clamp(2.5rem,6vw,4rem);            /* page title / band title */
+  --text-h2:clamp(1.75rem,4vw,2.5rem);         /* section title */
+  --text-h3:1.375rem;                          /* card group / drawer title */
+  --text-body:1rem;                            /* 16px body */
+  --text-small:0.875rem;                       /* helper, secondary */
+  --text-caption:0.75rem;                      /* mono meta, labels */
+  --text-price:1.0625rem;                      /* mono price */
+
+  /* display settings */
+  --display-weight:600;
+  --display-tracking:0.015em;
+  --display-leading:0.95;
+  --body-leading:1.55;
+  --caps-tracking:0.08em;                      /* uppercase mono labels */
+
+  /* semantic shortcuts */
+  --type-hero:var(--display-weight) var(--text-hero)/var(--display-leading) var(--font-display);
+  --type-h1:var(--display-weight) var(--text-h1)/var(--display-leading) var(--font-display);
+  --type-h2:var(--display-weight) var(--text-h2)/1 var(--font-display);
+  --type-h3:500 var(--text-h3)/1.1 var(--font-display);
+  --type-body:400 var(--text-body)/var(--body-leading) var(--font-body);
+  --type-small:400 var(--text-small)/1.5 var(--font-body);
+  --type-caption:500 var(--text-caption)/1.4 var(--font-mono);
+  --type-price:500 var(--text-price)/1.2 var(--font-mono);
+}

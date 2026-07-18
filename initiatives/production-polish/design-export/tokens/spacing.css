@@ -1,0 +1,25 @@
+/* UTG layout tokens: spacing, borders, radius (none), motion, containers. */
+:root{
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+
+  --container:1200px;
+  --gutter:24px;               /* mobile page gutter */
+  --gutter-desktop:56px;       /* >=768px */
+
+  --radius:0px;                /* hard edges everywhere — do not override */
+
+  /* border voice: 2px is THE rule weight; 1px hairlines inside tables/lists; 4px emphasis */
+  --rule-hair:1px;
+  --rule:2px;
+  --rule-heavy:4px;
+
+  --shadow-none:none;          /* no shadows in this system */
+
+  --dur-fast:120ms;/* @kind other */
+  --dur:200ms;/* @kind other */
+  --ease:cubic-bezier(.2,0,0,1);/* @kind other */ /* sharp out — nothing bouncy */
+
+  --hit:44px;                  /* min touch target */
+  --focus-ring:2px solid var(--ring);
+  --focus-offset:2px;
+}

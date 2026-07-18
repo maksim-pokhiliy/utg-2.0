@@ -19,6 +19,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-7 | Drop Firebase entirely; catalog as static in-repo config, images in `public/`           | RATIFIED |
 | D-8 | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1  | RATIFIED |
 | D-9 | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper) | RATIFIED |
+| D-10 | The design system is a sealed module: single-barrel API, colors/font-sizes exist only inside, Typography + Container for the outside world | RATIFIED |
 
 ---
 
@@ -70,6 +71,13 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Status:** RATIFIED (user delegated the library choice to planner recommendation, 2026-07-17).
 - **Decision.** Tailwind stays as the styling engine; shadcn/ui becomes the component layer (copied-in components, CSS-variable theming, Radix primitives underneath). Adopted in step 4a per the Claude Design system. Retired along the way: Flowbite React (forms/buttons → shadcn), notyf (toasts → Sonner), body-scroll-lock (Radix Dialog/Sheet handles scroll locking), swiper (reports carousel → shadcn/embla Carousel).
 - **Rationale.** It is not "Tailwind vs a library" — shadcn _is_ Tailwind with owned code: no runtime CSS-in-JS, full restylability (brutalist zero-radius theming is trivial), accessibility solved by Radix, first-class Next.js App Router/RSC fit, and CSS-variable tokens map 1:1 to what Claude Design produces. Replaces four dated dependencies with a coherent single system; also the stack recruiters recognize in 2026. Alternatives rejected: Flowbite (status quo — dated, weak primitives), Mantine/Chakra/HeroUI (parallel styling systems pulling away from Tailwind), raw Radix (shadcn minus the leverage).
+
+### D-10 — The design system is a sealed module
+
+- **Status:** RATIFIED (user directive, 2026-07-18).
+- **Decision.** The design system lives as one coherent module (`src/design-system/`) and is the sole styling authority. Concretely: (1) **single public API** — one barrel export; deep imports into module internals are lint-banned; (2) **colors are sealed** — raw color values (hex/rgb/hsl/oklch) exist ONLY in the DS theme definition; Tailwind's default palette is wiped from the theme so non-token color utilities (`bg-zinc-900`, `text-gray-700`…) do not exist at all; app code sees only semantic token utilities/components; (3) **typography is sealed** — font-size/leading values and utilities live only inside the DS; app code renders all text through a variant-based `Typography` component; (4) a `Container` component (MUI-style `maxWidth` prop, built-in gutters) owns page width. App code composes DS components + token utilities, nothing else.
+- **Rationale.** Consistency by construction instead of by convention: drift becomes mechanically impossible (utilities don't exist) or mechanically detectable (grep/lint gates), so no future contributor — human or agent — can restyle ad hoc at call sites. Requested by the user verbatim ("запечатана и обтянута колючей проволокой").
+- **Enforcement — mechanical, not by agreement** (user: "компиллер кричал матом"). Three layers, all hard failures: (1) the Tailwind-4 theme wipe makes non-token color/size utilities produce no CSS at all; (2) ESLint **errors** scoped to everything outside `src/design-system/`: `no-restricted-imports` on DS internals + `no-restricted-syntax` patterns banning color literals (hex/rgb/hsl/oklch) and raw palette/text-size utility classnames in source — `yarn lint` fails on violation; (3) TypeScript unions on `Typography` variants / `Container` maxWidth make invalid usage a compile error. The repo's no-comments rule closes the escape hatch: an `eslint-disable` is a comment and therefore itself a violation visible in any diff. Review greps remain as a fourth, human-side net.
 
 ### D-6 — Stack moves: Zustand and Next 16
 

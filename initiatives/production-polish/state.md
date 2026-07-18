@@ -13,7 +13,7 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 1   | Rescue / de-Firebase + RSC        | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates) | PR #3                              |
 | 2   | Recoil → Zustand + cart fixes     | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                     | PR #4                              |
 | 3   | Next 16 + React 19                | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                     | PR #5                              |
-| 4a  | Port design system (shadcn, D-9)  | 🔵 next — planner exporting tokens/specs via DesignSync, prompt in progress                                                   | `design-export/`                   |
+| 4a  | Port design system (sealed, D-10) | 🔵 active — spec exported to `design-export/`, prompt ready to carry                                                          | `step-4a-design-system-prompt.md`  |
 | D1  | Design system (Claude Design)     | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT |
 | D2  | Screen prototypes (Claude Design) | ✅ done — all surfaces incl. 404, verbatim strings fixed, user approved                                                       | `ui_kits/storefront/`              |
 | 4b  | Implement screens                 | ⬜ pending — gated on 4a                                                                                                      | plan.md                            |
