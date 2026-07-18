@@ -52,7 +52,7 @@ export function Toaster(): ReactElement {
   return (
     <SonnerToaster
       position="bottom-center"
-      toastOptions={{ unstyled: true, duration: 6000 }}
+      toastOptions={{ unstyled: true, duration: 10000 }}
     />
   );
 }

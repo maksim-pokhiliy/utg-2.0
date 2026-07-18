@@ -12,18 +12,10 @@ import {
   IconButton,
   Typography,
 } from "@root/design-system";
-import { useDictionary, type Dictionary } from "@root/i18n";
+import { useDictionary } from "@root/i18n";
 
 import { NavLink } from "./NavLink";
-
-const NAV_ITEMS: { href: string; label: keyof Dictionary["shared"] }[] = [
-  { href: "/", label: "home" },
-  { href: "/category", label: "merch" },
-  { href: "/reports", label: "reports" },
-  { href: "/about", label: "about" },
-];
-
-const INSTAGRAM_URL = "https://www.instagram.com/ukrainian_tactical_gear/";
+import { INSTAGRAM_URL, NAV_ITEMS } from "./nav";
 
 export function NavOverlay(): ReactElement {
   const dictionary = useDictionary();

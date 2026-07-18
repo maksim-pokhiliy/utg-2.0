@@ -31,7 +31,7 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
           {category.products.map((product) => (
             <li key={product.slug} className="relative group">
               <NavLink
-                className="block h-auto w-full"
+                className="block h-auto w-full no-underline text-ink"
                 href={`/category/${category.slug}/${product.slug}`}
               >
                 <div
@@ -47,27 +47,27 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
                     fill
                   />
                 </div>
+
+                {product.isAvailable ? (
+                  <Badge variant="in" className="absolute -mt-10 left-0">
+                    {dictionary.category.order}
+                  </Badge>
+                ) : (
+                  <Badge variant="out" className="absolute -mt-10 left-0">
+                    {dictionary.category.out}
+                  </Badge>
+                )}
+
+                <div className="p-2 text-left">
+                  <Typography variant="body" as="span">
+                    {product.title}
+                  </Typography>
+
+                  <br />
+
+                  <Price>{formatPrice(product.price, money, locale)}</Price>
+                </div>
               </NavLink>
-
-              {product.isAvailable ? (
-                <Badge variant="in" className="absolute -mt-10 left-0">
-                  {dictionary.category.order}
-                </Badge>
-              ) : (
-                <Badge variant="out" className="absolute -mt-10 left-0">
-                  {dictionary.category.out}
-                </Badge>
-              )}
-
-              <div className="p-2 text-left">
-                <Typography variant="body" as="span">
-                  {product.title}
-                </Typography>
-
-                <br />
-
-                <Price>{formatPrice(product.price, money, locale)}</Price>
-              </div>
             </li>
           ))}
         </ul>

@@ -1,6 +1,8 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
+
+import { usePathname } from "next/navigation";
 
 import {
   Badge,
@@ -37,6 +39,12 @@ export default function CartDrawer(): ReactElement {
   const dictionary = useDictionary();
   const money = useMoney();
   const locale = useLocale();
+
+  const pathname = usePathname();
+
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

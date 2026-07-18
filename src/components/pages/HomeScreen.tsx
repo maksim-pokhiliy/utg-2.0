@@ -7,6 +7,7 @@ import { CategorySummary } from "@root/data";
 import { useDictionary } from "@root/i18n";
 
 import { NavLink } from "@root/components/layout/NavLink";
+import { INSTAGRAM_URL } from "@root/components/layout/nav";
 
 interface IHomeScreenProps {
   categories: CategorySummary[];
@@ -21,16 +22,19 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         <div className="flex sm:flex-row flex-col bg-ink pb-20">
           <div className="basis-1/2 text-center sm:text-left relative">
             <div className="px-10 sm:px-14 py-6 bg-background">
-              <Typography variant="hero" className="animate-fade-in pb-6">
+              <Typography variant="hero" className="pb-6">
                 UKRAINIAN
                 <br /> TACTICAL
                 <br /> GEAR
               </Typography>
 
-              <div className="flex text-ink-soft gap-4 justify-center sm:justify-start">
+              <div className="flex gap-4 justify-center sm:justify-start">
                 <a
-                  href="https://www.instagram.com/ukrainian_tactical_gear/"
+                  href={INSTAGRAM_URL}
                   target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="no-underline text-ink-soft hover:text-ink"
                 >
                   <Icon name="instagram" />
                 </a>
@@ -51,7 +55,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
       </div>
 
       <Container className="pb-10">
-        <div className="text-paper text-center sm:text-left pt-10 sm:py-20 basis-1/2">
+        <div className="text-center sm:text-left pt-10 sm:py-20 basis-1/2">
           <Typography
             variant="h1"
             className="text-center sm:text-left text-ink mb-4"
@@ -68,7 +72,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
               <div key={category.slug} className="mt-10 group">
                 <NavLink
                   href={`/category/${category.slug}`}
-                  className="block h-auto w-full"
+                  className="block h-auto w-full no-underline text-ink"
                 >
                   <div
                     className="relative w-full overflow-hidden"
@@ -83,17 +87,15 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                       fill
                     />
                   </div>
-                </NavLink>
 
-                <Typography
-                  variant="h2"
-                  as="span"
-                  className="block text-center text-ink mt-4"
-                >
-                  <NavLink href={`/category/${category.slug}`}>
+                  <Typography
+                    variant="h2"
+                    as="span"
+                    className="block text-center mt-4"
+                  >
                     {category.name}
-                  </NavLink>
-                </Typography>
+                  </Typography>
+                </NavLink>
               </div>
             ))}
           </div>

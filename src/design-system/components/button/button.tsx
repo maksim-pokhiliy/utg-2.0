@@ -60,7 +60,11 @@ export function Button({
 
   if (asChild) {
     return (
-      <Slot className={classes} {...rest}>
+      <Slot
+        className={classes}
+        aria-disabled={disabled || loading || undefined}
+        {...rest}
+      >
         {children}
       </Slot>
     );

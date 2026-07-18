@@ -31,7 +31,7 @@ export default function CategoriesScreen({
             <li key={category.slug} className="relative group">
               <NavLink
                 href={`/category/${category.slug}`}
-                className="block h-auto w-full"
+                className="block h-auto w-full no-underline text-ink"
               >
                 <div
                   className="relative w-full overflow-hidden"
@@ -46,17 +46,15 @@ export default function CategoriesScreen({
                     fill
                   />
                 </div>
-              </NavLink>
 
-              <Typography
-                variant="h2"
-                as="span"
-                className="block text-center text-ink mt-2"
-              >
-                <NavLink href={`/category/${category.slug}`}>
+                <Typography
+                  variant="h2"
+                  as="span"
+                  className="block text-center mt-2"
+                >
                   {category.name}
-                </NavLink>
-              </Typography>
+                </Typography>
+              </NavLink>
             </li>
           ))}
         </ul>
