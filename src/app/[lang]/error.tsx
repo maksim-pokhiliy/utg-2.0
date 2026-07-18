@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+import { Button, Container, Typography } from "@root/design-system";
 import { resolveLocale } from "@root/utils/locale";
 
 const messages = {
@@ -25,18 +26,14 @@ export default function Error({
   const message = messages[resolveLocale(pathname.split("/")[1])];
 
   return (
-    <div className="mx-auto px-10 py-20 text-center">
-      <h1 className="font-bold uppercase text-4xl md:text-6xl mb-4">
+    <Container className="py-20 text-center">
+      <Typography variant="hero" as="h1" className="mb-4">
         {message.title}
-      </h1>
+      </Typography>
 
-      <button
-        type="button"
-        onClick={reset}
-        className="btn-main rounded-2xl inline-block"
-      >
+      <Button variant="outline" onClick={reset}>
         {message.retry}
-      </button>
-    </div>
+      </Button>
+    </Container>
   );
 }

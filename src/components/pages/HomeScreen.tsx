@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 
+import { Button, Container, Icon, Typography } from "@root/design-system";
 import { CategorySummary } from "@root/data";
 import { useDictionary } from "@root/i18n";
 
-import { NavLink } from "@root/components/layout/NavBar/NavLink";
+import { NavLink } from "@root/components/layout/NavLink";
 
 interface IHomeScreenProps {
   categories: CategorySummary[];
@@ -17,31 +18,21 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
   return (
     <div className="mx-auto relative">
       <div className="relative">
-        <div className="flex sm:flex-row flex-col bg-zinc-900 pb-20">
+        <div className="flex sm:flex-row flex-col bg-ink pb-20">
           <div className="basis-1/2 text-center sm:text-left relative">
-            <div className="px-10 sm:px-14 py-6 bg-site">
-              <h1 className="text-5xl sm:text-[80px] 2xl:text-[120px] leading-none animate-fade-in pb-6">
+            <div className="px-10 sm:px-14 py-6 bg-background">
+              <Typography variant="hero" className="animate-fade-in pb-6">
                 UKRAINIAN
                 <br /> TACTICAL
                 <br /> GEAR
-              </h1>
+              </Typography>
 
-              <div className="flex text-gray-700 gap-4 justify-center sm:justify-start">
+              <div className="flex text-ink-soft gap-4 justify-center sm:justify-start">
                 <a
-                  className="text-lg"
                   href="https://www.instagram.com/ukrainian_tactical_gear/"
                   target="_blank"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 448 512"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"
-                    />
-                  </svg>
+                  <Icon name="instagram" />
                 </a>
               </div>
             </div>
@@ -59,18 +50,18 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         />
       </div>
 
-      <div className="px-10 pb-10">
-        <div className="text-custom-1 text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-          <h1 className="font-bold uppercase text-4xl sm:text-6xl text-center sm:text-left text-black mb-4">
-            {dictionary.shared.merch}
-          </h1>
-
-          <NavLink
-            href="/category"
-            className="btn-main rounded-2xl text-base px-8 py-2.5 inline-block"
+      <Container className="pb-10">
+        <div className="text-paper text-center sm:text-left pt-10 sm:py-20 basis-1/2">
+          <Typography
+            variant="h1"
+            className="text-center sm:text-left text-ink mb-4"
           >
-            {dictionary.main.get}
-          </NavLink>
+            {dictionary.shared.merch}
+          </Typography>
+
+          <Button asChild variant="accent">
+            <NavLink href="/category">{dictionary.main.get}</NavLink>
+          </Button>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
             {categories.map((category) => (
@@ -94,16 +85,20 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                   </div>
                 </NavLink>
 
-                <span className="font-bold text-2xl sm:text-5xl block text-center text-black mt-4">
+                <Typography
+                  variant="h2"
+                  as="span"
+                  className="block text-center text-ink mt-4"
+                >
                   <NavLink href={`/category/${category.slug}`}>
                     {category.name}
                   </NavLink>
-                </span>
+                </Typography>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

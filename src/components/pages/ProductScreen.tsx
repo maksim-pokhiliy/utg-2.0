@@ -1,8 +1,8 @@
 import Image from "next/image";
 
+import { Container, Typography } from "@root/design-system";
 import { ProductView } from "@root/data";
-
-import ProductSidebar from "../ui/ProductSidebar";
+import ProductSidebar from "@root/components/product/ProductSidebar";
 
 interface IProductScreenProps {
   product: ProductView;
@@ -10,7 +10,7 @@ interface IProductScreenProps {
 
 export default function ProductScreen({ product }: IProductScreenProps) {
   return (
-    <div className="mx-auto px-10 my-12">
+    <Container className="py-12">
       <div className="full-w overflow-hidden max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row gap-10">
           <div className="box-border flex flex-col basis-1/2 group">
@@ -35,13 +35,13 @@ export default function ProductScreen({ product }: IProductScreenProps) {
             <ProductSidebar product={product} />
 
             {product.description ? (
-              <p className="text-sm md:text-base tracking-wide mt-2">
+              <Typography variant="body" className="mt-2">
                 {product.description}
-              </p>
+              </Typography>
             ) : null}
           </div>
         </div>
       </div>
-    </div>
+    </Container>
   );
 }

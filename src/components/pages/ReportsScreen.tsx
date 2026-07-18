@@ -4,6 +4,7 @@ import Image from "next/image";
 import { EffectCreative } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
+import { Container, SectionBand } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
 
 import "swiper/css";
@@ -24,14 +25,10 @@ export default function ReportsScreen() {
   const dictionary = useDictionary();
 
   return (
-    <div className="mx-auto pb-10 md:pb-20">
-      <div className="bg-black text-custom-1 text-center py-4 md:py-10">
-        <h1 className="font-bold uppercase text-3xl md:text-6xl">
-          {dictionary.shared.reports}
-        </h1>
-      </div>
+    <div className="pb-10 md:pb-20">
+      <SectionBand title={dictionary.shared.reports} center />
 
-      <div className="p-10 sm:px-14">
+      <Container className="py-10">
         <Swiper
           effect="creative"
           modules={[EffectCreative]}
@@ -65,7 +62,7 @@ export default function ReportsScreen() {
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
+      </Container>
     </div>
   );
 }

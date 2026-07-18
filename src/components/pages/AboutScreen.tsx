@@ -2,28 +2,25 @@
 
 import Image from "next/image";
 
+import { Container, SectionBand, Typography } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
 
 export default function AboutScreen() {
   const dictionary = useDictionary();
 
   return (
-    <div className="mx-auto pb-10 md:pb-20">
-      <div className="bg-black text-custom-1 text-center py-4 md:py-10">
-        <h1 className="font-bold uppercase text-3xl md:text-6xl">
-          {dictionary.shared.about}
-        </h1>
-      </div>
+    <div className="pb-10 md:pb-20">
+      <SectionBand title={dictionary.shared.about} center />
 
-      <div className="p-10 sm:px-14">
-        <p className="text-sm md:text-base">{dictionary.about.site_created}</p>
+      <Container className="py-10">
+        <Typography variant="body">{dictionary.about.site_created}</Typography>
 
-        <p className="text-sm md:text-base mt-10">
+        <Typography variant="body" className="mt-10">
           {dictionary.about.all_proceeds}
-        </p>
+        </Typography>
 
         <div
-          className="relative w-full overflow-hidden"
+          className="relative w-full overflow-hidden mt-10"
           style={{ paddingBottom: "100%" }}
         >
           <Image
@@ -35,7 +32,7 @@ export default function AboutScreen() {
             fill
           />
         </div>
-      </div>
+      </Container>
     </div>
   );
 }
