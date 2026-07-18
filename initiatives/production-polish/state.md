@@ -7,36 +7,35 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Board
 
-| #   | Step                              | Status                                                                                                                        | Pointer                            |
-| --- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| 0   | Quick wins                        | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                     | PR #2                              |
-| 1   | Rescue / de-Firebase + RSC        | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates) | PR #3                              |
-| 2   | Recoil → Zustand + cart fixes     | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                     | PR #4                              |
-| 3   | Next 16 + React 19                | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                     | PR #5                              |
-| 4a  | Port design system (sealed, D-10) | 🔵 active — spec exported to `design-export/`, prompt ready to carry                                                          | `step-4a-design-system-prompt.md`  |
-| D1  | Design system (Claude Design)     | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT |
-| D2  | Screen prototypes (Claude Design) | ✅ done — all surfaces incl. 404, verbatim strings fixed, user approved                                                       | `ui_kits/storefront/`              |
-| 4b  | Implement screens                 | ⬜ pending — gated on 4a                                                                                                      | plan.md                            |
-| 4c  | Implement cart/checkout           | ⬜ pending — gated on D2                                                                                                      | plan.md                            |
-| 5   | SEO pack                          | ⬜ pending                                                                                                                    | plan.md                            |
-| 6   | Tests + CI                        | ⬜ pending                                                                                                                    | plan.md                            |
-| 7   | README + presentation             | ⬜ pending                                                                                                                    | plan.md                            |
+| #   | Step                              | Status                                                                                                                                                 | Pointer                            |
+| --- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| 0   | Quick wins                        | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                                              | PR #2                              |
+| 1   | Rescue / de-Firebase + RSC        | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates)                          | PR #3                              |
+| 2   | Recoil → Zustand + cart fixes     | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                                              | PR #4                              |
+| 3   | Next 16 + React 19                | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                                              | PR #5                              |
+| 4a  | Port design system (sealed, D-10) | ✅ PR #6 planner-approved (seal-scream re-proven, tokens verified in built CSS, all greps zero); **user owes browser walkthrough** → then squash-merge | PR #6                              |
+| D1  | Design system (Claude Design)     | ✅ done — user approved; D-4 fully ratified                                                                                                            | project `62bf007e-…` = visual SSOT |
+| D2  | Screen prototypes (Claude Design) | ✅ done — all surfaces incl. 404, verbatim strings fixed, user approved                                                                                | `ui_kits/storefront/`              |
+| 4b  | Implement screens                 | ⬜ pending — gated on 4a                                                                                                                               | plan.md                            |
+| 4c  | Implement cart/checkout           | ⬜ pending — gated on D2                                                                                                                               | plan.md                            |
+| 5   | SEO pack                          | ⬜ pending                                                                                                                                             | plan.md                            |
+| 6   | Tests + CI                        | ⬜ pending                                                                                                                                             | plan.md                            |
+| 7   | README + presentation             | ⬜ pending                                                                                                                                             | plan.md                            |
 
 ## Next action
 
 Single lane now — design lane is CLOSED (D-4 fully ratified; the Claude Design project
 is the visual SSOT for 4a–4c; reopen only point-wise if 4b implementation finds gaps).
 
-**Code lane**: planner writes the 4a prompt — pulls tokens + component specs from the
-design project via DesignSync into `initiatives/production-polish/design-export/`
-(committed), then issues `step-4a-design-system-prompt.md`. User re-checks checkout on
-prod after the `f3f79bf` Vercel deploy when convenient.
-
-Still owed by user: D-3 (commit planner artifacts?).
+**Code lane**: user runs PR #6's browser walkthrough (both locales: burger overlay,
+drawer esc/focus/scroll-lock, stepper incl. clearing input, checkout submit-fail path,
+toasts, no hydration warnings) → squash-merge → prod visual check after Vercel deploy.
+Then planner writes the 4b prompt (screens re-composition per the kit + DEF-3 sizes +
+DEF-14 copy + DEF-20 minors + swiper→DS carousel).
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-9 all ratified)
+(none — D-1…D-10 all ratified)
 
 ## Live carry-forwards
 
