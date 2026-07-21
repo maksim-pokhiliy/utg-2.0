@@ -25,12 +25,14 @@ export type IconLinkVariant = NonNullable<
   VariantProps<typeof iconLink>["variant"]
 >;
 
-interface IconLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
+type IconLinkBaseProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   variant?: IconLinkVariant;
-  label?: string;
   external?: boolean;
-  "aria-label": string;
-}
+};
+
+type IconLinkProps =
+  | (IconLinkBaseProps & { label: string; "aria-label"?: string })
+  | (IconLinkBaseProps & { label?: undefined; "aria-label": string });
 
 export function IconLink({
   variant,
@@ -41,7 +43,7 @@ export function IconLink({
   ...rest
 }: IconLinkProps): ReactElement {
   const externalProps = external ? { target: "_blank", rel: "noreferrer" } : {};
-  const hasLabel = label !== undefined;
+  const hasLabel = Boolean(label);
 
   return (
     <a

@@ -42,6 +42,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
               alt="UTG"
               width={300}
               height={210}
+              quality={100}
               priority
             />
           </div>
@@ -62,18 +63,13 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
             </div>
 
             <div className="flex flex-none flex-wrap items-center gap-x-6 gap-y-4">
-              <Button asChild variant="accent" className="w-[220px]">
+              <Button asChild variant="accent" className="min-w-[220px]">
                 <NavLink href="#merch">
                   {dictionary.main.get}
                   <Icon name="arrow-right" size={20} />
                 </NavLink>
               </Button>
-              <IconLink
-                href={INSTAGRAM_URL}
-                external
-                label="Instagram"
-                aria-label="Instagram"
-              >
+              <IconLink href={INSTAGRAM_URL} external label="Instagram">
                 <Icon name="instagram" size={20} className="size-[18px]" />
               </IconLink>
             </div>
@@ -81,7 +77,10 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         </Container>
       </section>
 
-      <section id="merch" className="bg-band py-8 text-band-foreground">
+      <section
+        id="merch"
+        className="scroll-mt-20 bg-band py-8 text-band-foreground"
+      >
         <Container className="flex flex-wrap items-baseline justify-between gap-4">
           <Typography variant="h2">{dictionary.shared.merch}</Typography>
           <Typography variant="caption" as="span" className="text-band-muted">
@@ -108,8 +107,8 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                         src={category.image}
                         alt=""
                         fill
-                        sizes="(min-width: 1200px) 384px, (min-width: 768px) 33vw, 100vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        quality={100}
+                        sizes="(min-width: 1200px) 360px, (min-width: 880px) 33vw, (min-width: 552px) 46vw, 100vw"
                       />
                     }
                   />
