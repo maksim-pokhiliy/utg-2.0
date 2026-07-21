@@ -36,13 +36,25 @@ const button = cva(
 export type ButtonVariant = NonNullable<VariantProps<typeof button>["variant"]>;
 export type ButtonSize = NonNullable<VariantProps<typeof button>["size"]>;
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+type ButtonBaseProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   block?: boolean;
-  loading?: boolean;
-  asChild?: boolean;
-}
+};
+
+type ButtonAsButtonProps = ButtonBaseProps &
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    asChild?: false;
+    loading?: boolean;
+  };
+
+type ButtonAsChildProps = ButtonBaseProps &
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    asChild: true;
+    loading?: never;
+  };
+
+type ButtonProps = ButtonAsButtonProps | ButtonAsChildProps;
 
 export function Button({
   variant,
@@ -60,11 +72,7 @@ export function Button({
 
   if (asChild) {
     return (
-      <Slot
-        className={classes}
-        aria-disabled={disabled || loading || undefined}
-        {...rest}
-      >
+      <Slot className={classes} aria-disabled={disabled || undefined} {...rest}>
         {children}
       </Slot>
     );
