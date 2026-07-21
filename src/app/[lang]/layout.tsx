@@ -90,7 +90,11 @@ export default async function RootLayout({
 
           <main className="flex-1">{children}</main>
 
-          <Footer year={new Date().getFullYear()} />
+          <Footer
+            year={new Date().getFullYear()}
+            mission={dictionary.footer.mission}
+            navLabels={dictionary.shared}
+          />
 
           <CartDrawer />
           <Toaster />
