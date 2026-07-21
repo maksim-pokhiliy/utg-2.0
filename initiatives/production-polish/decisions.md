@@ -13,13 +13,14 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-1  | Foundation-before-visual step sequence                                                                                                     | RATIFIED |
 | D-2  | Planner/executor execution model                                                                                                           | RATIFIED |
 | D-3  | Track `initiatives/` + `CLAUDE.md` in git, or keep untracked                                                                               | RATIFIED |
-| D-4  | Visual direction for steps 4a–4c                                                                                                           | OPEN     |
+| D-4  | Visual direction for steps 4a–4c                                                                                                           | RATIFIED |
 | D-5  | Deploy target, live-shop status, env values                                                                                                | RATIFIED |
 | D-6  | Stack moves: Recoil→Zustand, Next 14→16 + React 19                                                                                         | RATIFIED |
 | D-7  | Drop Firebase entirely; catalog as static in-repo config, images in `public/`                                                              | RATIFIED |
 | D-8  | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1                                                     | RATIFIED |
 | D-9  | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper)                                                    | RATIFIED |
 | D-10 | The design system is a sealed module: single-barrel API, colors/font-sizes exist only inside, Typography + Container for the outside world | RATIFIED |
+| D-11 | Kit screens are DS demos, not page designs; pages get a per-page design→ratify→implement loop; DS frozen                                   | RATIFIED |
 
 ---
 
@@ -44,7 +45,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 ### D-4 — Visual direction for the redesign (steps 4a–4c)
 
 - **Status:** RATIFIED — fully (final gate passed 2026-07-18: user visually reviewed and approved the complete system + all screen prototypes; planner had reviewed files earlier).
-- **Decision.** Keep + sharpen the existing identity: black/military brutalism on warm off-white, hard edges, condensed display type, flag yellow/blue as rare accents. The ratified concrete language lives in the Claude Design project `62bf007e-1ea9-45bc-a40a-f64544314e8c`: tokens (`tokens/*.css`), component specs (`components/**`), guidelines, and the approved screen kit (`ui_kits/storefront/`). That project is now the visual SSOT for steps 4a–4c; implementation matches it, deviations need a new decision.
+- **Decision.** Keep + sharpen the existing identity: black/military brutalism on warm off-white, hard edges, condensed display type, flag yellow/blue as rare accents. The ratified concrete language lives in the Claude Design project `62bf007e-1ea9-45bc-a40a-f64544314e8c`: tokens (`tokens/*.css`), component specs (`components/**`), guidelines. That project is the visual SSOT; per D-11 the `ui_kits/` screens are demos, and page designs are ratified page-by-page in the D3 track.
 - **Rationale.** It is the project's authentic identity (volunteer gear shop for a fighting unit) and a coherent, ownable direction; a generic-pretty rebrand would erase what makes it distinct.
 
 ### D-5 — Deploy target, live-shop status, env availability
@@ -78,6 +79,12 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Decision.** The design system lives as one coherent module (`src/design-system/`) and is the sole styling authority. Concretely: (1) **single public API** — one barrel export; deep imports into module internals are lint-banned; (2) **colors are sealed** — raw color values (hex/rgb/hsl/oklch) exist ONLY in the DS theme definition; Tailwind's default palette is wiped from the theme so non-token color utilities (`bg-zinc-900`, `text-gray-700`…) do not exist at all; app code sees only semantic token utilities/components; (3) **typography is sealed** — font-size/leading values and utilities live only inside the DS; app code renders all text through a variant-based `Typography` component; (4) a `Container` component (MUI-style `maxWidth` prop, built-in gutters) owns page width. App code composes DS components + token utilities, nothing else.
 - **Rationale.** Consistency by construction instead of by convention: drift becomes mechanically impossible (utilities don't exist) or mechanically detectable (grep/lint gates), so no future contributor — human or agent — can restyle ad hoc at call sites. Requested by the user verbatim ("запечатана и обтянута колючей проволокой").
 - **Enforcement — mechanical, not by agreement** (user: "компиллер кричал матом"). Three layers, all hard failures: (1) the Tailwind-4 theme wipe makes non-token color/size utilities produce no CSS at all; (2) ESLint **errors** scoped to everything outside `src/design-system/`: `no-restricted-imports` on DS internals + `no-restricted-syntax` patterns banning color literals (hex/rgb/hsl/oklch) and raw palette/text-size utility classnames in source — `yarn lint` fails on violation; (3) TypeScript unions on `Typography` variants / `Container` maxWidth make invalid usage a compile error. The repo's no-comments rule closes the escape hatch: an `eslint-disable` is a comment and therefore itself a violation visible in any diff. Review greps remain as a fourth, human-side net. **Addendum (2026-07-18, post-4a fix round):** two more sealed layers — (4) control ownership: styled interactive elements (buttons, text-like links/tabs) exist only as DS components; raw `<button>`/`<a>` JSX outside the DS is an ESLint error (layout containers remain app-land); (5) composite patterns (Dialog, ConfirmDialog, future drawers/cards) are exported as closed intent-API compositions — building blocks stay internal; the DS exports intents, not constructors.
+
+### D-11 — Per-page design loop; kit screens are demos; DS frozen
+
+- **Status:** RATIFIED (user directive, 2026-07-21).
+- **Decision.** The storefront screens in the design project's `ui_kits/` are demos that showcase the design system — NOT ratified page designs (this supersedes the earlier "D2 done" reading). The design system itself is FROZEN: changes only through Claude Design plus explicit ratification. Pages are designed and shipped one at a time: planner writes a per-page Claude Design brief → user carries it → user+planner ratify the prototype → planner exports it → one `/feature`/`/feature small` run implements that page. Old step 4b (implement-all-screens-per-kit) is superseded; 4b is rescoped to DS-alignment in the app, and per-page implementation steps follow the design track.
+- **Rationale.** The product owner wants a genuine UI/UX pass with fresh ideas per page rather than an implementation of showcase demos; the per-page loop keeps every PR small and guarantees real eyes on every design before code. Kit demos remain useful as starting material and as the verbatim source for kit-authored copy.
 
 ### D-6 — Stack moves: Zustand and Next 16
 

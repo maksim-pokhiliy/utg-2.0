@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-07-21, D-11).** Never ran. Pages are designed and implemented one at a time now; 4b was rescoped to DS alignment (`step-4b-ds-alignment-prompt.md`). Kept for the trail — the DEF-3 composite-cart-identity design and the image-hygiene gates in here remain good input for the per-page implementation prompts.
+
 # Step 4b — Screens per the ratified kit: home/catalog/product/reports/about/404, sizes, swiper removal (executor prompt)
 
 Precondition: master at/after `ba65cb6` (4a + fix round merged).

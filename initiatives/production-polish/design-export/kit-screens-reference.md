@@ -1,6 +1,6 @@
 # Kit screen compositions (verbatim from `ui_kits/storefront/`, pulled 2026-07-18)
 
-The ratified screen specs for 4b/4c. Inline styles are the kit's medium — translate to
+Per D-11 these are DS DEMOS, not ratified page designs — reference material for the per-page design briefs and the verbatim source for kit-authored copy strings. Inline styles are the kit's medium — translate to
 DS components/token utilities; structure, hierarchy, and values are the spec. The kit's
 simulated loading (550ms skeleton timeout in Category) is prototype theater — our pages
 are SSG with synchronous data: NO loading states on catalog pages.

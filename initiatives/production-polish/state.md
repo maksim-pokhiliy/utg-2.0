@@ -1,43 +1,40 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-21 (4b prompt amended with NavOverlay fidelity; D2 pending user screen pass)
+**Updated:** 2026-07-21 (D-11: per-page design loop; 4b rescoped to DS alignment; Home brief issued)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
 
 ## Board
 
-| #   | Step                                  | Status                                                                                                                                                             | Pointer                            |
-| --- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| 0   | Quick wins                            | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                                                          | PR #2                              |
-| 1   | Rescue / de-Firebase + RSC            | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates)                                      | PR #3                              |
-| 2   | Recoil → Zustand + cart fixes         | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                                                          | PR #4                              |
-| 3   | Next 16 + React 19                    | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                                                          | PR #5                              |
-| 4a  | Port design system (sealed, D-10)     | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                                                        | PR #6                              |
-| D1  | Design system (Claude Design)         | ✅ done — user approved; D-4 fully ratified                                                                                                                        | project `62bf007e-…` = visual SSOT |
-| D2  | Screen prototypes (Claude Design)     | 🟡 exists + punch-list-fixed, but user's visual pass over the screens is UNCONFIRMED — user clicks through `ui_kits/storefront` in parallel with the 4b plan phase | `kit-screens-reference.md`         |
-| 4b  | Implement screens (kit + DEF-3/14/20) | 🔵 active — prompt ready to carry, kit screens exported                                                                                                            | plan.md                            |
-| 4c  | Implement cart/checkout               | ⬜ pending — gated on D2                                                                                                                                           | plan.md                            |
-| 5   | SEO pack                              | ⬜ pending                                                                                                                                                         | plan.md                            |
-| 6   | Tests + CI                            | ⬜ pending                                                                                                                                                         | plan.md                            |
-| 7   | README + presentation                 | ⬜ pending                                                                                                                                                         | plan.md                            |
+| #     | Step                                                                                            | Status                                                                                                                        | Pointer                            |
+| ----- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 0     | Quick wins                                                                                      | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                     | PR #2                              |
+| 1     | Rescue / de-Firebase + RSC                                                                      | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates) | PR #3                              |
+| 2     | Recoil → Zustand + cart fixes                                                                   | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                     | PR #4                              |
+| 3     | Next 16 + React 19                                                                              | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                     | PR #5                              |
+| 4a    | Port design system (sealed, D-10)                                                               | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                   | PR #6                              |
+| D1    | Design system (Claude Design)                                                                   | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT |
+| D2    | Screen prototypes (Claude Design)                                                               | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`         |
+| 4b    | DS alignment (NavOverlay + DEF-20)                                                              | 🔵 active — prompt ready to carry                                                                                             | `step-4b-ds-alignment-prompt.md`   |
+| D3    | Per-page screen designs (Claude Design)                                                         | 🔵 active — Home brief issued                                                                                                 | `design-3-home-prompt.md`          |
+| 4c–4g | Per-page implementation (home → catalog/category → product → cart/checkout → reports/about/404) | ⬜ pending — each gated on its D3 ratification                                                                                | plan.md                            |
+| 5     | SEO pack                                                                                        | ⬜ pending                                                                                                                    | plan.md                            |
+| 6     | Tests + CI                                                                                      | ⬜ pending                                                                                                                    | plan.md                            |
+| 7     | README + presentation                                                                           | ⬜ pending                                                                                                                    | plan.md                            |
 
 ## Next action
 
-Two parallel micro-lanes:
+Two parallel lanes (D-11 rhythm):
 
-- **Code lane**: user carries the amended `step-4b-screens-prompt.md` to a fresh
-  executor tab (one-liner: "Run initiatives/production-polish/step-4b-screens-prompt.md
-  — read that file and execute it as your full prompt, verbatim."). Plan-gate review by
-  planner as usual.
-- **Design lane (10 min, parallel)**: user opens the Claude Design project and clicks
-  through `ui_kits/storefront` (the clickable prototype) in both locales — this is the
-  D2 visual pass that may never have happened. Changes, if any, fold in at the 4b plan
-  gate; approval upgrades D2 back to done.
-
-After the 4b PR merges: **planner handoff** — user starts a fresh planner session with
-the start prompt delivered in chat (= `planner-handoff-prompt.md` + current-position
-snapshot).
+- **Code lane**: user carries `step-4b-ds-alignment-prompt.md` to a fresh executor tab
+  (one-liner: "Run initiatives/production-polish/step-4b-ds-alignment-prompt.md — read
+  that file and execute it as your full prompt, verbatim."). Plan-gate review by planner
+  as usual. After its PR merges: **planner handoff** (fresh session starts from the
+  start prompt delivered in chat = `planner-handoff-prompt.md` + position snapshot).
+- **Design lane**: user carries `design-3-home-prompt.md` into the Claude Design
+  session. Prototype comes back → user+planner ratify → planner exports → the Home
+  implementation prompt (step 4c) follows. Subsequent page briefs issue one at a time.
 
 ## Open decisions awaiting ratification
 
