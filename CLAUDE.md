@@ -39,7 +39,7 @@ Path alias: `@root/*` → `src/*`.
 
 ### Page pattern
 
-Catalog `page.tsx` files are server components: they read the catalog module synchronously, resolve the locale, and pass localized view objects as props to presentational `*Screen` components (`src/components/pages/`). Screens are `"use client"` and read `{locale, dictionary, money}` from `src/i18n/` context hooks (`useDictionary`/`useMoney`/`useLocale`). Checkout is dynamically imported `ssr:false` via a thin client wrapper (redundant since the hydration guard — removal scheduled, DEF-19).
+Catalog `page.tsx` files are server components: they read the catalog module synchronously, resolve the locale, and pass localized view objects as props to presentational `*Screen` components (`src/components/pages/`). Screens are `"use client"` and read `{locale, dictionary, money}` from `src/i18n/` context hooks (`useDictionary`/`useMoney`/`useLocale`).
 
 ### Data
 
@@ -47,7 +47,7 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 - Catalog data is sacred business data (titles, UAH integer prices, availability, sizes, uk/en descriptions) — never invent or edit it without an explicit decision; `initiatives/production-polish/extracted/` holds the recovered sources of truth.
 - URL slugs are lowercase (`patches`, `tshirts`, `patches/waiting`, `tshirts/death-black`).
 - The only API route left is `POST /api/place_order` — proxies the checkout payload to the external `PLACE_ORDER_URL` relay, forwarding upstream status; its 500 body carries no internal details. The payload field shape (`first_name`…`cart[{title,quantity,productUrl,…}]`, `locale`, `total`) is a sacred contract with the bot.
-- All images are local under `public/images/` (products, reports, `no_commercial.JPG`), logo at `public/logo.png`, favicon via `src/app/favicon.ico`. Fonts still come from external CDNs (Wix) until the design-system step.
+- All images are local under `public/images/` (products, reports, `no_commercial.JPG`), logo at `public/logo.png` (intrinsic 640×448), favicon via `src/app/favicon.ico`.
 
 ### State & money
 
@@ -58,7 +58,7 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 ### Styling — the sealed design system (D-10)
 
 - `src/design-system/` is the ONLY styling authority: Tailwind 4 CSS-first theme (`styles/theme.css` — the default palette and text scale are WIPED; only UTG semantic tokens exist), shadcn-style primitives, and a single public barrel `index.ts`. App code imports from `@root/design-system` only; the global stylesheet reaches the layout via CSS `@import`, not JS.
-- Raw colors (hex/rgb/hsl/oklch) and raw font-size utilities exist ONLY inside the DS. App text renders through `Typography` (variants hero/h1/h2/h3/nav/body/small/caption/price); page width through `Container` (maxWidth prop). Styled interactive elements are DS components (`Button`, `IconButton`, `TextTab`, `IconLink`); raw `<button>`/`<a>` outside the DS is a lint error. Composite patterns are closed intent-API exports (`Dialog` title/children/actions + size panel|full, `ConfirmDialog`) — building blocks stay internal. Layout containers (div/flex/gap/spacing) remain app-land.
+- Raw colors (hex/rgb/hsl/oklch) and raw font-size utilities exist ONLY inside the DS. App text renders through `Typography` (variants hero/h1/h2/h3/nav/body/small/caption/price); page width through `Container` (maxWidth prop). Styled interactive elements are DS components (`Button`, `IconButton`, `TextTab`, `IconLink` — whose optional `label` renders the sealed icon+mono-caps treatment); raw `<button>`/`<a>` outside the DS is a lint error. Composite patterns are closed intent-API exports (`Dialog` title/children/actions + size panel|full, `ConfirmDialog`, `CategoryTile` index/name/media) — building blocks stay internal. Layout containers (div/flex/gap/spacing) remain app-land.
 - Fonts self-hosted via `next/font/google`: Oswald (display, uppercase), IBM Plex Sans (body), IBM Plex Mono (prices/meta labels) — latin + cyrillic subsets, zero external font/CDN requests.
 - The visual spec is `initiatives/production-polish/design-export/` (verbatim from the ratified Claude Design project — read-only); violations of the seal fail `yarn lint`, and there is no `eslint-disable` escape hatch (comments are banned repo-wide).
 
