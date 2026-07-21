@@ -24,15 +24,20 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-Single lane now — design lane is CLOSED (D-4 fully ratified; the Claude Design project
-is the visual SSOT for 4a–4c; reopen only point-wise if 4b implementation finds gaps).
+Two parallel micro-lanes:
 
-**Code lane**: planner writes `step-4b-screens-prompt.md` (screens re-composition per
-the kit: home/catalog/category/product + breadcrumbs/back-link + ProductCard primitive,
-size selector with composite cart id DEF-3, kit copy into dictionaries DEF-14, DEF-20
-minors, swiper → DS carousel). Executor runs it; after its PR merges, the **planner
-handoff** happens: user starts a fresh planner session with
-`planner-handoff-prompt.md`.
+- **Code lane**: user carries the amended `step-4b-screens-prompt.md` to a fresh
+  executor tab (one-liner: "Run initiatives/production-polish/step-4b-screens-prompt.md
+  — read that file and execute it as your full prompt, verbatim."). Plan-gate review by
+  planner as usual.
+- **Design lane (10 min, parallel)**: user opens the Claude Design project and clicks
+  through `ui_kits/storefront` (the clickable prototype) in both locales — this is the
+  D2 visual pass that may never have happened. Changes, if any, fold in at the 4b plan
+  gate; approval upgrades D2 back to done.
+
+After the 4b PR merges: **planner handoff** — user starts a fresh planner session with
+the start prompt delivered in chat (= `planner-handoff-prompt.md` + current-position
+snapshot).
 
 ## Open decisions awaiting ratification
 
