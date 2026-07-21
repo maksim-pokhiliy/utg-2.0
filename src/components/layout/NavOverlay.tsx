@@ -30,37 +30,42 @@ export function NavOverlay(): ReactElement {
         title="Menu"
         size="full"
       >
-        <nav className="flex-1 flex flex-col items-center justify-center gap-6">
-          {NAV_ITEMS.map((item, index) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="no-underline text-band-foreground hover:text-flag-yellow flex items-baseline gap-4"
-            >
-              <Typography
-                variant="caption"
-                as="span"
-                className="text-band-muted"
+        <div className="flex-1 flex flex-col px-(--gutter)">
+          <nav className="mt-[10vh] flex flex-col gap-1">
+            {NAV_ITEMS.map((item, index) => (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="flex items-baseline gap-4 no-underline text-band-foreground hover:text-flag-yellow"
               >
-                {String(index + 1).padStart(2, "0")}
-              </Typography>
-              <Typography variant="h2" as="span">
-                {dictionary.shared[item.label]}
-              </Typography>
-            </NavLink>
-          ))}
+                <Typography
+                  variant="caption"
+                  as="span"
+                  className="text-band-muted"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </Typography>
+                <Typography variant="nav" as="span">
+                  {dictionary.shared[item.label]}
+                </Typography>
+              </NavLink>
+            ))}
+          </nav>
 
           <IconLink
             href={INSTAGRAM_URL}
             external
             variant="band"
             aria-label="Instagram"
-            className="mt-8"
+            className="mt-auto mb-8 gap-2.5"
           >
-            <Icon name="instagram" size={24} />
+            <Icon name="instagram" size={20} />
+            <Typography variant="caption" as="span">
+              Instagram
+            </Typography>
           </IconLink>
-        </nav>
+        </div>
       </Dialog>
     </>
   );
