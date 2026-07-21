@@ -43,7 +43,7 @@ export function IconLink({
   ...rest
 }: IconLinkProps): ReactElement {
   const externalProps = external ? { target: "_blank", rel: "noreferrer" } : {};
-  const hasLabel = Boolean(label);
+  const hasLabel = Boolean(label?.trim());
 
   return (
     <a

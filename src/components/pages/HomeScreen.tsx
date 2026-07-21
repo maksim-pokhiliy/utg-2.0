@@ -97,7 +97,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                 <NavLink
                   href={`/category/${category.slug}`}
                   aria-label={category.name}
-                  className="group block text-ink no-underline"
+                  className="block text-ink no-underline"
                 >
                   <CategoryTile
                     index={index + 1}

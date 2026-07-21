@@ -57,13 +57,10 @@ export function NavOverlay(): ReactElement {
             href={INSTAGRAM_URL}
             external
             variant="band"
-            aria-label="Instagram"
-            className="mt-auto mb-8 gap-2.5 self-start"
+            label="Instagram"
+            className="mt-auto mb-8 self-start"
           >
             <Icon name="instagram" size={20} />
-            <Typography variant="caption" as="span">
-              Instagram
-            </Typography>
           </IconLink>
         </div>
       </Dialog>
