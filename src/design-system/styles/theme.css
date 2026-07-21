@@ -60,6 +60,7 @@
   --text-small: 0.875rem;
   --text-caption: 0.75rem;
   --text-price: 1.0625rem;
+  --text-nav: clamp(2.5rem, 8vw, 4rem);
 
   --display-weight: 600;
   --display-tracking: 0.015em;
@@ -77,6 +78,7 @@
   --type-small: 400 var(--text-small) / 1.5 var(--font-body);
   --type-caption: 500 var(--text-caption) / 1.4 var(--font-mono);
   --type-price: 500 var(--text-price) / 1.2 var(--font-mono);
+  --type-nav: var(--display-weight) var(--text-nav) / 1.15 var(--font-display);
 
   --space-1: 4px;
   --space-2: 8px;
