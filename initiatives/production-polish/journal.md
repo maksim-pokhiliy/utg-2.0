@@ -170,3 +170,8 @@ Append-only. One entry per session/step.
 
 - Independent verification on the branch: 8 atomic commits, planner-docs commit confirmed stripped, zero planner files; tsc/lint/prettier/zero-env build green, route table all-SSG; seal greps zero; **the asChild/loading type ban proven live** (planner probe `<Button asChild loading>` → TS2322 naming the incompatible prop).
 - Reviewer findings ruled: [low] overlay lacks any overflow handling — planner grep confirmed (no overflow-\* in NavOverlay/dialog); on short landscape viewports the menu clips unreachably; real functional defect, one utility class, executor tab warm → fix-before-merge round. [info] `--text-nav` narrative nuance accepted (same clamp bounds as h1, steeper mid-ramp + 1.15 leading justify the token; wording only). [info] accessible name "UTG" — already ruled, stands.
+
+## 2026-07-21 — 4b merged; planner handoff issued
+
+- Overflow fix round landed (overflow-y-auto on the overlay children column, verified in merged master) and PR #7 squash-merged (`8d9a4ba`). DEF-20 CLOSED (all four: not-applicable-with-evidence / type-ban proven by planner probe / Footer server-ified / switcher anchored). CLAUDE.md Typography variant list gains `nav`.
+- This closes the last run of this planner session per the standing plan. Handoff prompt refreshed (D-11 per-brief-project pattern replaces the stale old-4c DesignSync note) and issued in chat with the position snapshot. Session totals for the trail: PRs #2–#7 merged (quick wins → rescue/de-Firebase → Zustand → Next 16/React 19 → sealed DS + fix round → DS alignment), prod rescued and redesign foundation complete; the fresh planner takes over at 4c (Home implementation, prompt staged) and drives the D-11 per-page loop.

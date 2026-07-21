@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-21 (Home design ratified + exported; 4c prompt ready behind 4b)
+**Updated:** 2026-07-21 (4b merged; PLANNER HANDOFF point — fresh session takes over with 4c)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -16,7 +16,7 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 4a    | Port design system (sealed, D-10)                                                | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                   | PR #6                              |
 | D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT |
 | D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`         |
-| 4b    | DS alignment (NavOverlay + DEF-20)                                               | 🔵 active — plan gate approved (caption numbers OK; title="UTG" instead of wordmark deferral), implementing                   | `step-4b-ds-alignment-prompt.md`   |
+| 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                              |
 | D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — **Home RATIFIED + exported**; next brief (catalog/category) after 4c lands                                        | `design-export/screens/home/`      |
 | 4c    | Implement Home per D3.1                                                          | 🟡 prompt ready — carry ONLY after 4b merges (both touch the DS)                                                              | `step-4c-home-prompt.md`           |
 | 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | ⬜ pending — each gated on its D3 ratification                                                                                | plan.md                            |
@@ -26,15 +26,16 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-Current waits and order:
+**PLANNER HANDOFF IS NOW.** The previous planner session ends here; a fresh planner
+session starts from the start prompt issued in chat (= `planner-handoff-prompt.md` +
+position snapshot). The new planner's first moves:
 
-- **4b (DS alignment)** executor is running — plan gate → planner review → PR → merge.
-- **4c (Home)** prompt is ready (`step-4c-home-prompt.md`) but carries ONLY after the
-  4b merge — both steps touch `src/design-system/`; serial avoids DS conflicts.
-- **Handoff** after the 4b merge per the standing plan: fresh planner session starts
-  from the start prompt the planner will re-issue at that moment (the chat snapshot
-  from before D-11 is stale — do not reuse it); it then reviews 4c's plan gate and
-  drives the per-page loop (next design brief: catalog/category pages).
+1. User carries `step-4c-home-prompt.md` (Home implementation) to a fresh executor tab
+   — the 4b serialization precondition is satisfied. New planner reviews its plan gate,
+   then the PR, per the operating loop.
+2. After 4c lands: planner refreshes the Desktop code snapshot, writes the next D3
+   brief (catalog + category pages) following the `design-3-home-prompt.md` pattern,
+   and the per-page loop continues (4d–4g), then steps 5/6/7.
 
 ## Open decisions awaiting ratification
 
