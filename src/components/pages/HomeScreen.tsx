@@ -70,7 +70,7 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
                 </NavLink>
               </Button>
               <IconLink href={INSTAGRAM_URL} external label="Instagram">
-                <Icon name="instagram" size={20} className="size-[18px]" />
+                <Icon name="instagram" size={20} />
               </IconLink>
             </div>
           </div>
