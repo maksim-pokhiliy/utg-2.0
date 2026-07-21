@@ -61,3 +61,33 @@ body "{title} will be removed from your cart.", actions "Cancel" / "Remove".
 Spec (`tokens/components.css`): `.utg-stepper { display: inline-flex; … }` — the control
 hugs its buttons+input and never stretches to the parent's width, regardless of flex/grid
 context it is placed in.
+
+## NavOverlay (burger menu) — LEFT-aligned, numbered, Instagram pinned bottom
+
+Verbatim structure from the kit's Header.jsx overlay (pulled 2026-07-18). Our 4a
+implementation centers the column (`items-center justify-center`) — that is a fidelity
+defect; the kit is left-aligned:
+
+```jsx
+<div style={{ position: "fixed", inset: 0, background: "var(--ink)", color: "var(--paper)",
+  display: "flex", flexDirection: "column", padding: "0 var(--gutter)" }}>
+  {/* top row: wordmark + close, minHeight 60px, space-between */}
+  <nav style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "10vh" }}>
+    {/* each link: LEFT-aligned, flex baseline gap 16px */}
+    <a style={{ font: "600 clamp(2.5rem,8vw,4rem)/1.15 var(--font-display)",
+      textTransform: "uppercase", letterSpacing: "0.015em", color: "var(--paper)",
+      textDecoration: "none", display: "flex", alignItems: "baseline", gap: "16px" }}>
+      <span style={{ font: "500 0.875rem var(--font-mono)", color: "var(--band-muted)" }}>01</span>
+      головна
+    </a>
+  </nav>
+  <a style={{ marginTop: "auto", marginBottom: "32px", /* Instagram: mono caps row,
+    inline-flex gap 10px, icon 20 */ }}>Instagram</a>
+</div>
+```
+
+Key deltas vs our 4a build: column is left-aligned (no centering), starts at 10vh from
+the top; link size is the big display clamp (larger than Typography h2's scale — extend
+the DS type scale or the overlay link component accordingly, inside the DS); numbered
+prefixes sit at baseline; Instagram is `margin-top: auto` pinned, as a mono-caps row
+with the icon, not a bare icon.

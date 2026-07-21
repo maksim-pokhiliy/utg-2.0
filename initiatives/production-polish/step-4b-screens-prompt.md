@@ -18,7 +18,8 @@ Invocation: paste everything below into the executor tab as one message.
 3. **DEF-3 — composite cart identity.** Sized products: the selected size becomes part of the cart line — line id = `slug:size` (unsized products keep bare slug), so different sizes are distinct lines. **The payload field shape is sacred — no new fields**: encode the size into the line `title` (e.g. «Футболка «Death» Black (M)») so the bot prints it naturally; `{id,title,price,quantity,image,productUrl}` keys stay exactly as-is. Old persisted carts (bare-slug ids, no size in title) must still load and remain orderable — additive compatibility, no storage-key bump.
 4. **DEF-14 — kit copy into dictionaries.** Add/update the keys your screens need from the reference's copy table (both locales, verbatim; the drift-guard forces pairs). Includes the about1/en fix ("the unit we support"). Checkout strings are explicitly NOT yours (4c).
 5. **DEF-20 sweep** (verify each against current master first — some may have died in the fix round): NavOverlay/Dialog missing `aria-describedby`; `Button asChild` silently ignoring `loading` (guard or type-forbid the combination); Footer's unnecessary `"use client"` (server-ify via props if clean); LanguageSwitcher's unanchored `pathname.replace` (anchor to `^/locale`).
-6. **Image hygiene** (the 4b half of old DEF-11): proper `sizes` for every `next/image` in grids/hero per its rendered width, `priority` only above the fold (hero logo, first grid row at most), `loading="lazy"` for reports/about, quality per the existing `qualities` config. No full-size overfetch on grid thumbnails.
+6. **Chrome fidelity — NavOverlay per the kit** (user-reported defect): the burger overlay must match the kit's composition (`design-export/chrome-reference.md`, NavOverlay section) — LEFT-aligned link column starting ~10vh from the top (ours is centered: wrong), links in the kit's large display size with baseline-aligned mono numbered prefixes, Instagram as a mono-caps row with icon pinned to the bottom via auto margin. Whatever type step this needs (the kit link size exceeds the current Typography scale) lives inside the DS, not as app-land overrides.
+7. **Image hygiene** (the 4b half of old DEF-11): proper `sizes` for every `next/image` in grids/hero per its rendered width, `priority` only above the fold (hero logo, first grid row at most), `loading="lazy"` for reports/about, quality per the existing `qualities` config. No full-size overfetch on grid thumbnails.
 
 **Acceptance gates (verify and report in the PR test plan):**
 
@@ -26,7 +27,7 @@ Invocation: paste everything below into the executor tab as one message.
 - View-source: home hero + mission + category names server-rendered; product page contains description and size chips markup; reports grid has 8 figures with `01…08` captions and exactly one text caption (#3).
 - Cart identity: add tee M then tee L → two distinct lines; add tee M twice → one line qty 2; unsized patch behaves as before; a pre-4b persisted cart (bare ids) loads and checks out; payload keys byte-identical (`{id,title,price,quantity,image,productUrl}` + `locale`/`total`/form fields — no `size` key anywhere).
 - Both locales walkthrough: home → category → product (in-stock with sizes; out-of-stock tee shows badges/outMsg/Instagram) → add to cart → drawer shows size-suffixed titles → remove-confirm still works; `/uk/x` 404 renders the kit design; no hydration warnings.
-- No regressions on chrome from the fix round (switcher toggle, footer, stepper hug).
+- No regressions on chrome from the fix round (switcher toggle, footer, stepper hug); NavOverlay matches the kit in both locales (left-aligned numbered column, Instagram pinned bottom).
 
 **Constraints:**
 
