@@ -18,6 +18,8 @@ export type { IconName, IconSize } from "./components/icon/icon";
 export { IconLink } from "./components/icon-link/icon-link";
 export type { IconLinkVariant } from "./components/icon-link/icon-link";
 
+export { CategoryTile } from "./components/category-tile/category-tile";
+
 export { Badge } from "./components/badge/badge";
 export type { BadgeVariant } from "./components/badge/badge";
 
