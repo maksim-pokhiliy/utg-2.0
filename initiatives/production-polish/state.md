@@ -44,9 +44,10 @@ position snapshot). The new planner's first moves:
 ## Live carry-forwards
 
 DEF-4 (order endpoint abuse protection — decide later), DEF-9 (hero photo sealed in
-Firebase; support ticket pending; non-blocking — typographic hero stopgap in step 1),
-DEF-13 (rates-down `en` checkout renders `$` on UAH total in the operator's Telegram
-message — coordinated payload+bot fix, after 4c).
+Firebase; support ticket pending; non-blocking — the ratified Home design carries a
+photo slot), DEF-13 (rates-down `en` checkout renders `$` on UAH total in the
+operator's Telegram message — coordinated payload+bot fix, after 4c), DEF-18
+(react-hooks v6 rules off — revisit with any React Compiler decision).
 
 ## Gotchas a resuming session must know
 

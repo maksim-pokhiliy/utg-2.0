@@ -175,3 +175,9 @@ Append-only. One entry per session/step.
 
 - Overflow fix round landed (overflow-y-auto on the overlay children column, verified in merged master) and PR #7 squash-merged (`8d9a4ba`). DEF-20 CLOSED (all four: not-applicable-with-evidence / type-ban proven by planner probe / Footer server-ified / switcher anchored). CLAUDE.md Typography variant list gains `nav`.
 - This closes the last run of this planner session per the standing plan. Handoff prompt refreshed (D-11 per-brief-project pattern replaces the stale old-4c DesignSync note) and issued in chat with the position snapshot. Session totals for the trail: PRs #2–#7 merged (quick wins → rescue/de-Firebase → Zustand → Next 16/React 19 → sealed DS + fix round → DS alignment), prod rescued and redesign foundation complete; the fresh planner takes over at 4c (Home implementation, prompt staged) and drives the D-11 per-page loop.
+
+## 2026-07-21 — Planner session 2 resumes; deferred board trued up
+
+- Fresh planner session ran the resume protocol; board cross-checked against `git log origin/master` (`796a4d9`, clean tree, no open PRs) — position matches the handoff snapshot exactly. Zero-env `yarn build` on master green in 7.3s, route table all-SSG.
+- Deferred hygiene: DEF-6 and DEF-7 were still SCHEDULED but verified done — DEF-6 resolved by the step-3/4a lockfile refresh (caniuse-lite 1.0.30001806, no browserslist warning in the zero-env build), DEF-7 shipped ahead of its step-5 slot (local `src/app/favicon.ico`, all assets in `public/`, zero `firebasestorage` refs repo-wide). Both CLOSED with evidence; DEF-18 added to state.md's live carry-forwards line where it was omitted.
+- Next action unchanged: user carries `step-4c-home-prompt.md` to a fresh executor tab; planner reviews the plan gate, then the PR, per the loop.
