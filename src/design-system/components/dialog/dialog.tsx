@@ -57,6 +57,14 @@ export function Dialog({
   actions,
   size = "panel",
 }: DialogProps): ReactElement {
+  const titleNode = (
+    <DialogPrimitive.Title asChild>
+      <Typography variant="h3" as="h2">
+        {title}
+      </Typography>
+    </DialogPrimitive.Title>
+  );
+
   return (
     <DialogPrimitive.Root
       open={open}
@@ -76,11 +84,7 @@ export function Dialog({
           {size === "full" ? (
             <>
               <div className="flex items-center justify-between p-(--gutter)">
-                <DialogPrimitive.Title asChild>
-                  <Typography variant="h3" as="h2">
-                    {title}
-                  </Typography>
-                </DialogPrimitive.Title>
+                {titleNode}
 
                 <DialogPrimitive.Close asChild>
                   <IconButton variant="band" aria-label="Close">
@@ -94,11 +98,7 @@ export function Dialog({
           ) : (
             <>
               <div className="bg-band text-band-foreground px-4 py-3">
-                <DialogPrimitive.Title asChild>
-                  <Typography variant="h3" as="h2">
-                    {title}
-                  </Typography>
-                </DialogPrimitive.Title>
+                {titleNode}
               </div>
 
               <div className="flex flex-col gap-5 p-4">
