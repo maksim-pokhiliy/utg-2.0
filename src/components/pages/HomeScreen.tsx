@@ -4,9 +4,11 @@ import Image from "next/image";
 
 import {
   Button,
+  CategoryTile,
   Container,
   Icon,
   IconLink,
+  Separator,
   Typography,
 } from "@root/design-system";
 import { CategorySummary } from "@root/data";
@@ -23,84 +25,99 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
   const dictionary = useDictionary();
 
   return (
-    <div className="mx-auto relative">
-      <div className="relative">
-        <div className="flex sm:flex-row flex-col bg-ink pb-20">
-          <div className="basis-1/2 text-center sm:text-left relative">
-            <div className="px-10 sm:px-14 py-6 bg-background">
-              <Typography variant="hero" className="pb-6">
-                UKRAINIAN
-                <br /> TACTICAL
-                <br /> GEAR
-              </Typography>
+    <>
+      <section className="pt-[clamp(var(--space-7),7vw,var(--space-9))] pb-12">
+        <Container>
+          <div className="relative">
+            <Typography variant="hero">
+              Ukrainian
+              <br />
+              Tactical
+              <br />
+              Gear
+            </Typography>
+            <Image
+              className="absolute right-0 bottom-1 h-auto w-[clamp(120px,26vw,300px)]"
+              src="/logo.png"
+              alt="UTG"
+              width={300}
+              height={210}
+              quality={100}
+              priority
+            />
+          </div>
 
-              <div className="flex gap-4 justify-center sm:justify-start">
-                <IconLink href={INSTAGRAM_URL} external aria-label="Instagram">
-                  <Icon name="instagram" />
-                </IconLink>
-              </div>
+          <Separator weight="heavy" className="mt-6" />
+
+          <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-6 pt-6">
+            <div className="grow basis-[300px]">
+              <Typography variant="caption" as="p" className="mb-2 text-ink">
+                {dictionary.main.stamp}
+              </Typography>
+              <Typography
+                variant="body"
+                className="max-w-[46ch] text-pretty text-ink-soft"
+              >
+                {dictionary.main.mission}
+              </Typography>
+            </div>
+
+            <div className="flex flex-none flex-wrap items-center gap-x-6 gap-y-4">
+              <Button asChild variant="accent" className="min-w-[220px]">
+                <NavLink href="#merch">
+                  {dictionary.main.get}
+                  <Icon name="arrow-right" size={20} />
+                </NavLink>
+              </Button>
+              <IconLink href={INSTAGRAM_URL} external label="Instagram">
+                <Icon name="instagram" size={20} />
+              </IconLink>
             </div>
           </div>
-        </div>
+        </Container>
+      </section>
 
-        <Image
-          className="absolute inset-x-2/4 -translate-x-2/4 -translate-y-[20%] bottom-0 top-[30%] hidden sm:block"
-          src="/logo.png"
-          alt="UTG"
-          quality={100}
-          width={320}
-          height={320}
-          priority
-        />
-      </div>
-
-      <Container className="pb-10">
-        <div className="text-center sm:text-left pt-10 sm:py-20 basis-1/2">
-          <Typography
-            variant="h1"
-            className="text-center sm:text-left text-ink mb-4"
-          >
-            {dictionary.shared.merch}
+      <section
+        id="merch"
+        className="scroll-mt-20 bg-band py-8 text-band-foreground"
+      >
+        <Container className="flex flex-wrap items-baseline justify-between gap-4">
+          <Typography variant="h2">{dictionary.shared.merch}</Typography>
+          <Typography variant="caption" as="span" className="text-band-muted">
+            {dictionary.main.counter}
           </Typography>
+        </Container>
+      </section>
 
-          <Button asChild variant="accent">
-            <NavLink href="/category">{dictionary.main.get}</NavLink>
-          </Button>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-14">
-            {categories.map((category) => (
-              <div key={category.slug} className="mt-10 group">
+      <section className="pt-8 pb-24">
+        <Container>
+          <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-6">
+            {categories.map((category, index) => (
+              <li key={category.slug}>
                 <NavLink
                   href={`/category/${category.slug}`}
-                  className="block h-auto w-full no-underline text-ink"
+                  aria-label={category.name}
+                  className="block text-ink no-underline"
                 >
-                  <div
-                    className="relative w-full overflow-hidden"
-                    style={{ paddingBottom: "100%" }}
-                  >
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      quality={100}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
-                      priority
-                      fill
-                    />
-                  </div>
-
-                  <Typography
-                    variant="h2"
-                    as="span"
-                    className="block text-center mt-4"
-                  >
-                    {category.name}
-                  </Typography>
+                  <CategoryTile
+                    index={index + 1}
+                    name={category.name}
+                    media={
+                      <Image
+                        src={category.image}
+                        alt=""
+                        fill
+                        quality={100}
+                        sizes="(min-width: 1200px) 360px, (min-width: 880px) 33vw, (min-width: 552px) 46vw, 100vw"
+                      />
+                    }
+                  />
                 </NavLink>
-              </div>
+              </li>
             ))}
-          </div>
-        </div>
-      </Container>
-    </div>
+          </ul>
+        </Container>
+      </section>
+    </>
   );
 }

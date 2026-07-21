@@ -7,7 +7,10 @@
     "quantity": "Quantity"
   },
   "main": {
-    "get": "Get Merch"
+    "get": "Get Merch",
+    "stamp": "Volunteer project",
+    "mission": "All merch proceeds buy equipment for a Ukrainian special-forces unit.",
+    "counter": "3 categories"
   },
   "category": {
     "order": "Order Now",
