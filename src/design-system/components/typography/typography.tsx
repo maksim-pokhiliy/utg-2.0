@@ -15,7 +15,8 @@ export type TypographyVariant =
   | "body"
   | "small"
   | "caption"
-  | "price";
+  | "price"
+  | "nav";
 
 const VARIANT_CLASS: Record<TypographyVariant, string> = {
   hero: "type-hero",
@@ -26,6 +27,7 @@ const VARIANT_CLASS: Record<TypographyVariant, string> = {
   small: "type-small",
   caption: "type-caption",
   price: "type-price",
+  nav: "type-nav",
 };
 
 const DEFAULT_TAG: Record<TypographyVariant, ElementType> = {
@@ -37,6 +39,7 @@ const DEFAULT_TAG: Record<TypographyVariant, ElementType> = {
   small: "p",
   caption: "span",
   price: "span",
+  nav: "span",
 };
 
 type TypographyProps<T extends ElementType> = {

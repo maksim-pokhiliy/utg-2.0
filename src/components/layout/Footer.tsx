@@ -1,26 +1,28 @@
-"use client";
-
 import type { ReactElement } from "react";
 
 import { Container, Icon, IconLink, Typography } from "@root/design-system";
-import { useDictionary } from "@root/i18n";
+import type { Dictionary } from "@root/i18n";
 
 import { NavLink } from "./NavLink";
 import { INSTAGRAM_URL, NAV_ITEMS } from "./nav";
 
 interface FooterProps {
   year: number;
+  mission: string;
+  navLabels: Dictionary["shared"];
 }
 
-export default function Footer({ year }: FooterProps): ReactElement {
-  const dictionary = useDictionary();
-
+export default function Footer({
+  year,
+  mission,
+  navLabels,
+}: FooterProps): ReactElement {
   return (
     <footer className="bg-band text-band-foreground mt-auto">
       <Container className="flex flex-col gap-7 pt-12 pb-6">
         <div className="flex flex-wrap items-start justify-between gap-x-12 gap-y-6">
           <Typography variant="small" className="max-w-[38ch] text-band-muted">
-            {dictionary.footer.mission}
+            {mission}
           </Typography>
 
           <nav className="flex flex-col gap-2">
@@ -35,7 +37,7 @@ export default function Footer({ year }: FooterProps): ReactElement {
                   as="span"
                   className="font-display font-medium leading-none uppercase tracking-[0.05em]"
                 >
-                  {dictionary.shared[item.label]}
+                  {navLabels[item.label]}
                 </Typography>
               </NavLink>
             ))}

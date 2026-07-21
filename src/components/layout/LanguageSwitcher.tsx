@@ -13,12 +13,13 @@ export default function LanguageSwitcher(): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
 
-  const switchTo = (lang: string) => {
+  const switchTo = (lang: (typeof LOCALES)[number]) => {
     if (lang === locale) {
       return;
     }
 
-    router.push(pathname.replace(`/${locale}`, `/${lang}`));
+    const prefix = `/${locale}`;
+    router.push(`/${lang}${pathname.slice(prefix.length)}`);
   };
 
   return (
