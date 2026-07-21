@@ -75,11 +75,13 @@ export function Dialog({
         >
           {size === "full" ? (
             <>
-              <DialogPrimitive.Title className="sr-only">
-                {title}
-              </DialogPrimitive.Title>
+              <div className="flex items-center justify-between p-(--gutter)">
+                <DialogPrimitive.Title asChild>
+                  <Typography variant="h3" as="h2">
+                    {title}
+                  </Typography>
+                </DialogPrimitive.Title>
 
-              <div className="flex justify-end p-(--gutter)">
                 <DialogPrimitive.Close asChild>
                   <IconButton variant="band" aria-label="Close">
                     <Icon name="x" />

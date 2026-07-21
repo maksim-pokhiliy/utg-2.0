@@ -27,7 +27,7 @@ export function NavOverlay(): ReactElement {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Menu"
+        title="UTG"
         size="full"
       >
         <div className="flex-1 flex flex-col px-(--gutter)">
