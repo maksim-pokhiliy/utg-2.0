@@ -58,7 +58,7 @@ export function NavOverlay(): ReactElement {
             external
             variant="band"
             aria-label="Instagram"
-            className="mt-auto mb-8 gap-2.5"
+            className="mt-auto mb-8 gap-2.5 self-start"
           >
             <Icon name="instagram" size={20} />
             <Typography variant="caption" as="span">
