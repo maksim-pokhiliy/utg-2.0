@@ -30,7 +30,7 @@ export function NavOverlay(): ReactElement {
         title="UTG"
         size="full"
       >
-        <div className="flex-1 flex flex-col px-(--gutter)">
+        <div className="flex-1 flex flex-col px-(--gutter) overflow-y-auto">
           <nav className="mt-[10vh] flex flex-col gap-1">
             {NAV_ITEMS.map((item, index) => (
               <NavLink
