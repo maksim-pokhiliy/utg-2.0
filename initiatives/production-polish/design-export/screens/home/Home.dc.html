@@ -16,10 +16,11 @@
   <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
   <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
   <script src="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js"></script>
+  <script src="../data/catalog.js"></script>
   <style>header a img{height:38px !important}</style>
 </helmet>
 <div id="home" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
-  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ sticky }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ sticky }}" nav="{{ navLinks }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
   <main style="flex:1 1 auto">
     <section data-screen-label="Hero" style="padding:clamp(var(--space-7),7vw,var(--space-9)) var(--gutter) var(--space-7)">
       <div style="max-width:var(--container);margin:0 auto">
@@ -51,7 +52,7 @@
     </section>
     <section data-screen-label="Categories" style="padding:var(--space-6) var(--gutter) var(--space-9)">
       <div style="max-width:var(--container);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--space-5)">
-        <a class="utg-card" href="#/category/patches">
+        <a class="utg-card" href="{{ hrefPatches }}">
           <span class="utg-card-media"><img src="../../assets/products/patch-utg.jpg" alt="{{ t.catPatches }}"></span>
           <span style="display:flex;align-items:center;gap:var(--space-3);padding:14px 16px">
             <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:var(--ink-faint)">01</span>
@@ -59,7 +60,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
           </span>
         </a>
-        <a class="utg-card" href="#/category/stickers">
+        <a class="utg-card" href="{{ hrefStickers }}">
           <span class="utg-card-media"><img src="../../assets/products/stickers-2.jpg" alt="{{ t.catStickers }}"></span>
           <span style="display:flex;align-items:center;gap:var(--space-3);padding:14px 16px">
             <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:var(--ink-faint)">02</span>
@@ -67,7 +68,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
           </span>
         </a>
-        <a class="utg-card" href="#/category/tshirts">
+        <a class="utg-card" href="{{ hrefTshirts }}">
           <span class="utg-card-media"><img src="../../assets/products/tshirt-death-black.jpg" alt="{{ t.catTshirts }}"></span>
           <span style="display:flex;align-items:center;gap:var(--space-3);padding:14px 16px">
             <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:var(--ink-faint)">03</span>
@@ -78,7 +79,7 @@
       </div>
     </section>
   </main>
-  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" hint-size="100%,280px"></x-import>
+  <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" nav="{{ navLinks }}" hint-size="100%,280px"></x-import></sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
@@ -88,8 +89,26 @@
 }">
 class Component extends DCLogic {
   state = { locale: null };
+  componentDidMount() {
+    if (!window.UTG_CATALOG) {
+      this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); this.forceUpdate(); } }, 25);
+    }
+    this._onHash = () => this.forceUpdate();
+    window.addEventListener("hashchange", this._onHash);
+    this._t2 = setTimeout(() => this.forceUpdate(), 150);
+    this._t3 = setTimeout(() => this.forceUpdate(), 600);
+  }
+  componentWillUnmount() {
+    clearInterval(this._t);
+    clearTimeout(this._t2);
+    clearTimeout(this._t3);
+    window.removeEventListener("hashchange", this._onHash);
+  }
   renderVals() {
-    const locale = this.state.locale ?? this.props.locale ?? "uk";
+    const C = window.UTG_CATALOG;
+    const hash = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const hashLang = hash.lang === "en" || hash.lang === "uk" ? hash.lang : null;
+    const locale = this.state.locale ?? hashLang ?? this.props.locale ?? "uk";
     const heroPhoto = (this.props.heroPhotoSrc ?? "").trim();
     const T = {
       uk: {
@@ -116,7 +135,11 @@ class Component extends DCLogic {
     return {
       locale,
       t: T[locale],
-      setLocale: (l) => this.setState({ locale: l }),
+      setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
+      navLinks: C ? C.navLinks(locale) : null,
+      hrefPatches: C ? C.categoryHref("patches", locale) : "#",
+      hrefStickers: C ? C.categoryHref("stickers", locale) : "#",
+      hrefTshirts: C ? C.categoryHref("tshirts", locale) : "#",
       heroPhotoImg: heroPhoto
         ? React.createElement("img", {
             src: heroPhoto,
@@ -127,6 +150,7 @@ class Component extends DCLogic {
       showPhoto: !!heroPhoto,
       showSkull: !heroPhoto,
       sticky: this.props.stickyHeader ?? true,
+      ready: !!C,
       cartCount: 0,
     };
   }
