@@ -6,9 +6,11 @@ import { Container, ProductCard, SectionBand } from "@root/design-system";
 import { CategoryView } from "@root/data";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 import { formatPrice } from "@root/utils/formatPrice";
-import { formatCount } from "@root/utils/plural";
+import { formatItemCount } from "@root/utils/plural";
 
 import { NavLink } from "@root/components/layout/NavLink";
+
+const ABOVE_FOLD_IMAGE_COUNT = 3;
 
 interface ICategoryScreenProps {
   category: CategoryView;
@@ -23,14 +25,8 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
   const isAnyAvailable = category.products.some(
     (product) => product.isAvailable
   );
-
-  const itemForms = {
-    one: dictionary.category.itemOne,
-    few: dictionary.category.itemFew,
-    many: dictionary.category.itemMany,
-  };
   const meta =
-    formatCount(total, locale, itemForms) +
+    formatItemCount(total, locale, dictionary) +
     (isAnyAvailable ? "" : ` · ${dictionary.category.out}`);
 
   return (
@@ -47,12 +43,16 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
       <section className="pt-8 pb-24">
         <Container>
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6">
-            {category.products.map((product) => (
+            {category.products.map((product, index) => (
               <li key={product.slug}>
                 <NavLink
                   href={`/category/${category.slug}/${product.slug}`}
-                  aria-label={product.title}
-                  className="block text-ink no-underline"
+                  aria-label={
+                    product.isAvailable
+                      ? product.title
+                      : `${product.title}, ${dictionary.category.out}`
+                  }
+                  className="block h-full text-ink no-underline"
                 >
                   <ProductCard
                     title={product.title}
@@ -60,13 +60,14 @@ export default function CategoryScreen({ category }: ICategoryScreenProps) {
                     isAvailable={product.isAvailable}
                     orderLabel={dictionary.category.order}
                     outLabel={dictionary.category.out}
+                    className="h-full"
                     media={
                       <Image
                         src={product.image}
                         alt=""
                         fill
                         quality={100}
-                        loading="lazy"
+                        priority={index < ABOVE_FOLD_IMAGE_COUNT}
                         sizes="(min-width: 1200px) 288px, (min-width: 768px) 33vw, (min-width: 480px) 50vw, 100vw"
                       />
                     }
