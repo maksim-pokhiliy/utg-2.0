@@ -8,6 +8,7 @@ interface CategoryTileProps {
   index: number;
   name: string;
   media: ReactNode;
+  meta?: { count: string; availability: string };
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export function CategoryTile({
   index,
   name,
   media,
+  meta,
   className,
 }: CategoryTileProps): ReactElement {
   return (
@@ -36,6 +38,24 @@ export function CategoryTile({
         </Typography>
         <Icon name="arrow-right" size={20} />
       </span>
+      {meta ? (
+        <span className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-[2px] border-t border-line px-4 pt-[10px] pb-3">
+          <Typography
+            variant="caption"
+            as="span"
+            className="whitespace-nowrap text-ink-faint"
+          >
+            {meta.count}
+          </Typography>
+          <Typography
+            variant="caption"
+            as="span"
+            className="whitespace-nowrap text-ink-faint"
+          >
+            {meta.availability}
+          </Typography>
+        </span>
+      ) : null}
     </span>
   );
 }
