@@ -20,6 +20,8 @@ export type { IconLinkVariant } from "./components/icon-link/icon-link";
 
 export { CategoryTile } from "./components/category-tile/category-tile";
 
+export { ProductCard } from "./components/product-card/product-card";
+
 export { Badge } from "./components/badge/badge";
 export type { BadgeVariant } from "./components/badge/badge";
 

@@ -46,4 +46,6 @@ export interface CategorySummary {
   slug: CategorySlug;
   name: string;
   image: string;
+  count: number;
+  isAnyAvailable: boolean;
 }

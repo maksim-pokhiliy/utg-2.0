@@ -180,11 +180,19 @@ const localizeCategory = (
 });
 
 export const getCategorySummaries = (locale: Locale): CategorySummary[] =>
-  categories.map((category) => ({
-    slug: category.slug,
-    name: category.name[locale],
-    image: category.image,
-  }));
+  categories.map((category) => {
+    const items = products.filter(
+      (product) => product.category === category.slug
+    );
+
+    return {
+      slug: category.slug,
+      name: category.name[locale],
+      image: category.image,
+      count: items.length,
+      isAnyAvailable: items.some((product) => product.isAvailable),
+    };
+  });
 
 export const getCategoryView = (
   slug: string,

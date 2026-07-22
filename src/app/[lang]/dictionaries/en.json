@@ -14,7 +14,14 @@
   },
   "category": {
     "order": "Order Now",
-    "out": "Out Of Stock"
+    "out": "Out Of Stock",
+    "inStock": "In Stock",
+    "itemOne": "item",
+    "itemFew": "items",
+    "itemMany": "items",
+    "catOne": "category",
+    "catFew": "categories",
+    "catMany": "categories"
   },
   "product": {
     "add": "Add to Cart"
