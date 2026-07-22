@@ -48,12 +48,12 @@ export function SectionBand({
   return (
     <div
       className={cn(
-        "bg-band text-band-foreground py-8 px-(--gutter) [&_:focus-visible]:outline-band-foreground",
+        "bg-band text-band-foreground py-8 [&_:focus-visible]:outline-band-foreground",
         center && "text-center",
         className
       )}
     >
-      <div className="mx-auto max-w-(--container)">
+      <div className="mx-auto w-full max-w-(--container) px-(--gutter)">
         {kickerNode}
         {meta != null ? (
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">

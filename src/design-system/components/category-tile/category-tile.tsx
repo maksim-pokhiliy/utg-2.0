@@ -26,7 +26,7 @@ export function CategoryTile({
         className
       )}
     >
-      <span className="relative aspect-square overflow-hidden border-b-2 border-ink bg-paper [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-200 [&_img]:ease-[var(--ease)] group-hover/tile:[&_img]:scale-[1.03]">
+      <span className="relative aspect-square overflow-hidden border-b-2 border-ink bg-white [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-200 [&_img]:ease-[var(--ease)] group-hover/tile:[&_img]:scale-[1.03]">
         {media}
       </span>
       <span className="flex items-center gap-3 px-4 py-[14px]">
