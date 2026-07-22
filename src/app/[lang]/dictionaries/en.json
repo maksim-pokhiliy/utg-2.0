@@ -18,7 +18,10 @@
     "inStock": "In Stock",
     "itemOne": "item",
     "itemFew": "items",
-    "itemMany": "items"
+    "itemMany": "items",
+    "catOne": "category",
+    "catFew": "categories",
+    "catMany": "categories"
   },
   "product": {
     "add": "Add to Cart"

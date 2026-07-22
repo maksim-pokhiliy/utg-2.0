@@ -18,7 +18,10 @@
     "inStock": "В наявності",
     "itemOne": "товар",
     "itemFew": "товари",
-    "itemMany": "товарів"
+    "itemMany": "товарів",
+    "catOne": "категорія",
+    "catFew": "категорії",
+    "catMany": "категорій"
   },
   "product": {
     "add": "Додати у Кошик"
