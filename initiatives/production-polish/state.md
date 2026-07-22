@@ -26,9 +26,10 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. User attaches the refreshed Desktop snapshot + carries
-   `design-4-catalog-category-prompt.md` to a FRESH Claude Design session, approves the
-   two compositions visually, and brings the design-project URL back.
+1. User re-attaches the refreshed Desktop snapshot + carries
+   `design-4-catalog-category-prompt.md` into the SAME Claude Design dialog that
+   produced Home (the prototype accumulates into a full clickable site on mocked
+   data), approves the two compositions visually, and brings the project URL back.
 2. Planner fidelity-reviews via DesignSync (token vocabulary only; proposed DS
    additions — expected: `ProductCard`, possibly a `CategoryTile` extension — need
    explicit ratification), exports verbatim to `design-export/screens/{catalog,category}/`,

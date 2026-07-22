@@ -1,24 +1,28 @@
 # D3.2 — Catalog index + Category pages design (Claude Design brief)
 
-Paste everything below into a FRESH Claude Design session as one message, with the
-freshly refreshed `utg-2.0` Desktop snapshot attached.
+Paste everything below into the SAME Claude Design dialog that produced the Home
+prototype, as one message, with the freshly refreshed `utg-2.0` Desktop snapshot
+attached. The design project now accumulates page by page into a full clickable
+prototype of the site on mocked data — every following page brief lands in this same
+dialog.
 
 Standing rule for ALL page briefs (D3 track): the user attaches a FRESH snapshot of the
 codebase (folder `utg-2.0`, planner refreshes it on the Desktop before each brief) to
-the design session. The brief still carries all copy inline; the attached code is the
-ground truth for what exists — the sealed design system in `src/design-system/`
-(tokens `styles/theme.css`, primitives, public barrel `index.ts`), current screens in
-`src/app/[lang]/` + `src/components/`, dictionaries in `src/app/[lang]/dictionaries/`.
+the design dialog; the newest snapshot SUPERSEDES any previously attached one. The
+brief still carries all copy inline; the attached code is the ground truth for what
+exists — the sealed design system in `src/design-system/` (tokens `styles/theme.css`,
+primitives, public barrel `index.ts`), current screens in `src/app/[lang]/` +
+`src/components/`, dictionaries in `src/app/[lang]/dictionaries/`.
 
 ---
 
-Page-design phase, second brief. The design system is FROZEN and ratified — tokens,
-type, primitives, guidelines are the law; do not restyle them. The attached codebase is
-the ground truth: `src/design-system/` now includes `CategoryTile` (the numbered tile
-shipped with the ratified Home), and the Home page (`src/components/pages/HomeScreen.tsx`)
-is the SHIPPED, live continuation point — your designs extend its visual language. The
-storefront screens in older `ui_kits/` demos are sketches you may depart from, not
-ratified designs.
+Page-design phase, second brief — same dialog, the prototype grows. The freshly
+attached `utg-2.0` snapshot SUPERSEDES the one from the Home brief: your ratified Home
+is now SHIPPED and live in it (`src/components/pages/HomeScreen.tsx`), and
+`src/design-system/` now includes `CategoryTile` (your numbered tile, as implemented —
+DS-native values). The design system is FROZEN and ratified — tokens, type, primitives,
+guidelines are the law; do not restyle them. The storefront screens in older `ui_kits/`
+demos are sketches you may depart from, not ratified designs.
 
 **Task: design TWO surfaces** (they ship together as one implementation step).
 Mobile-first (375px) and desktop (1200px+), Ukrainian default with an English variant
@@ -87,3 +91,8 @@ Deliverable: ONE worked composition per surface — no variant forks: commit to 
 direction and polish it across both breakpoints, both locales, and all states
 (hover/focus per the system). Ship as new files in this project, clearly separated
 (e.g. `screens/catalog/` + `screens/category/`).
+
+Because the prototype is cumulative, WIRE the navigation: the Home screen's category
+tiles and its catalog flow click through to the new screens, the catalog index's tiles
+click through to the three category instances — the project should browse like the
+real site on mocked data.
