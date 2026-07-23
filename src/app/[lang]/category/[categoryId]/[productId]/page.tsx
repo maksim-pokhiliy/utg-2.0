@@ -50,5 +50,11 @@ export default async function Product({ params }: IProductPageProps) {
     notFound();
   }
 
-  return <ProductScreen product={product} categoryName={category.name} />;
+  return (
+    <ProductScreen
+      key={`${categoryId}/${productId}`}
+      product={product}
+      categoryName={category.name}
+    />
+  );
 }

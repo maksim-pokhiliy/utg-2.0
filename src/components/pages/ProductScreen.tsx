@@ -55,7 +55,7 @@ export default function ProductScreen({
   };
 
   const handleAddToCart = () => {
-    if (product.sizes && size === null) {
+    if (product.sizes && product.sizes.length > 0 && size === null) {
       setIsSizeMissing(true);
 
       return;
@@ -119,7 +119,7 @@ export default function ProductScreen({
                 {formatPrice(product.price, money, locale)}
               </Price>
 
-              {product.sizes ? (
+              {product.sizes && product.sizes.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   <Typography
                     variant="caption"
