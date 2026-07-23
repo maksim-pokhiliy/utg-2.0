@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/fonts.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/colors.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/typography.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/spacing.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/base.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
+  <script>(function(){var u="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js";function go(){var s=document.createElement("script");s.src=u;document.head.appendChild(s);}if(window.React){go();}else{var n=0,t=setInterval(function(){if(window.React||++n>500){clearInterval(t);go();}},20);}})();</script>
+  <script src="../data/catalog.js"></script>
+  <style>header a img{height:38px !important}</style>
+</helmet>
+<div id="product" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ true }}" nav="{{ navLinks }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
+  <main style="flex:1 1 auto">
+    <section class="utg-band" data-screen-label="Product band">
+      <div style="max-width:var(--container);margin:0 auto">
+        <a href="{{ backHref }}" style="display:inline-flex;align-items:center;min-height:44px;margin:-14px 0 0;font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--band-muted);text-decoration:none" style-hover="color:var(--band-foreground);text-decoration:underline">{{ backLabel }}</a>
+        <h1 style="text-wrap:balance">{{ title }}</h1>
+      </div>
+    </section>
+    <section data-screen-label="Product" style="padding:var(--space-6) var(--gutter) var(--space-9)">
+      <div style="max-width:var(--container);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:var(--space-6) var(--space-7);align-items:start">
+        <div style="position:relative;aspect-ratio:1/1;border:var(--rule) solid var(--ink);background:#fff">
+          <sc-if value="{{ canOrder }}" hint-placeholder-val="{{ false }}"><img src="{{ image }}" alt="{{ title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></sc-if>
+          <sc-if value="{{ isOut }}" hint-placeholder-val="{{ false }}"><img src="{{ image }}" alt="{{ title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(.45);opacity:.7"></sc-if>
+          <span class="{{ badgeCls }}" style="position:absolute;top:0;left:0">{{ badgeLabel }}</span>
+        </div>
+        <div style="min-width:0;display:flex;flex-direction:column;gap:var(--space-5)">
+          <x-import component-from-global-scope="UTGDesignSystem_62bf00.Price" uah="{{ price }}" locale="{{ locale }}" big="{{ true }}" muted="{{ isOut }}" hint-size="90px,29px"></x-import>
+          <sc-if value="{{ hasSizes }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+              <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">{{ sizeLabel }}</span>
+              <sc-if value="{{ canOrder }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)" role="group" aria-label="{{ sizeLabel }}">
+                  <sc-for list="{{ chips }}" as="c" hint-placeholder-count="0">
+                    <button type="button" style="{{ c.style }}" style-hover="background:var(--ink);color:var(--paper)" style-focus="outline:2px solid var(--secondary);outline-offset:2px" onClick="{{ c.onPick }}" aria-pressed="{{ c.pressed }}">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ isOut }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+                  <sc-for list="{{ sizeNames }}" as="s" hint-placeholder-count="0"><span class="utg-badge utg-badge--out">{{ s }}</span></sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <hr style="margin:0;border:0;border-top:var(--rule-hair) solid var(--line)">
+          <sc-if value="{{ canOrder }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)">
+                <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">{{ qtyLabel }}</span>
+                <x-import component-from-global-scope="UTGDesignSystem_62bf00.QuantityStepper" value="{{ qty }}" on-change="{{ setQty }}" label="{{ qtyLabel }}" hint-size="150px,44px"></x-import>
+              </div>
+              <x-import component-from-global-scope="UTGDesignSystem_62bf00.Button" variant="accent" block="{{ true }}" hint-size="100%,48px">{{ addLabel }}</x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isOut }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <p style="margin:0;font:var(--type-body);color:var(--ink-soft);max-width:55ch;text-wrap:pretty">{{ outMsg }}</p>
+              <x-import component-from-global-scope="UTGDesignSystem_62bf00.Button" variant="outline" block="{{ true }}" href="https://www.instagram.com/ukrainian_tactical_gear/" target="_blank" rel="noreferrer" hint-size="100%,48px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><path d="M17.5 6.5h.01"></path></svg>Instagram</x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasDescription }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-3);border-top:var(--rule-hair) solid var(--line);padding-top:var(--space-5)">
+              <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">{{ descLabel }}</span>
+              <p style="margin:0;font:var(--type-body);color:var(--ink-soft);max-width:55ch;text-wrap:pretty">{{ description }}</p>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+  </main>
+  <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" nav="{{ navLinks }}" hint-size="100%,280px"></x-import></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;shape&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;patches/waiting&quot;, &quot;patches/set&quot;, &quot;stickers/sticker-pack&quot;, &quot;tshirts/death-black&quot;], &quot;default&quot;: &quot;patches/waiting&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;demoInStock&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Design review&quot;}
+}">
+class Component extends DCLogic {
+  state = { locale: null, qty: 1, size: null };
+  componentDidMount() {
+    if (!window.UTG_CATALOG) {
+      this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); this.forceUpdate(); } }, 25);
+    }
+    this._onHash = () => this.setState({ size: null, qty: 1 });
+    window.addEventListener("hashchange", this._onHash);
+    this._t2 = setTimeout(() => this.forceUpdate(), 150);
+    this._t3 = setTimeout(() => this.forceUpdate(), 600);
+  }
+  componentWillUnmount() {
+    clearInterval(this._t);
+    clearTimeout(this._t2);
+    clearTimeout(this._t3);
+    window.removeEventListener("hashchange", this._onHash);
+  }
+  renderVals() {
+    const C = window.UTG_CATALOG;
+    const hash = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const hashLang = hash.lang === "en" || hash.lang === "uk" ? hash.lang : null;
+    const locale = this.state.locale ?? hashLang ?? this.props.locale ?? "uk";
+    const shape = (this.props.shape ?? "patches/waiting").split("/");
+    const catSlug = hash.cat ?? shape[0];
+    const prodSlug = hash.product ?? shape[1];
+    const v = C ? C.productView(catSlug, prodSlug, locale) : { categorySlug: catSlug, categoryName: "", title: "", description: null, sizes: null, price: 0, isAvailable: false, image: "" };
+    const d = C ? C.dict[locale] : {};
+    const available = (this.props.demoInStock ?? false) ? true : v.isAvailable;
+    const sel = this.state.size;
+    const chipBase = {
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      minWidth: "56px", minHeight: "44px", padding: "0 14px",
+      border: "2px solid var(--ink)", cursor: "pointer",
+      font: "500 0.9375rem var(--font-mono)", letterSpacing: "var(--caps-tracking)", textTransform: "uppercase",
+      transition: "background var(--dur) var(--ease), color var(--dur) var(--ease)",
+    };
+    return {
+      locale,
+      setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
+      navLinks: C ? C.navLinks(locale) : null,
+      ready: !!C,
+      cartCount: 0,
+      backHref: C ? C.categoryHref(v.categorySlug, locale) : "#",
+      backLabel: "← " + (v.categoryName || ""),
+      title: v.title,
+      image: v.image,
+      badgeCls: available ? "utg-badge utg-badge--in" : "utg-badge utg-badge--out",
+      badgeLabel: available ? (d.inStock ?? "") : (d.out ?? ""),
+      price: v.price,
+      isOut: !available,
+      canOrder: available,
+      hasSizes: !!v.sizes,
+      sizeNames: v.sizes || [],
+      chips: (v.sizes || []).map((s) => ({
+        label: s,
+        pressed: sel === s,
+        onPick: () => this.setState({ size: sel === s ? null : s }),
+        style: sel === s ? { ...chipBase, background: "var(--ink)", color: "var(--paper)" } : { ...chipBase, background: "var(--paper)", color: "var(--ink)" },
+      })),
+      qty: this.state.qty,
+      setQty: (n) => this.setState({ qty: n }),
+      hasDescription: !!v.description,
+      description: v.description,
+      sizeLabel: d.size ?? "",
+      qtyLabel: d.quantity ?? "",
+      addLabel: d.add ?? "",
+      descLabel: d.description ?? "",
+      outMsg: d.outMsg ?? "",
+    };
+  }
+}
+</script>
+</body>
+</html>

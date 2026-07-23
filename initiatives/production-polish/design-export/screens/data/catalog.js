@@ -2,6 +2,16 @@
    Counts and availability are DERIVED from the products array — nothing hardcoded per page. */
 (function () {
   var A = "../../assets/products/";
+  var TS = ["M", "L", "XL", "2XL"];
+  /* descriptions verbatim from src/data/catalog.ts */
+  var DESC_DEATH = {
+    en: 'Small print on the left chest: Ukrainian Tactical Gear logo. Back print with "With you or for you it depends on how you trained" slogan and large graphic.',
+    uk: 'Ліворуч спереду дрібний принт: лого Ukrainian Tactical Gear. Принт на спині зі слоганом "With you or for you it depends on how you trained" і великим малюнком.',
+  };
+  var DESC_WELCOME = {
+    en: 'Small print on the left chest: Ukrainian Tactical Gear logo. Back print with "Welcome to Ukraine, suka!" slogan and large graphic.',
+    uk: 'Ліворуч спереду дрібний принт: лого Ukrainian Tactical Gear. Принт на спині зі слоганом "Welcome to Ukraine, suka!" і великим малюнком.',
+  };
   var categories = [
     { slug: "patches", name: { uk: "Патчі", en: "Patches" }, image: A + "patch-utg.jpg" },
     { slug: "stickers", name: { uk: "Стікери", en: "Stickers" }, image: A + "stickers-2.jpg" },
@@ -9,12 +19,12 @@
   ];
   /* order mirrors catalog.ts */
   var products = [
-    { slug: "death-black", category: "tshirts", title: { uk: "«Death» Чорна", en: "«Death» Black" }, price: 1000, isAvailable: false, image: A + "tshirt-death-black.jpg" },
-    { slug: "welcome-black", category: "tshirts", title: { uk: "«Welcome» Чорна", en: "«Welcome» Black" }, price: 1000, isAvailable: false, image: A + "tshirt-welcome-black.jpg" },
-    { slug: "death-green", category: "tshirts", title: { uk: "«Death» Зелена", en: "«Death» Green" }, price: 1000, isAvailable: false, image: A + "tshirt-death-green.jpg" },
-    { slug: "welcome-green", category: "tshirts", title: { uk: "«Welcome» Зелена", en: "«Welcome» Green" }, price: 1000, isAvailable: false, image: A + "tshirt-welcome-green.jpg" },
-    { slug: "death-grey", category: "tshirts", title: { uk: "«Death» Сіра", en: "«Death» Grey" }, price: 1000, isAvailable: false, image: A + "tshirt-death-grey.jpg" },
-    { slug: "welcome-grey", category: "tshirts", title: { uk: "«Welcome» Сіра", en: "«Welcome» Grey" }, price: 1000, isAvailable: false, image: A + "tshirt-welcome-grey.jpg" },
+    { slug: "death-black", category: "tshirts", title: { uk: "«Death» Чорна", en: "«Death» Black" }, description: DESC_DEATH, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-death-black.jpg" },
+    { slug: "welcome-black", category: "tshirts", title: { uk: "«Welcome» Чорна", en: "«Welcome» Black" }, description: DESC_WELCOME, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-welcome-black.jpg" },
+    { slug: "death-green", category: "tshirts", title: { uk: "«Death» Зелена", en: "«Death» Green" }, description: DESC_DEATH, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-death-green.jpg" },
+    { slug: "welcome-green", category: "tshirts", title: { uk: "«Welcome» Зелена", en: "«Welcome» Green" }, description: DESC_WELCOME, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-welcome-green.jpg" },
+    { slug: "death-grey", category: "tshirts", title: { uk: "«Death» Сіра", en: "«Death» Grey" }, description: DESC_DEATH, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-death-grey.jpg" },
+    { slug: "welcome-grey", category: "tshirts", title: { uk: "«Welcome» Сіра", en: "«Welcome» Grey" }, description: DESC_WELCOME, sizes: TS, price: 1000, isAvailable: false, image: A + "tshirt-welcome-grey.jpg" },
     { slug: "waiting", category: "patches", title: { uk: "«Waiting»", en: "«Waiting»" }, price: 300, isAvailable: true, image: A + "patch-waiting.jpg" },
     { slug: "welcome", category: "patches", title: { uk: "«Welcome»", en: "«Welcome»" }, price: 300, isAvailable: true, image: A + "patch-welcome.jpg" },
     { slug: "death", category: "patches", title: { uk: "«Death»", en: "«Death»" }, price: 300, isAvailable: true, image: A + "patch-with-you.jpg" },
@@ -24,8 +34,8 @@
   ];
   /* strings: shared.* / category.* verbatim from dictionaries; inStock adopted from kit Badge labels */
   var dict = {
-    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності" },
-    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock" },
+    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності", add: "Додати у Кошик", quantity: "Кількість", size: "Розмір", description: "Опис", outMsg: "Наразі немає в наявності. Слідкуйте за оновленнями в Instagram." },
+    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock", add: "Add to Cart", quantity: "Quantity", size: "Size", description: "Description", outMsg: "Currently out of stock. Follow updates on Instagram." },
   };
   function ukPlural(n, forms) {
     var m10 = n % 10, m100 = n % 100;
@@ -43,6 +53,7 @@
     return products.filter(function (p) { return p.category === slug; });
   }
   function categoryHref(slug, locale) { return "../category/Category.dc.html#cat=" + slug + "&lang=" + locale; }
+  function productHref(catSlug, prodSlug, locale) { return "../product/Product.dc.html#cat=" + catSlug + "&product=" + prodSlug + "&lang=" + locale; }
   function catalogHref(locale) { return "../catalog/Catalog.dc.html#lang=" + locale; }
   window.UTG_CATALOG = {
     categories: categories,
@@ -51,6 +62,7 @@
     countItems: countItems,
     countCats: countCats,
     categoryHref: categoryHref,
+    productHref: productHref,
     catalogHref: catalogHref,
     homeHref: function (locale) { return "../home/Home.dc.html#lang=" + locale; },
     getHash: function (k) { return new URLSearchParams(location.hash.slice(1)).get(k); },
@@ -87,6 +99,22 @@
         products: byCategory(c.slug).map(function (p) {
           return { slug: p.slug, title: p.title[locale], image: p.image, price: p.price, isAvailable: p.isAvailable };
         }),
+      };
+    },
+    productView: function (catSlug, prodSlug, locale) {
+      var c = categories.find(function (x) { return x.slug === catSlug; }) || categories[0];
+      var list = byCategory(c.slug);
+      var p = list.find(function (x) { return x.slug === prodSlug; }) || list[0];
+      return {
+        categorySlug: c.slug,
+        categoryName: c.name[locale],
+        slug: p.slug,
+        title: p.title[locale],
+        description: p.description ? p.description[locale] : null,
+        sizes: p.sizes || null,
+        price: p.price,
+        isAvailable: p.isAvailable,
+        image: p.image,
       };
     },
   };

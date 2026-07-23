@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-22 (4d merged + live in prod; D3.3 product brief issued)
+**Updated:** 2026-07-23 (D3.3 product ratified + exported; step-4e prompt issued)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -17,7 +17,7 @@ carry-forwards → `deferred.md`. **Resume here.**
 | D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT   |
 | D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`           |
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
-| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home + catalog/category SHIPPED; **product brief issued (D3.3)**                                                  | `design-export/screens/`             |
+| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home/catalog/category SHIPPED; **product (D3.3) RATIFIED & exported**                                             | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
 | 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ done — PR #9 (`2d051b3`) incl. geometry fix round, prod live-verified; 4e next                                          | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
@@ -26,12 +26,13 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. User re-attaches the refreshed Desktop snapshot + carries
-   `design-5-product-prompt.md` into the SAME cumulative Claude Design dialog,
-   approves the composition visually, and brings the project URL back.
-2. Planner fidelity-reviews via DesignSync (expected proposed DS addition: the
-   size-selector chips), exports to `design-export/screens/product/`, then writes
-   `step-4e-product-prompt.md` (DEF-3 composite cart identity — payload keys sacred).
+1. User carries `step-4e-product-prompt.md` to a fresh executor tab. Planner reviews
+   its plan gate (expected items: `SizeSelector` API, the cart-line/identity shape,
+   and user approval of the required-size hint strings), then the PR, per the loop.
+   DEF-3 rides this step; the payload contract stays byte-compatible.
+2. After 4e merges: refresh the Desktop snapshot, write the D3.4 cart/checkout brief
+   into the same cumulative dialog (the DEF-13 payload+bot `currency` decision lives
+   in that window).
 
 ## Open decisions awaiting ratification
 
