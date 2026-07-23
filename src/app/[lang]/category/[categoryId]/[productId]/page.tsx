@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getCategorySlugs, getProductSlugs, getProductView } from "@root/data";
+import {
+  getCategorySlugs,
+  getCategoryView,
+  getProductSlugs,
+  getProductView,
+} from "@root/data";
 
 import { resolveLocale } from "@root/utils/locale";
 
@@ -37,11 +42,13 @@ export async function generateMetadata({
 
 export default async function Product({ params }: IProductPageProps) {
   const { lang, categoryId, productId } = await params;
-  const product = getProductView(categoryId, productId, resolveLocale(lang));
+  const locale = resolveLocale(lang);
+  const product = getProductView(categoryId, productId, locale);
+  const category = getCategoryView(categoryId, locale);
 
-  if (!product) {
+  if (!product || !category) {
     notFound();
   }
 
-  return <ProductScreen product={product} />;
+  return <ProductScreen product={product} categoryName={category.name} />;
 }
