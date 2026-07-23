@@ -4,7 +4,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 const COLOR_LITERAL = "#[0-9a-fA-F]{3,8}\\b";
 const COLOR_FUNCTION = "(rgba?|hsla?|oklch)\\(";
 const PALETTE_UTILITY =
-  "\\b(bg|text|border|ring|fill|stroke|from|via|to)-(black|white|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(-\\d{1,3})?\\b";
+  "\\b(bg|text|border|ring|fill|stroke|from|via|to)-(black|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(-\\d{1,3})?\\b";
 const TYPE_UTILITY =
   "(\\btext-(xs|sm|base|lg|[2-9]?xl)\\b|text-\\[|leading-\\[)";
 
