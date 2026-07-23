@@ -57,7 +57,7 @@ export function SectionBand({
         {kickerNode}
         {meta != null ? (
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-            <Typography variant={as} as={as}>
+            <Typography variant={as} as={as} className="text-balance">
               {title}
             </Typography>
             <Typography variant="caption" as="span" className="text-band-muted">
@@ -65,7 +65,7 @@ export function SectionBand({
             </Typography>
           </div>
         ) : (
-          <Typography variant={as} as={as}>
+          <Typography variant={as} as={as} className="text-balance">
             {title}
           </Typography>
         )}

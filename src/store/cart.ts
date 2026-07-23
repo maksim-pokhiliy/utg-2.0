@@ -6,6 +6,9 @@ import { persist, type PersistStorage } from "zustand/middleware";
 
 export const CART_STORAGE_KEY = "utg-cart-v2";
 
+const CART_ID_SEPARATOR = "::";
+const CART_TITLE_SEPARATOR = " · ";
+
 export interface ICartItem {
   id: string;
   title: string;
@@ -14,6 +17,33 @@ export interface ICartItem {
   image: string;
   productUrl: string;
 }
+
+export interface ICartLineInput {
+  slug: string;
+  title: string;
+  size: string | null;
+  price: number;
+  quantity: number;
+  image: string;
+  productUrl: string;
+}
+
+export const composeCartLine = ({
+  slug,
+  title,
+  size,
+  price,
+  quantity,
+  image,
+  productUrl,
+}: ICartLineInput): ICartItem => ({
+  id: size === null ? slug : `${slug}${CART_ID_SEPARATOR}${size}`,
+  title: size === null ? title : `${title}${CART_TITLE_SEPARATOR}${size}`,
+  price,
+  quantity,
+  image,
+  productUrl,
+});
 
 interface CartStore {
   items: ICartItem[];

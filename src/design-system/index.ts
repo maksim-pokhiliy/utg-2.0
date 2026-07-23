@@ -30,6 +30,8 @@ export type { PriceSize } from "./components/price/price";
 
 export { QuantityStepper } from "./components/quantity-stepper/quantity-stepper";
 
+export { SizeSelector } from "./components/size-selector/size-selector";
+
 export { Separator } from "./components/separator/separator";
 export type { SeparatorWeight } from "./components/separator/separator";
 
