@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, type ReactElement } from "react";
+import Image from "next/image";
+import { useEffect, useState, type ReactElement } from "react";
 
 import { usePathname } from "next/navigation";
 
 import {
-  Badge,
   Button,
+  CartLine,
+  ConfirmDialog,
   Icon,
   IconButton,
   Price,
@@ -21,12 +23,11 @@ import {
   useCartStore,
   selectItemCount,
   selectSubtotal,
+  type ICartItem,
 } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 import { NavLink } from "@root/components/layout/NavLink";
-
-import CartLine from "./CartLine";
 
 export default function CartDrawer(): ReactElement {
   const isOpen = useSidebarStore((state) => state.isOpen);
@@ -35,12 +36,16 @@ export default function CartDrawer(): ReactElement {
   const cart = useCartStore((state) => state.items);
   const itemCount = useCartStore(selectItemCount);
   const total = useCartStore(selectSubtotal);
+  const setQuantity = useCartStore((state) => state.setQuantity);
+  const removeItem = useCartStore((state) => state.removeItem);
 
   const dictionary = useDictionary();
   const money = useMoney();
   const locale = useLocale();
 
   const pathname = usePathname();
+
+  const [confirming, setConfirming] = useState<ICartItem | null>(null);
 
   useEffect(() => {
     close();
@@ -50,6 +55,11 @@ export default function CartDrawer(): ReactElement {
     if (!open) {
       close();
     }
+  };
+
+  const handleRemoveConfirm = (item: ICartItem) => {
+    removeItem(item.id);
+    setConfirming(null);
   };
 
   return (
@@ -63,11 +73,19 @@ export default function CartDrawer(): ReactElement {
               </Typography>
             </SheetTitle>
 
-            {itemCount > 0 ? <Badge variant="band">{itemCount}</Badge> : null}
+            {itemCount > 0 ? (
+              <Typography
+                variant="caption"
+                as="span"
+                className="text-band-muted"
+              >
+                {`[${itemCount}]`}
+              </Typography>
+            ) : null}
           </div>
 
           <SheetClose asChild>
-            <IconButton variant="band" aria-label="Close">
+            <IconButton variant="band" aria-label={dictionary.cart.close}>
               <Icon name="x" />
             </IconButton>
           </SheetClose>
@@ -75,14 +93,34 @@ export default function CartDrawer(): ReactElement {
 
         {cart.length ? (
           <>
-            <div className="flex-1 overflow-y-auto px-4">
+            <div className="flex-1 overflow-y-auto px-5">
               {cart.map((item) => (
-                <CartLine key={item.id} item={item} />
+                <CartLine
+                  key={item.id}
+                  title={item.title}
+                  media={
+                    <Image
+                      src={item.image}
+                      alt=""
+                      fill
+                      quality={75}
+                      sizes="64px"
+                    />
+                  }
+                  total={formatPrice(item.price * item.quantity, money, locale)}
+                  quantity={item.quantity}
+                  onQuantityChange={(quantity) =>
+                    setQuantity(item.id, quantity)
+                  }
+                  onRemove={() => setConfirming(item)}
+                  quantityLabel={dictionary.shared.quantity}
+                  removeLabel={dictionary.cart.remove_confirm}
+                />
               ))}
             </div>
 
-            <div className="flex flex-col gap-3 border-t-2 border-ink p-4">
-              <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3.5 border-t-2 border-ink px-5 pt-4 pb-5">
+              <div className="flex items-baseline justify-between">
                 <Typography variant="caption" as="span">
                   {dictionary.cart.total}
                 </Typography>
@@ -98,7 +136,9 @@ export default function CartDrawer(): ReactElement {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 px-6 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <Icon name="shopping-bag" size={40} />
+
             <Typography variant="h3" as="p">
               {dictionary.cart.empty_cart}
             </Typography>
@@ -115,6 +155,22 @@ export default function CartDrawer(): ReactElement {
             </Typography>
           </div>
         )}
+
+        {confirming ? (
+          <ConfirmDialog
+            open
+            onClose={() => setConfirming(null)}
+            onConfirm={() => handleRemoveConfirm(confirming)}
+            title={dictionary.cart.remove_title}
+            body={dictionary.cart.remove_body.replace(
+              "{title}",
+              confirming.title
+            )}
+            cancelLabel={dictionary.cart.remove_cancel}
+            confirmLabel={dictionary.cart.remove_confirm}
+            destructive
+          />
+        ) : null}
       </SheetContent>
     </Sheet>
   );
