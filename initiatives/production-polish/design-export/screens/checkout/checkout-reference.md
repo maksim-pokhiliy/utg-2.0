@@ -22,8 +22,12 @@ pixels, components are the law.
      (`type="tel"`); hair rule `space-6`; heading «Деталі доставки» → 2-col
      (country/state) → city → address → additional as textarea rows=5. Required
      fields carry a `--destructive` ` *` in the label (kit `.req`). FROZEN field
-     set/names; required six: first_name, last_name, telephone, country, city,
-     address.
+     set/names; required SEVEN — the live set: first_name, last_name, telephone,
+     country, state, city, address (only `additional` optional). [OQ-B ruling
+     2026-07-25: the prototype renders `state` optional per the kit sketch; the
+     implementation preserves the live required seven — the earlier "six matches
+     live" line here was a truncated-grep planner error, caught at the 4f plan
+     gate.]
    - **Validation**: submit with empty required fields → per-field error state
      (destructive border) + `role="alert"` errtext «Обов'язкове поле»/"Required
      field" (NEW key); error clears on input; focus jumps to the FIRST errored input.

@@ -12,8 +12,12 @@ copy. Pulled from project `62bf007e-…` (`ui_kits/storefront/{Checkout.jsx,data
   telephone → hair Divider → `h3` delivery → 2-col (country/state) → city → address →
   additional as `Textarea rows=3`. `Field` with `required` mark + `error={required}`
   string on empty submit; errors clear per-field on input.
-- **Required set**: first_name, last_name, telephone, country, city, address
-  (state + additional optional) — matches the live form's six `required` attributes.
+- **Required set (kit)**: first_name, last_name, telephone, country, city, address
+  (state + additional optional). CORRECTION (2026-07-25): the LIVE form requires
+  SEVEN — `state` included (a truncated planner grep produced the earlier
+  "matches the live six" claim; executor verification caught it). The implementation
+  keeps the live seven per the OQ-B ruling — the kit's optionality was a designer
+  guess, not a product decision.
 - **Right — summary card** (2px ink border): `utg-band` header row (`h3` summary) →
   lines (48px thumb with 1px ink border, small title — **`{title}{size ? " · " + size}`**,
   mono ×qty in ink-faint, price) → baseline total row (label + `price--big`) → accent
