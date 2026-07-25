@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/fonts.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/colors.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/typography.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/spacing.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/base.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
+  <script>(function(){var u="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js";function go(){var s=document.createElement("script");s.src=u;document.head.appendChild(s);}if(window.React){go();}else{var n=0,t=setInterval(function(){if(window.React||++n>500){clearInterval(t);go();}},20);}})();</script>
+  <script src="../data/catalog.js"></script>
+</helmet>
+<div id="cart-drawer-design" data-screen-label="Cart drawer" style="min-height:100vh;background:var(--paper);display:flex;align-items:center;justify-content:center">
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.IconButton" icon="shopping-bag" box="{{ true }}" count="{{ cartCount }}" label="{{ cartLabel }}" on-click="{{ openCart }}" hint-size="48px,48px"></x-import>
+  <x-import component-from-global-scope="UTGCart.Drawer" from="./cart-drawer.js" locale="{{ locale }}" open="{{ cartOpen }}" on-close="{{ closeCart }}" demo-empty="{{ demoEmpty }}" catalog-href="{{ drawerCatalogHref }}" checkout-href="{{ drawerCheckoutHref }}" hint-size="0px,0px"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;demoEmpty&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Design review&quot;}
+}">
+class Component extends DCLogic {
+  state = { locale: null, cartOpen: true };
+  componentDidMount() {
+    const sub = () => { this._unsub = window.UTG_CATALOG.cart.subscribe(() => this.forceUpdate()); };
+    if (window.UTG_CATALOG) sub();
+    else this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); sub(); this.forceUpdate(); } }, 25);
+  }
+  componentWillUnmount() { clearInterval(this._t); this._unsub && this._unsub(); }
+  renderVals() {
+    const C = window.UTG_CATALOG;
+    const locale = this.state.locale ?? this.props.locale ?? "uk";
+    const d = C ? C.dict[locale] : {};
+    return {
+      locale,
+      cartLabel: d.cartTitle ?? "",
+      cartCount: C ? C.cart.count() : 0,
+      cartOpen: !!this.state.cartOpen,
+      openCart: () => this.setState({ cartOpen: true }),
+      closeCart: () => this.setState({ cartOpen: false }),
+      demoEmpty: this.props.demoEmpty ?? false,
+      drawerCatalogHref: C ? C.catalogHref(locale) : "#",
+      drawerCheckoutHref: C ? C.checkoutHref(locale) : "#",
+    };
+  }
+}
+</script>
+</body>
+</html>

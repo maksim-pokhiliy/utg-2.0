@@ -34,8 +34,8 @@
   ];
   /* strings: shared.* / category.* verbatim from dictionaries; inStock adopted from kit Badge labels */
   var dict = {
-    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності", add: "Додати у Кошик", quantity: "Кількість", size: "Розмір", description: "Опис", outMsg: "Наразі немає в наявності. Слідкуйте за оновленнями в Instagram." },
-    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock", add: "Add to Cart", quantity: "Quantity", size: "Size", description: "Description", outMsg: "Currently out of stock. Follow updates on Instagram." },
+    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності", add: "Додати у Кошик", quantity: "Кількість", size: "Розмір", description: "Опис", outMsg: "Наразі немає в наявності. Слідкуйте за оновленнями в Instagram.", cartTitle: "Кошик", total: "Всього", proceed: "Перейти до Оформлення", emptyTitle: "Ваш кошик порожній", emptyHint: "Додайте товари до свого кошика", here: "тут", removeTitle: "Видалити товар?", removeBody: "«{title}» буде видалено з кошика.", cancel: "Скасувати", removeConfirm: "Видалити", close: "Закрити", checkout: "оформлення", customer: "Інформація про замовника", delivery: "Деталі доставки", firstName: "Ім'я", firstPh: "John", lastName: "Прізвище", lastPh: "Wick", phone: "Телефон / Нік у Телеграм", phonePh: "555-0100", country: "Країна", countryPh: "Україна", region: "Область", regionPh: "Львівська Область", city: "Місто", cityPh: "Львів", address: "Адреса", addressPh: "Вулиця Казкового Міста 1", additional: "Додаткова інформація", summary: "Підсумок", placeOrder: "Зробити Замовлення", review: "Перегляньте ваші дані вище та продовжуйте, коли будете готові.", required: "Обов'язкове поле", orderError: "Помилка при відправці замовлення", orderReceived: "Замовлення прийнято", successBody: "Дякуємо за ваше замовлення! Наш менеджер зв'яжеться з вами найближчим часом", successNote: "Оплата не відбувається онлайн — це волонтерський проект. Менеджер узгодить з вами оплату та доставку." },
+    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock", add: "Add to Cart", quantity: "Quantity", size: "Size", description: "Description", outMsg: "Currently out of stock. Follow updates on Instagram.", cartTitle: "Cart", total: "Total", proceed: "Proceed to Checkout", emptyTitle: "Your cart is empty", emptyHint: "Add products to your cart in", here: "here", removeTitle: "Remove item?", removeBody: "{title} will be removed from your cart.", cancel: "Cancel", removeConfirm: "Remove", close: "Close", checkout: "checkout", customer: "Customer details", delivery: "Delivery details", firstName: "First Name", firstPh: "John", lastName: "Last Name", lastPh: "Wick", phone: "Phone Number / Telegram Nickname", phonePh: "555-0100", country: "Country", countryPh: "Ukraine", region: "Region / State", regionPh: "Lviv Region", city: "City", cityPh: "Lviv", address: "Address", addressPh: "Fairy Tale City Street 1", additional: "Additional Information", summary: "Order summary", placeOrder: "Place Order", review: "Review your details above and continue when you're ready.", required: "Required field", orderError: "Error when placing an order", orderReceived: "Order received", successBody: "Thank you for your order! Our manager will contact you shortly", successNote: "No online payment — this is a volunteer project. Our manager will arrange payment and delivery with you." },
   };
   function ukPlural(n, forms) {
     var m10 = n % 10, m100 = n % 100;
@@ -54,6 +54,63 @@
   }
   function categoryHref(slug, locale) { return "../category/Category.dc.html#cat=" + slug + "&lang=" + locale; }
   function productHref(catSlug, prodSlug, locale) { return "../product/Product.dc.html#cat=" + catSlug + "&product=" + prodSlug + "&lang=" + locale; }
+  function checkoutHref(locale) { return "../checkout/Checkout.dc.html#lang=" + locale; }
+  /* cart store — localStorage-backed, seeded once with the design-load cart (sized line, long set title, qty > 1) */
+  var CART_KEY = "utg_cart_v1";
+  var cartListeners = [];
+  function cartNotify() { cartListeners.forEach(function (cb) { try { cb(); } catch (e) {} }); }
+  function cartRead() {
+    try {
+      var raw = localStorage.getItem(CART_KEY);
+      if (raw == null) {
+        var seed = [
+          { cat: "tshirts", slug: "death-black", size: "M", qty: 1 },
+          { cat: "patches", slug: "set", size: null, qty: 1 },
+          { cat: "patches", slug: "waiting", size: null, qty: 2 },
+        ];
+        localStorage.setItem(CART_KEY, JSON.stringify(seed));
+        return seed;
+      }
+      return JSON.parse(raw) || [];
+    } catch (e) { return []; }
+  }
+  function cartWrite(items) {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(items)); } catch (e) {}
+    cartNotify();
+  }
+  function lineId(it) { return it.cat + "/" + it.slug + (it.size ? "·" + it.size : ""); }
+  window.addEventListener("storage", function (ev) { if (ev.key === CART_KEY) cartNotify(); });
+  var cart = {
+    subscribe: function (cb) {
+      cartListeners.push(cb);
+      return function () { var i = cartListeners.indexOf(cb); if (i >= 0) cartListeners.splice(i, 1); };
+    },
+    lines: function (locale) {
+      return cartRead().map(function (it) {
+        var p = byCategory(it.cat).find(function (x) { return x.slug === it.slug; });
+        if (!p) return null;
+        return { id: lineId(it), title: p.title[locale] + (it.size ? " · " + it.size : ""), image: p.image, uah: p.price, qty: it.qty };
+      }).filter(Boolean);
+    },
+    count: function () { return cartRead().reduce(function (s, i) { return s + i.qty; }, 0); },
+    total: function () { return cart.lines("uk").reduce(function (s, l) { return s + l.uah * l.qty; }, 0); },
+    add: function (catSlug, slug, size, qty) {
+      var items = cartRead();
+      var id = catSlug + "/" + slug + (size ? "·" + size : "");
+      var hit = items.find(function (i) { return lineId(i) === id; });
+      if (hit) hit.qty = Math.min(99, hit.qty + (qty || 1));
+      else items.push({ cat: catSlug, slug: slug, size: size || null, qty: qty || 1 });
+      cartWrite(items);
+    },
+    setQty: function (id, qty) {
+      cartWrite(cartRead().map(function (i) {
+        if (lineId(i) === id) i.qty = Math.max(1, Math.min(99, qty));
+        return i;
+      }));
+    },
+    remove: function (id) { cartWrite(cartRead().filter(function (i) { return lineId(i) !== id; })); },
+    clear: function () { cartWrite([]); },
+  };
   function catalogHref(locale) { return "../catalog/Catalog.dc.html#lang=" + locale; }
   window.UTG_CATALOG = {
     categories: categories,
@@ -63,6 +120,8 @@
     countCats: countCats,
     categoryHref: categoryHref,
     productHref: productHref,
+    checkoutHref: checkoutHref,
+    cart: cart,
     catalogHref: catalogHref,
     homeHref: function (locale) { return "../home/Home.dc.html#lang=" + locale; },
     getHash: function (k) { return new URLSearchParams(location.hash.slice(1)).get(k); },

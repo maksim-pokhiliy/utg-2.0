@@ -21,6 +21,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-9  | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper)                                                    | RATIFIED |
 | D-10 | The design system is a sealed module: single-barrel API, colors/font-sizes exist only inside, Typography + Container for the outside world | RATIFIED |
 | D-11 | Kit screens are DS demos, not page designs; pages get a per-page design→ratify→implement loop; DS frozen                                   | RATIFIED |
+| D-12 | Order payload gains an additive `currency` field (DEF-13 terminal fix); bot-side read is a separate follow-up in the bot repo              | RATIFIED |
 
 ---
 
@@ -86,7 +87,11 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Decision.** The storefront screens in the design project's `ui_kits/` are demos that showcase the design system — NOT ratified page designs (this supersedes the earlier "D2 done" reading). The design system itself is FROZEN: changes only through Claude Design plus explicit ratification. Pages are designed and shipped one at a time: planner writes a per-page Claude Design brief → user carries it → user+planner ratify the prototype → planner exports it → one `/feature`/`/feature small` run implements that page. Old step 4b (implement-all-screens-per-kit) is superseded; 4b is rescoped to DS-alignment in the app, and per-page implementation steps follow the design track.
 - **Rationale.** The product owner wants a genuine UI/UX pass with fresh ideas per page rather than an implementation of showcase demos; the per-page loop keeps every PR small and guarantees real eyes on every design before code. Kit demos remain useful as starting material and as the verbatim source for kit-authored copy.
 
-### D-6 — Stack moves: Zustand and Next 16
+### D-12 — Order payload gains `currency` (additive; DEF-13 terminal fix)
+
+- **Status:** RATIFIED (planner, 2026-07-25, executing the standing DEF-13 disposition "coordinated payload+bot `currency` field" scheduled to this window; user veto open until the 4f merge).
+- **Decision.** The checkout payload adds ONE key: `currency: "UAH" | "USD"`, valued from the server-resolved money context (the currency actually displayed to the buyer). Every existing key stays byte-identical. The bot currently destructures known fields only (verified in `extracted/bot-contract-index.js`), so the addition is ignored until a bot-side read lands — that read is a separate task in the user's own `utg-tg-order-bot` repo, out of this initiative's scope.
+- **Rationale.** DEF-13's defect is exactly that the bot derives currency from `locale` (`currencyMap[locale]`): rates-down + `en` sends UAH magnitudes labeled `$` in the operator's Telegram. Only an explicit currency signal kills the ambiguity; the additive path keeps the sacred contract backward-compatible in both directions (old bot ignores the key; updated bot falls back to the locale map when the key is absent).
 
 - **Status:** RATIFIED (approved with roadmap sign-off, 2026-07-17).
 - **Decision.** Replace Recoil with Zustand (cart + sidebar only; dictionary/rates move to server props in step 1). Upgrade Next 14 → 16 with React 19 after Recoil is out.

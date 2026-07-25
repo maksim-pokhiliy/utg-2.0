@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/fonts.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/colors.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/typography.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/spacing.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/base.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
+  <script>(function(){var u="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js";function go(){var s=document.createElement("script");s.src=u;document.head.appendChild(s);}if(window.React){go();}else{var n=0,t=setInterval(function(){if(window.React||++n>500){clearInterval(t);go();}},20);}})();</script>
+  <script src="../data/catalog.js"></script>
+  <style>header a img{height:38px !important}@keyframes utgToastIn{from{transform:translate(-50%,12px);opacity:0}to{transform:translate(-50%,0);opacity:1}}</style>
+</helmet>
+<div id="checkout" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ true }}" nav="{{ navLinks }}" on-cart-click="{{ openCart }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
+  <main style="flex:1 1 auto">
+    <section class="utg-band" data-screen-label="Checkout band">
+      <div style="max-width:var(--container);margin:0 auto;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2) var(--space-4)">
+        <h1>{{ bandTitle }}</h1>
+        <sc-if value="{{ formVisible }}" hint-placeholder-val="{{ false }}"><span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--band-muted)">{{ metaCaption }}</span></sc-if>
+      </div>
+    </section>
+    <sc-if value="{{ success }}" hint-placeholder-val="{{ false }}">
+      <section data-screen-label="Order received" style="padding:var(--space-7) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:column;gap:var(--space-5)">
+          <div style="width:48px;height:48px;background:var(--flag-yellow);color:var(--ink);display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div>
+          <p style="margin:0;font:var(--type-body);color:var(--ink);max-width:55ch;text-wrap:pretty">{{ successBody }}</p>
+          <p style="margin:0;font:var(--type-small);color:var(--ink-faint);max-width:55ch;text-wrap:pretty">{{ successNote }}</p>
+        </div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ emptyVisible }}" hint-placeholder-val="{{ false }}">
+      <section data-screen-label="Empty cart" style="padding:var(--space-8) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--space-2)">
+          <p style="margin:0;font:var(--type-h3);font-family:var(--font-display);text-transform:uppercase;letter-spacing:var(--display-tracking)">{{ emptyTitle }}</p>
+          <p class="utg-help" style="margin:0">{{ emptyHint }} <a href="{{ drawerCatalogHref }}" style="color:var(--secondary)">{{ hereLabel }}</a></p>
+        </div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ formVisible }}" hint-placeholder-val="{{ true }}">
+      <section data-screen-label="Order form" style="padding:var(--space-6) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:row-reverse;flex-wrap:wrap;gap:var(--space-6) var(--space-7);align-items:flex-start">
+          <aside style="flex:1 1 320px;min-width:0">
+            <div style="border:var(--rule) solid var(--ink);background:var(--paper)">
+              <div style="background:var(--band);color:var(--band-foreground);display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);padding:10px 16px;font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase">
+                <span>{{ summaryLabel }}</span>
+                <span style="color:var(--band-muted)">[{{ summaryCount }}]</span>
+              </div>
+              <div style="padding:4px 16px 16px">
+                <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:var(--space-3);padding:10px 0;border-bottom:var(--rule-hair) solid var(--line)">
+                    <img src="{{ l.image }}" alt="" loading="lazy" style="width:48px;height:48px;object-fit:cover;border:1px solid var(--ink);flex:none">
+                    <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <span style="font:var(--type-small);color:var(--ink);text-wrap:pretty">{{ l.title }}</span>
+                      <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:var(--ink-faint)">{{ l.qtyLabel }}</span>
+                    </span>
+                    <x-import component-from-global-scope="UTGDesignSystem_62bf00.Price" uah="{{ l.total }}" locale="{{ locale }}" hint-size="56px,21px"></x-import>
+                  </div>
+                </sc-for>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);padding-top:14px">
+                  <span class="utg-label">{{ totalLabel }}</span>
+                  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Price" uah="{{ totalUah }}" locale="{{ locale }}" big="{{ true }}" hint-size="90px,29px"></x-import>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <form style="flex:2 1 360px;min-width:0" onSubmit="{{ submit }}">
+            <h2 style="margin:0 0 var(--space-4);font:500 var(--text-h3)/1 var(--font-display);letter-spacing:var(--display-tracking);text-transform:uppercase">{{ customerLabel }}</h2>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--space-4)">
+                <div class="utg-field">
+                  <label class="utg-label" for="f_first_name">{{ f.first_name.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.first_name.errCls }}" id="f_first_name" name="first_name" type="text" value="{{ f.first_name.v }}" placeholder="{{ f.first_name.ph }}" onChange="{{ f.first_name.on }}">
+                  <sc-if value="{{ f.first_name.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+                <div class="utg-field">
+                  <label class="utg-label" for="f_last_name">{{ f.last_name.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.last_name.errCls }}" id="f_last_name" name="last_name" type="text" value="{{ f.last_name.v }}" placeholder="{{ f.last_name.ph }}" onChange="{{ f.last_name.on }}">
+                  <sc-if value="{{ f.last_name.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+              </div>
+              <div class="utg-field">
+                <label class="utg-label" for="f_telephone">{{ f.telephone.label }}<span class="req"> *</span></label>
+                <input class="utg-input {{ f.telephone.errCls }}" id="f_telephone" name="telephone" type="tel" value="{{ f.telephone.v }}" placeholder="{{ f.telephone.ph }}" onChange="{{ f.telephone.on }}">
+                <sc-if value="{{ f.telephone.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+              </div>
+            </div>
+            <hr style="margin:var(--space-6) 0;border:0;border-top:var(--rule-hair) solid var(--line)">
+            <h2 style="margin:0 0 var(--space-4);font:500 var(--text-h3)/1 var(--font-display);letter-spacing:var(--display-tracking);text-transform:uppercase">{{ deliveryLabel }}</h2>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--space-4)">
+                <div class="utg-field">
+                  <label class="utg-label" for="f_country">{{ f.country.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.country.errCls }}" id="f_country" name="country" type="text" value="{{ f.country.v }}" placeholder="{{ f.country.ph }}" onChange="{{ f.country.on }}">
+                  <sc-if value="{{ f.country.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+                <div class="utg-field">
+                  <label class="utg-label" for="f_state">{{ f.state.label }}</label>
+                  <input class="utg-input" id="f_state" name="state" type="text" value="{{ f.state.v }}" placeholder="{{ f.state.ph }}" onChange="{{ f.state.on }}">
+                </div>
+              </div>
+              <div class="utg-field">
+                <label class="utg-label" for="f_city">{{ f.city.label }}<span class="req"> *</span></label>
+                <input class="utg-input {{ f.city.errCls }}" id="f_city" name="city" type="text" value="{{ f.city.v }}" placeholder="{{ f.city.ph }}" onChange="{{ f.city.on }}">
+                <sc-if value="{{ f.city.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+              </div>
+              <div class="utg-field">
+                <label class="utg-label" for="f_address">{{ f.address.label }}<span class="req"> *</span></label>
+                <input class="utg-input {{ f.address.errCls }}" id="f_address" name="address" type="text" value="{{ f.address.v }}" placeholder="{{ f.address.ph }}" onChange="{{ f.address.on }}">
+                <sc-if value="{{ f.address.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+              </div>
+              <div class="utg-field">
+                <label class="utg-label" for="f_additional">{{ f.additional.label }}</label>
+                <textarea class="utg-input" id="f_additional" name="additional" rows="5" value="{{ f.additional.v }}" onChange="{{ f.additional.on }}"></textarea>
+              </div>
+            </div>
+            <p style="margin:var(--space-5) 0;font:var(--type-small);color:var(--ink-soft)">{{ reviewNote }}</p>
+            <x-import component-from-global-scope="UTGDesignSystem_62bf00.Button" variant="accent" block="{{ true }}" type="submit" loading="{{ pending }}" hint-size="100%,48px">{{ placeOrderLabel }}</x-import>
+          </form>
+        </div>
+      </section>
+    </sc-if>
+  </main>
+  <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" nav="{{ navLinks }}" hint-size="100%,280px"></x-import></sc-if>
+  <x-import component-from-global-scope="UTGCart.Drawer" from="../cart/cart-drawer.js" locale="{{ locale }}" open="{{ cartOpen }}" on-close="{{ closeCart }}" catalog-href="{{ drawerCatalogHref }}" checkout-href="{{ drawerCheckoutHref }}" hint-size="0px,0px"></x-import>
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;width:min(400px,calc(100vw - 32px));animation:utgToastIn .2s var(--ease)">
+      <x-import component-from-global-scope="UTGDesignSystem_62bf00.Toast" variant="error" on-close="{{ closeToast }}" hint-size="100%,52px">{{ toastMsg }}</x-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;submitOutcome&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;success&quot;, &quot;error&quot;], &quot;default&quot;: &quot;success&quot;, &quot;tsType&quot;: &quot;\&quot;success\&quot; | \&quot;error\&quot;&quot;, &quot;section&quot;: &quot;Design review&quot;}
+}">
+class Component extends DCLogic {
+  state = { locale: null, cartOpen: false, form: {}, errors: [], pending: false, success: false, toast: null };
+  componentDidMount() {
+    const sub = () => { this._unsub = window.UTG_CATALOG.cart.subscribe(() => this.forceUpdate()); };
+    if (window.UTG_CATALOG) sub();
+    else this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); sub(); this.forceUpdate(); } }, 25);
+  }
+  componentWillUnmount() { clearInterval(this._t); this._unsub && this._unsub(); clearTimeout(this._submitT); }
+  renderVals() {
+    const C = window.UTG_CATALOG;
+    this._hash = this._hash || Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const hashLang = this._hash.lang === "en" || this._hash.lang === "uk" ? this._hash.lang : null;
+    const locale = this.state.locale ?? hashLang ?? this.props.locale ?? "uk";
+    const d = C ? C.dict[locale] : {};
+    const rawLines = C ? C.cart.lines(locale) : [];
+    const count = rawLines.reduce((s, l) => s + l.qty, 0);
+    const total = rawLines.reduce((s, l) => s + l.uah * l.qty, 0);
+    const errs = this.state.errors;
+    const FIELDS = {
+      first_name: [d.firstName, d.firstPh], last_name: [d.lastName, d.lastPh],
+      telephone: [d.phone, d.phonePh], country: [d.country, d.countryPh],
+      state: [d.region, d.regionPh], city: [d.city, d.cityPh],
+      address: [d.address, d.addressPh], additional: [d.additional, ""],
+    };
+    const f = {};
+    Object.keys(FIELDS).forEach((n) => {
+      const isErr = errs.includes(n);
+      f[n] = {
+        label: FIELDS[n][0] ?? "", ph: FIELDS[n][1] ?? "",
+        v: this.state.form[n] ?? "",
+        err: isErr, errCls: isErr ? "utg-input--error" : "",
+        on: (e) => {
+          const val = e.target.value;
+          this.setState((s) => ({ form: { ...s.form, [n]: val }, errors: s.errors.filter((x) => x !== n) }));
+        },
+      };
+    });
+    const REQ = ["first_name", "last_name", "telephone", "country", "city", "address"];
+    return {
+      locale,
+      setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
+      navLinks: C ? C.navLinks(locale) : null,
+      ready: !!C,
+      cartCount: C ? C.cart.count() : 0,
+      cartOpen: !!this.state.cartOpen,
+      openCart: () => this.setState({ cartOpen: true }),
+      closeCart: () => this.setState({ cartOpen: false }),
+      drawerCatalogHref: C ? C.catalogHref(locale) : "#",
+      drawerCheckoutHref: C ? C.checkoutHref(locale) : "#",
+      bandTitle: this.state.success ? (d.orderReceived ?? "") : (d.checkout ?? ""),
+      metaCaption: C ? C.countItems(count, locale) : "",
+      success: this.state.success,
+      formVisible: !!C && !this.state.success && rawLines.length > 0,
+      emptyVisible: !!C && !this.state.success && rawLines.length === 0,
+      emptyTitle: d.emptyTitle ?? "", emptyHint: d.emptyHint ?? "", hereLabel: d.here ?? "",
+      successBody: d.successBody ?? "", successNote: d.successNote ?? "",
+      customerLabel: d.customer ?? "", deliveryLabel: d.delivery ?? "",
+      summaryLabel: d.summary ?? "", summaryCount: count, totalLabel: d.total ?? "", totalUah: total,
+      requiredLabel: d.required ?? "", reviewNote: d.review ?? "", placeOrderLabel: d.placeOrder ?? "",
+      lines: rawLines.map((l) => ({ title: l.title, image: l.image, qtyLabel: "×" + l.qty, total: l.uah * l.qty })),
+      f,
+      pending: this.state.pending,
+      submit: (e) => {
+        e.preventDefault();
+        if (this.state.pending || this.state.success || !C) return;
+        const missing = REQ.filter((n) => !String(this.state.form[n] ?? "").trim());
+        if (missing.length) {
+          this.setState({ errors: missing });
+          setTimeout(() => { const el = document.querySelector(".utg-input--error"); el && el.focus(); }, 60);
+          return;
+        }
+        this.setState({ pending: true, toast: null });
+        this._submitT = setTimeout(() => {
+          if ((this.props.submitOutcome ?? "success") === "error") {
+            this.setState({ pending: false, toast: d.orderError ?? "" });
+            this._toastN = (this._toastN || 0) + 1; const n = this._toastN;
+            setTimeout(() => { if (this._toastN === n && this.state.toast) this.setState({ toast: null }); }, 6000);
+          } else {
+            C.cart.clear();
+            this.setState({ pending: false, success: true, form: {}, errors: [] });
+            window.scrollTo(0, 0);
+          }
+        }, 1400);
+      },
+      toastVisible: !!this.state.toast, toastMsg: this.state.toast ?? "",
+      closeToast: () => this.setState({ toast: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>
