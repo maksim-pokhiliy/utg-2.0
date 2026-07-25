@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-25 (4e merged + live in prod, DEF-3 CLOSED; D3.4 cart/checkout brief issued)
+**Updated:** 2026-07-25 (4e merged + live in prod, DEF-3 CLOSED; D3.4 gated on the kit checkout-string pull)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -17,7 +17,7 @@ carry-forwards → `deferred.md`. **Resume here.**
 | D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT   |
 | D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`           |
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
-| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home/catalog/category/product SHIPPED; **cart/checkout brief issued (D3.4)**                                      | `design-export/screens/`             |
+| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home/catalog/category/product SHIPPED; **D3.4 next (gated on string pull)**                                      | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
 | 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10, `a9bab45`, clean — no fix round; DEF-3 closed); 4f next                                        | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
