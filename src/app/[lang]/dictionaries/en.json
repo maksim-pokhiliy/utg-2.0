@@ -37,6 +37,7 @@
     "empty_cart": "Your cart is empty",
     "add_to_cart": "Add products to your cart in",
     "here": "here",
+    "close": "Close",
     "customer_details": "Customer details",
     "first_name": "First Name",
     "first_name_placeholder": "John",
@@ -56,6 +57,7 @@
     "additional": "Additional Information",
     "place_order": "Place Order",
     "review": "Review your details above and continue when you're ready.",
+    "required": "Required field",
     "order_success": "Thank you for your order! Our manager will contact you shortly",
     "order_error": "Error when placing an order",
     "remove_title": "Remove item?",
@@ -69,7 +71,9 @@
   },
   "checkout": {
     "checkout": "checkout",
-    "summary": "Order summary"
+    "summary": "Order summary",
+    "successTitle": "Order received",
+    "successNote": "No online payment — this is a volunteer project. Our manager will arrange payment and delivery with you."
   },
   "footer": {
     "mission": "A volunteer project: all merch proceeds buy equipment for a Ukrainian special-forces unit."
