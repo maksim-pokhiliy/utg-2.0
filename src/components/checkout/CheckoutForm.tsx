@@ -22,6 +22,7 @@ import { CheckoutField } from "./CheckoutField";
 import {
   INITIAL_FORM,
   REQUIRED_FIELDS,
+  trimFormValues,
   type CheckoutFieldName,
   type CheckoutFormValues,
 } from "./fields";
@@ -53,34 +54,16 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
     setErrors((prev) => prev.filter((field) => field !== name));
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isPending) {
-      return;
-    }
-
-    const missing = REQUIRED_FIELDS.filter((name) => form[name].trim() === "");
-    const [firstMissing] = missing;
-
-    if (firstMissing !== undefined) {
-      setErrors(missing);
-      document.getElementById(firstMissing)?.focus();
-
-      return;
-    }
+  const placeOrder = async (values: CheckoutFormValues): Promise<boolean> => {
+    const payload = {
+      ...values,
+      cart,
+      locale,
+      total: (total * money.coefficient).toFixed(2),
+      currency: money.currency,
+    };
 
     try {
-      setIsPending(true);
-
-      const payload = {
-        ...form,
-        cart,
-        locale,
-        total: (total * money.coefficient).toFixed(2),
-        currency: money.currency,
-      };
-
       const response = await fetch("/api/place_order/", {
         method: "POST",
         headers: {
@@ -92,14 +75,43 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
       if (!response.ok) {
         toast.error(dictionary.cart.order_error);
 
-        return;
+        return false;
       }
 
-      onPlaced();
+      return true;
     } catch {
       toast.error(dictionary.cart.order_error);
-    } finally {
-      setIsPending(false);
+
+      return false;
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isPending) {
+      return;
+    }
+
+    const values = trimFormValues(form);
+    const missing = REQUIRED_FIELDS.filter((name) => values[name] === "");
+    const [firstMissing] = missing;
+
+    if (firstMissing !== undefined) {
+      setErrors(missing);
+      document.getElementById(firstMissing)?.focus();
+
+      return;
+    }
+
+    setIsPending(true);
+
+    const isPlaced = await placeOrder(values);
+
+    setIsPending(false);
+
+    if (isPlaced) {
+      onPlaced();
     }
   };
 

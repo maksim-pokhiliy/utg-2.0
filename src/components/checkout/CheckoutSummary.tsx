@@ -60,6 +60,7 @@ export function CheckoutSummary({
               <Typography
                 variant="caption"
                 as="span"
+                aria-label={`${dictionary.shared.quantity}: ${item.quantity}`}
                 className="text-ink-faint"
               >
                 {`×${item.quantity}`}

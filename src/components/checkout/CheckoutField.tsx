@@ -46,6 +46,8 @@ export function CheckoutField({
         onChange={onChange}
         invalid={isInvalid}
         required={isRequired}
+        aria-invalid={isInvalid}
+        aria-describedby={isInvalid ? `${name}-error` : undefined}
       />
     </Field>
   );

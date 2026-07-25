@@ -25,3 +25,16 @@ export const REQUIRED_FIELDS: readonly CheckoutFieldName[] = [
 
 export const isRequiredField = (name: CheckoutFieldName): boolean =>
   REQUIRED_FIELDS.includes(name);
+
+export const trimFormValues = (
+  values: CheckoutFormValues
+): CheckoutFormValues => ({
+  first_name: values.first_name.trim(),
+  last_name: values.last_name.trim(),
+  telephone: values.telephone.trim(),
+  country: values.country.trim(),
+  state: values.state.trim(),
+  city: values.city.trim(),
+  address: values.address.trim(),
+  additional: values.additional.trim(),
+});

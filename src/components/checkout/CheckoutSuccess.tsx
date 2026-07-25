@@ -10,7 +10,7 @@ export function CheckoutSuccess(): ReactElement {
 
   return (
     <Container className="pt-12 pb-24">
-      <div className="flex flex-col gap-6">
+      <div role="status" className="flex flex-col gap-6">
         <div className="bg-flag-yellow text-ink flex h-12 w-12 items-center justify-center">
           <Icon name="check" size={24} />
         </div>

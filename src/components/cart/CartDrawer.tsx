@@ -52,6 +52,12 @@ export default function CartDrawer(): ReactElement {
     close();
   }, [pathname, close]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setIsRemoveOpen(false);
+    }
+  }, [isOpen]);
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       close();
@@ -122,8 +128,8 @@ export default function CartDrawer(): ReactElement {
                     setQuantity(item.id, quantity)
                   }
                   onRemove={() => handleRemoveRequest(item)}
-                  quantityLabel={dictionary.shared.quantity}
-                  removeLabel={dictionary.cart.remove_confirm}
+                  quantityLabel={`${dictionary.shared.quantity}: ${item.title}`}
+                  removeLabel={`${dictionary.cart.remove_confirm}: ${item.title}`}
                 />
               ))}
             </div>
@@ -172,7 +178,7 @@ export default function CartDrawer(): ReactElement {
           title={dictionary.cart.remove_title}
           body={dictionary.cart.remove_body.replace(
             "{title}",
-            removeTarget?.title ?? ""
+            () => removeTarget?.title ?? ""
           )}
           cancelLabel={dictionary.cart.remove_cancel}
           confirmLabel={dictionary.cart.remove_confirm}

@@ -55,7 +55,7 @@ export function CartLine({
           </IconButton>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
           <QuantityStepper
             size="sm"
             value={quantity}
