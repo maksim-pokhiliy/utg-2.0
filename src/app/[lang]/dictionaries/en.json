@@ -24,7 +24,11 @@
     "catMany": "categories"
   },
   "product": {
-    "add": "Add to Cart"
+    "add": "Add to Cart",
+    "size": "Size",
+    "sizeRequired": "Choose a size",
+    "description": "Description",
+    "outMessage": "Currently out of stock. Follow updates on Instagram."
   },
   "cart": {
     "cart": "Cart",
