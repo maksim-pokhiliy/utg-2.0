@@ -38,15 +38,16 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-11 all ratified)
+(none — D-1…D-12 all ratified)
 
 ## Live carry-forwards
 
 DEF-4 (order endpoint abuse protection — decide later), DEF-9 (hero photo sealed in
 Firebase; support ticket pending; non-blocking — the shipped Home carries a photo
 slot), DEF-13 (rates-down `en` checkout renders `$` on UAH total in the operator's
-Telegram message — scheduled to the 4f cart/checkout window), DEF-18 (react-hooks v6
-rules off — revisit with any React Compiler decision).
+Telegram message — site half rides 4f via D-12; bot-side read = user's follow-up in
+`utg-tg-order-bot`), DEF-18 (react-hooks v6 rules off — revisit with any React
+Compiler decision), DEF-22 (`getCategoryName` accessor — step-5 window).
 
 ## Gotchas a resuming session must know
 
