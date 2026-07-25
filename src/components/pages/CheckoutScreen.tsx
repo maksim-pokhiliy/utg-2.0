@@ -33,9 +33,9 @@ export default function CheckoutScreen(): ReactElement {
   const isEmptyVisible = isHydrated && !isSuccess && cart.length === 0;
 
   const handlePlaced = () => {
-    clear();
     setIsSuccess(true);
     window.scrollTo(0, 0);
+    clear();
   };
 
   return (
