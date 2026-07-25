@@ -65,6 +65,7 @@ export default function CheckoutScreen(): ReactElement {
         cart,
         locale,
         total: (total * money.coefficient).toFixed(2),
+        currency: money.currency,
       };
 
       const response = await fetch("/api/place_order/", {
