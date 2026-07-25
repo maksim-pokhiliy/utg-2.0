@@ -45,7 +45,8 @@ export default function CartDrawer(): ReactElement {
 
   const pathname = usePathname();
 
-  const [confirming, setConfirming] = useState<ICartItem | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<ICartItem | null>(null);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
   useEffect(() => {
     close();
@@ -57,9 +58,17 @@ export default function CartDrawer(): ReactElement {
     }
   };
 
-  const handleRemoveConfirm = (item: ICartItem) => {
-    removeItem(item.id);
-    setConfirming(null);
+  const handleRemoveRequest = (item: ICartItem) => {
+    setRemoveTarget(item);
+    setIsRemoveOpen(true);
+  };
+
+  const handleRemoveConfirm = () => {
+    if (removeTarget) {
+      removeItem(removeTarget.id);
+    }
+
+    setIsRemoveOpen(false);
   };
 
   return (
@@ -112,7 +121,7 @@ export default function CartDrawer(): ReactElement {
                   onQuantityChange={(quantity) =>
                     setQuantity(item.id, quantity)
                   }
-                  onRemove={() => setConfirming(item)}
+                  onRemove={() => handleRemoveRequest(item)}
                   quantityLabel={dictionary.shared.quantity}
                   removeLabel={dictionary.cart.remove_confirm}
                 />
@@ -156,21 +165,19 @@ export default function CartDrawer(): ReactElement {
           </div>
         )}
 
-        {confirming ? (
-          <ConfirmDialog
-            open
-            onClose={() => setConfirming(null)}
-            onConfirm={() => handleRemoveConfirm(confirming)}
-            title={dictionary.cart.remove_title}
-            body={dictionary.cart.remove_body.replace(
-              "{title}",
-              confirming.title
-            )}
-            cancelLabel={dictionary.cart.remove_cancel}
-            confirmLabel={dictionary.cart.remove_confirm}
-            destructive
-          />
-        ) : null}
+        <ConfirmDialog
+          open={isRemoveOpen}
+          onClose={() => setIsRemoveOpen(false)}
+          onConfirm={handleRemoveConfirm}
+          title={dictionary.cart.remove_title}
+          body={dictionary.cart.remove_body.replace(
+            "{title}",
+            removeTarget?.title ?? ""
+          )}
+          cancelLabel={dictionary.cart.remove_cancel}
+          confirmLabel={dictionary.cart.remove_confirm}
+          destructive
+        />
       </SheetContent>
     </Sheet>
   );
