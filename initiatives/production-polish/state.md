@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-25 (D3.4 ratified + exported, D-12 ratified; step-4f prompt issued)
+**Updated:** 2026-07-25 (4f merged — PR #11, `e428fcb`; DEF-13 site half shipped; next: D3.5 brief)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -19,22 +19,20 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
 | D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — **cart/checkout (D3.4) RATIFIED & exported** (preselect change rejected); next: D3.5                              | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10, `a9bab45`, clean — no fix round; DEF-3 closed); 4f next                                        | `step-4d-catalog-category-prompt.md` |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11, `e428fcb` — currency per D-12, required seven per OQ-B); 4g next              | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
 | 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                    | plan.md                              |
 | 7     | README + presentation                                                            | ⬜ pending                                                                                                                    | plan.md                              |
 
 ## Next action
 
-1. User carries `step-4f-cart-checkout-prompt.md` to a fresh executor tab. Planner
-   reviews its plan gate (expected items: `CartLine` API, dictionary key placement,
-   currency threading), then the PR, per the loop. D-12 rides this step (payload
-   `currency`); the bot-side read is the user's separate follow-up in
-   `utg-tg-order-bot`.
-2. After 4f merges: refresh the Desktop snapshot, write the D3.5 reports/about/404
-   brief into the same cumulative dialog (swiper dies there per D-9); the D3.5 export
-   pass also refreshes the wired Home/Catalog/Category exports (deferred this round —
-   demo-plumbing delta only).
+1. NEXT SESSION: post-merge prod verification (Vercel deploy on `e428fcb` + live
+   smoke of the drawer/checkout), then refresh the Desktop snapshot and write the
+   D3.5 reports/about/404 brief into the same cumulative dialog (swiper dies per
+   D-9); the D3.5 export pass also refreshes the wired Home/Catalog/Category
+   exports (deferred — demo-plumbing delta only).
+2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
+   new `currency` field (D-12); DEF-13 closes when it lands.
 
 ## Open decisions awaiting ratification
 
@@ -44,10 +42,10 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 DEF-4 (order endpoint abuse protection — decide later), DEF-9 (hero photo sealed in
 Firebase; support ticket pending; non-blocking — the shipped Home carries a photo
-slot), DEF-13 (rates-down `en` checkout renders `$` on UAH total in the operator's
-Telegram message — site half rides 4f via D-12; bot-side read = user's follow-up in
-`utg-tg-order-bot`), DEF-18 (react-hooks v6 rules off — revisit with any React
-Compiler decision), DEF-22 (`getCategoryName` accessor — step-5 window).
+slot), DEF-13 (site half SHIPPED in 4f; closes when the bot reads `currency`), DEF-18
+(react-hooks v6 — any React Compiler decision), DEF-22 (`getCategoryName`, step 5),
+DEF-23 (drawer auto-open focus — 4g), DEF-24 (USD cent rounding — step 5/6 or DROP),
+DEF-25 (autoComplete — step 5), DEF-26 (eslint-ignore for `initiatives/` — 4g).
 
 ## Gotchas a resuming session must know
 
