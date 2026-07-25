@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-25 (4e merged + live in prod, DEF-3 CLOSED; D3.4 gated on the kit checkout-string pull)
+**Updated:** 2026-07-25 (4e live; kit checkout strings pulled; D3.4 cart/checkout brief issued)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -17,7 +17,7 @@ carry-forwards → `deferred.md`. **Resume here.**
 | D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT   |
 | D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`           |
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
-| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home/catalog/category/product SHIPPED; **D3.4 next (gated on string pull)**                                      | `design-export/screens/`             |
+| D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — Home/catalog/category/product SHIPPED; **cart/checkout brief issued (D3.4)**                                      | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
 | 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10, `a9bab45`, clean — no fix round; DEF-3 closed); 4f next                                        | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
@@ -26,13 +26,16 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. User runs `/design-login` on the account that owns the ORIGINAL DS project
-   (`62bf007e-…`) so the planner can pull the kit's reserved checkout strings
-   (success-note, uk form labels — DEF-14 says do not re-invent; they exist only in
-   that project's `ui_kits/storefront/data.js`).
-2. Planner writes the D3.4 cart/checkout brief (same cumulative dialog, refreshed
-   snapshot attached — already synced); user carries it; ratify → export → 4f prompt.
-   The DEF-13 payload+bot `currency` decision lives in the 4f window.
+1. User re-attaches the refreshed Desktop snapshot + carries
+   `design-6-cart-checkout-prompt.md` into the SAME cumulative Claude Design dialog
+   (**note: the dialog lives on the OTHER claude.ai account than the current
+   /design-login** — DesignSync is now pointed at the original DS project's account;
+   re-run `/design-login` back before the planner's fidelity review of D3.4),
+   approves both surfaces visually, and brings the project URL back.
+2. Planner fidelity-reviews via DesignSync, exports to
+   `design-export/screens/{cart,checkout}/`, then writes `step-4f-cart-checkout-prompt.md`.
+   The DEF-13 payload+bot `currency` decision lives in the 4f window; DEF-22
+   (`getCategoryName`) rides 4f if it touches `src/data`.
 
 ## Open decisions awaiting ratification
 
