@@ -19,6 +19,7 @@ import {
 import { ProductView } from "@root/data";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 import { composeCartLine, useCartStore } from "@root/store/cart";
+import { useSidebarStore } from "@root/store/sidebar";
 import { formatPrice } from "@root/utils/formatPrice";
 
 import { NavLink } from "@root/components/layout/NavLink";
@@ -43,6 +44,7 @@ export default function ProductScreen({
   const locale = useLocale();
 
   const addItem = useCartStore((state) => state.addItem);
+  const openCart = useSidebarStore((state) => state.open);
 
   const [size, setSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -76,6 +78,7 @@ export default function ProductScreen({
     setQuantity(1);
     setSize(null);
     setIsSizeMissing(false);
+    openCart();
   };
 
   return (

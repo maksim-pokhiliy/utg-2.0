@@ -35,7 +35,13 @@ export function Field({
       ) : null}
 
       {error ? (
-        <span className="type-small font-medium text-destructive">{error}</span>
+        <span
+          role="alert"
+          id={htmlFor ? `${htmlFor}-error` : undefined}
+          className="type-small font-medium text-destructive"
+        >
+          {error}
+        </span>
       ) : null}
     </div>
   );
