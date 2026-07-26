@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Button,
@@ -10,7 +10,8 @@ import {
   SectionBand,
   Typography,
 } from "@root/design-system";
-import { resolveLocale } from "@root/utils/locale";
+import type { Locale } from "@root/data";
+import { DEFAULT_LOCALE, resolveLocale } from "@root/utils/locale";
 
 const KICKER = "/ 404";
 
@@ -29,12 +30,16 @@ const messages = {
 
 export default function NotFoundScreen() {
   const pathname = usePathname();
-  const locale = resolveLocale(pathname.split("/")[1]);
-  const message = messages[locale];
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-  }, [locale]);
+    const resolved = resolveLocale(pathname.split("/")[1]);
+
+    setLocale(resolved);
+    document.documentElement.lang = resolved;
+  }, [pathname]);
+
+  const message = messages[locale];
 
   return (
     <>
