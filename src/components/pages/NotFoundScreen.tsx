@@ -4,7 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-import { Button, Container, SectionBand, Typography } from "@root/design-system";
+import {
+  Button,
+  Container,
+  SectionBand,
+  Typography,
+} from "@root/design-system";
 import { resolveLocale } from "@root/utils/locale";
 
 const KICKER = "/ 404";
