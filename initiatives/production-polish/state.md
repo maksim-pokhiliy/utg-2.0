@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-25 (4f merged — PR #11, `e428fcb`; DEF-13 site half shipped; next: D3.5 brief)
+**Updated:** 2026-07-27 (4f prod-verified live on `d556f04`; next: D3.5 brief)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -19,17 +19,17 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
 | D3    | Per-page screen designs (Claude Design)                                          | 🔵 active — **cart/checkout (D3.4) RATIFIED & exported** (preselect change rejected); next: D3.5                              | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11, `e428fcb` — currency per D-12, required seven per OQ-B); 4g next              | `step-4d-catalog-category-prompt.md` |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11, `e428fcb` — currency per D-12, prod-verified live 07-27); 4g next             | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
 | 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                    | plan.md                              |
 | 7     | README + presentation                                                            | ⬜ pending                                                                                                                    | plan.md                              |
 
 ## Next action
 
-1. NEXT SESSION: post-merge prod verification (Vercel deploy on `e428fcb` + live
-   smoke of the drawer/checkout), then refresh the Desktop snapshot and write the
-   D3.5 reports/about/404 brief into the same cumulative dialog (swiper dies per
-   D-9); the D3.5 export pass also refreshes the wired Home/Catalog/Category
+1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green, D-12
+   `currency` in the shipped chunk). Now: refresh the Desktop snapshot and write
+   the D3.5 reports/about/404 brief into the same cumulative dialog (swiper dies
+   per D-9); the D3.5 export pass also refreshes the wired Home/Catalog/Category
    exports (deferred — demo-plumbing delta only).
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
