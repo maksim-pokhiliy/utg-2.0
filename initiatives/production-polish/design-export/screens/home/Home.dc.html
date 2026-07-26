@@ -15,12 +15,12 @@
   <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/base.css">
   <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
   <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
-  <script src="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js"></script>
+  <script>(function(){var u="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js";function go(){var s=document.createElement("script");s.src=u;document.head.appendChild(s);}if(window.React){go();}else{var n=0,t=setInterval(function(){if(window.React||++n>500){clearInterval(t);go();}},20);}})();</script>
   <script src="../data/catalog.js"></script>
   <style>header a img{height:38px !important}</style>
 </helmet>
 <div id="home" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
-  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ sticky }}" nav="{{ navLinks }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ sticky }}" nav="{{ navLinks }}" on-cart-click="{{ openCart }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
   <main style="flex:1 1 auto">
     <section data-screen-label="Hero" style="padding:clamp(var(--space-7),7vw,var(--space-9)) var(--gutter) var(--space-7)">
       <div style="max-width:var(--container);margin:0 auto">
@@ -80,19 +80,21 @@
     </section>
   </main>
   <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" nav="{{ navLinks }}" hint-size="100%,280px"></x-import></sc-if>
+  <x-import component-from-global-scope="UTGCart.Drawer" from="../cart/cart-drawer.js" locale="{{ locale }}" open="{{ cartOpen }}" on-close="{{ closeCart }}" catalog-href="{{ drawerCatalogHref }}" checkout-href="{{ drawerCheckoutHref }}" hint-size="0px,0px"></x-import>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
   &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
   &quot;heroPhotoSrc&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Hero&quot;},
-  &quot;stickyHeader&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Chrome&quot;}
+  &quot;stickyHeader&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Chrome&quot;},
+  &quot;demoDeadLink&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Design review&quot;}
 }">
 class Component extends DCLogic {
   state = { locale: null };
   componentDidMount() {
-    if (!window.UTG_CATALOG) {
-      this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); this.forceUpdate(); } }, 25);
-    }
+    const sub = () => { this._unsub = window.UTG_CATALOG.cart.subscribe(() => this.forceUpdate()); };
+    if (window.UTG_CATALOG) sub();
+    else this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); sub(); this.forceUpdate(); } }, 25);
     this._onHash = () => this.forceUpdate();
     window.addEventListener("hashchange", this._onHash);
     this._t2 = setTimeout(() => this.forceUpdate(), 150);
@@ -100,6 +102,7 @@ class Component extends DCLogic {
   }
   componentWillUnmount() {
     clearInterval(this._t);
+    this._unsub && this._unsub();
     clearTimeout(this._t2);
     clearTimeout(this._t3);
     window.removeEventListener("hashchange", this._onHash);
@@ -137,7 +140,7 @@ class Component extends DCLogic {
       t: T[locale],
       setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
       navLinks: C ? C.navLinks(locale) : null,
-      hrefPatches: C ? C.categoryHref("patches", locale) : "#",
+      hrefPatches: C ? ((this.props.demoDeadLink ?? false) ? C.productHref("patches", "removed-item", locale) : C.categoryHref("patches", locale)) : "#",
       hrefStickers: C ? C.categoryHref("stickers", locale) : "#",
       hrefTshirts: C ? C.categoryHref("tshirts", locale) : "#",
       heroPhotoImg: heroPhoto
@@ -151,7 +154,12 @@ class Component extends DCLogic {
       showSkull: !heroPhoto,
       sticky: this.props.stickyHeader ?? true,
       ready: !!C,
-      cartCount: 0,
+      cartCount: C ? C.cart.count() : 0,
+      cartOpen: !!this.state.cartOpen,
+      openCart: () => this.setState({ cartOpen: true }),
+      closeCart: () => this.setState({ cartOpen: false }),
+      drawerCatalogHref: C ? C.catalogHref(locale) : "#",
+      drawerCheckoutHref: C ? C.checkoutHref(locale) : "#",
     };
   }
 }

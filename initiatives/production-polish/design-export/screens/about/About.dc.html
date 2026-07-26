@@ -19,31 +19,28 @@
   <script src="../data/catalog.js"></script>
   <style>header a img{height:38px !important}</style>
 </helmet>
-<div id="catalog" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
+<div id="about" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
   <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ true }}" nav="{{ navLinks }}" on-cart-click="{{ openCart }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
   <main style="flex:1 1 auto">
-    <section class="utg-band" data-screen-label="Catalog band">
-      <div style="max-width:var(--container);margin:0 auto;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2) var(--space-4)">
-        <h1>{{ merchTitle }}</h1>
-        <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--band-muted)">{{ catCount }}</span>
+    <section class="utg-band" data-screen-label="About band">
+      <div style="max-width:var(--container);margin:0 auto">
+        <h1>{{ bandTitle }}</h1>
       </div>
     </section>
-    <section data-screen-label="Categories" style="padding:var(--space-6) var(--gutter) var(--space-9)">
-      <div style="max-width:var(--container);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--space-5)">
-        <sc-for list="{{ tiles }}" as="c" hint-placeholder-count="0">
-          <a class="utg-card" href="{{ c.href }}">
-            <span class="utg-card-media"><img src="{{ c.image }}" alt="" loading="lazy"></span>
-            <span style="display:flex;align-items:center;gap:var(--space-3);padding:14px 16px">
-              <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:var(--ink-faint)">{{ c.index }}</span>
-              <span style="flex:1 1 auto;font:500 var(--text-h3)/1 var(--font-display);letter-spacing:var(--display-tracking);text-transform:uppercase">{{ c.name }}</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-            </span>
-            <span style="display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:2px var(--space-3);margin-top:auto;padding:10px 16px 12px;border-top:1px solid var(--line);font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">
-              <span style="white-space:nowrap">{{ c.count }}</span>
-              <span style="white-space:nowrap">{{ c.stock }}</span>
-            </span>
-          </a>
-        </sc-for>
+    <section data-screen-label="About text" style="padding:var(--space-6) var(--gutter) var(--space-9)">
+      <div style="max-width:var(--container);margin:0 auto">
+        <div style="max-width:760px;display:flex;flex-direction:column;gap:var(--space-5)">
+          <p style="margin:0;font:var(--type-body);color:var(--ink);text-wrap:pretty">{{ p1 }}</p>
+          <sc-if value="{{ useProposed }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font:var(--type-body);color:var(--ink);text-wrap:pretty">{{ p2Base }} {{ propPre }}<a href="{{ reportsLink }}" style="color:var(--secondary)">{{ propLink }}</a>.</p>
+          </sc-if>
+          <sc-if value="{{ useLive }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font:var(--type-body);color:var(--ink);text-wrap:pretty">{{ p2Live }}</p>
+          </sc-if>
+          <span style="display:block;max-width:520px;border:var(--rule) solid var(--ink);background:#fff;margin-top:var(--space-2)">
+            <img src="../../assets/no_commercial.jpg" alt="" loading="lazy" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">
+          </span>
+        </div>
       </div>
     </section>
   </main>
@@ -52,37 +49,27 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
-  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;}
+  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;closingLine&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;proposed&quot;, &quot;live&quot;], &quot;default&quot;: &quot;proposed&quot;, &quot;tsType&quot;: &quot;\&quot;proposed\&quot; | \&quot;live\&quot;&quot;, &quot;section&quot;: &quot;Proposed copy&quot;}
 }">
 class Component extends DCLogic {
-  state = { locale: null };
+  state = { locale: null, cartOpen: false };
   componentDidMount() {
     const sub = () => { this._unsub = window.UTG_CATALOG.cart.subscribe(() => this.forceUpdate()); };
     if (window.UTG_CATALOG) sub();
     else this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); sub(); this.forceUpdate(); } }, 25);
-    this._onHash = () => this.forceUpdate();
-    window.addEventListener("hashchange", this._onHash);
-    this._t2 = setTimeout(() => this.forceUpdate(), 150);
-    this._t3 = setTimeout(() => this.forceUpdate(), 600);
   }
-  componentWillUnmount() {
-    clearInterval(this._t);
-    this._unsub && this._unsub();
-    clearTimeout(this._t2);
-    clearTimeout(this._t3);
-    window.removeEventListener("hashchange", this._onHash);
-  }
+  componentWillUnmount() { clearInterval(this._t); this._unsub && this._unsub(); }
   renderVals() {
     const C = window.UTG_CATALOG;
-    const hash = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
-    const hashLang = hash.lang === "en" || hash.lang === "uk" ? hash.lang : null;
+    this._hash = this._hash || Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const hashLang = this._hash.lang === "en" || this._hash.lang === "uk" ? this._hash.lang : null;
     const locale = this.state.locale ?? hashLang ?? this.props.locale ?? "uk";
+    const d = C ? C.dict[locale] : {};
+    const proposed = (this.props.closingLine ?? "proposed") === "proposed";
     return {
       locale,
       setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
-      merchTitle: C ? C.dict[locale].merch : "",
-      catCount: C ? C.countCats(C.categories.length, locale) : "",
-      tiles: C ? C.summaries(locale) : [],
       navLinks: C ? C.navLinks(locale) : null,
       ready: !!C,
       cartCount: C ? C.cart.count() : 0,
@@ -91,6 +78,15 @@ class Component extends DCLogic {
       closeCart: () => this.setState({ cartOpen: false }),
       drawerCatalogHref: C ? C.catalogHref(locale) : "#",
       drawerCheckoutHref: C ? C.checkoutHref(locale) : "#",
+      bandTitle: d.about ?? "",
+      p1: d.aboutP1 ?? "",
+      p2Live: d.aboutP2Live ?? "",
+      p2Base: d.aboutP2Base ?? "",
+      propPre: d.aboutPropPre ?? "",
+      propLink: d.aboutPropLink ?? "",
+      reportsLink: C ? C.reportsHref(locale) : "#",
+      useProposed: !!C && proposed,
+      useLive: !!C && !proposed,
     };
   }
 }

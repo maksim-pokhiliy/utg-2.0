@@ -34,8 +34,8 @@
   ];
   /* strings: shared.* / category.* verbatim from dictionaries; inStock adopted from kit Badge labels */
   var dict = {
-    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності", add: "Додати у Кошик", quantity: "Кількість", size: "Розмір", description: "Опис", outMsg: "Наразі немає в наявності. Слідкуйте за оновленнями в Instagram.", cartTitle: "Кошик", total: "Всього", proceed: "Перейти до Оформлення", emptyTitle: "Ваш кошик порожній", emptyHint: "Додайте товари до свого кошика", here: "тут", removeTitle: "Видалити товар?", removeBody: "«{title}» буде видалено з кошика.", cancel: "Скасувати", removeConfirm: "Видалити", close: "Закрити", checkout: "оформлення", customer: "Інформація про замовника", delivery: "Деталі доставки", firstName: "Ім'я", firstPh: "John", lastName: "Прізвище", lastPh: "Wick", phone: "Телефон / Нік у Телеграм", phonePh: "555-0100", country: "Країна", countryPh: "Україна", region: "Область", regionPh: "Львівська Область", city: "Місто", cityPh: "Львів", address: "Адреса", addressPh: "Вулиця Казкового Міста 1", additional: "Додаткова інформація", summary: "Підсумок", placeOrder: "Зробити Замовлення", review: "Перегляньте ваші дані вище та продовжуйте, коли будете готові.", required: "Обов'язкове поле", orderError: "Помилка при відправці замовлення", orderReceived: "Замовлення прийнято", successBody: "Дякуємо за ваше замовлення! Наш менеджер зв'яжеться з вами найближчим часом", successNote: "Оплата не відбувається онлайн — це волонтерський проект. Менеджер узгодить з вами оплату та доставку." },
-    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock", add: "Add to Cart", quantity: "Quantity", size: "Size", description: "Description", outMsg: "Currently out of stock. Follow updates on Instagram.", cartTitle: "Cart", total: "Total", proceed: "Proceed to Checkout", emptyTitle: "Your cart is empty", emptyHint: "Add products to your cart in", here: "here", removeTitle: "Remove item?", removeBody: "{title} will be removed from your cart.", cancel: "Cancel", removeConfirm: "Remove", close: "Close", checkout: "checkout", customer: "Customer details", delivery: "Delivery details", firstName: "First Name", firstPh: "John", lastName: "Last Name", lastPh: "Wick", phone: "Phone Number / Telegram Nickname", phonePh: "555-0100", country: "Country", countryPh: "Ukraine", region: "Region / State", regionPh: "Lviv Region", city: "City", cityPh: "Lviv", address: "Address", addressPh: "Fairy Tale City Street 1", additional: "Additional Information", summary: "Order summary", placeOrder: "Place Order", review: "Review your details above and continue when you're ready.", required: "Required field", orderError: "Error when placing an order", orderReceived: "Order received", successBody: "Thank you for your order! Our manager will contact you shortly", successNote: "No online payment — this is a volunteer project. Our manager will arrange payment and delivery with you." },
+    uk: { home: "головна", merch: "мерч", reports: "звіти", about: "про нас", order: "Замовити", out: "Немає в наявності", inStock: "В наявності", add: "Додати у Кошик", quantity: "Кількість", size: "Розмір", description: "Опис", outMsg: "Наразі немає в наявності. Слідкуйте за оновленнями в Instagram.", cartTitle: "Кошик", total: "Всього", proceed: "Перейти до Оформлення", emptyTitle: "Ваш кошик порожній", emptyHint: "Додайте товари до свого кошика", here: "тут", removeTitle: "Видалити товар?", removeBody: "«{title}» буде видалено з кошика.", cancel: "Скасувати", removeConfirm: "Видалити", close: "Закрити", checkout: "оформлення", customer: "Інформація про замовника", delivery: "Деталі доставки", firstName: "Ім'я", firstPh: "John", lastName: "Прізвище", lastPh: "Wick", phone: "Телефон / Нік у Телеграм", phonePh: "555-0100", country: "Країна", countryPh: "Україна", region: "Область", regionPh: "Львівська Область", city: "Місто", cityPh: "Львів", address: "Адреса", addressPh: "Вулиця Казкового Міста 1", additional: "Додаткова інформація", summary: "Підсумок", placeOrder: "Зробити Замовлення", review: "Перегляньте ваші дані вище та продовжуйте, коли будете готові.", required: "Обов'язкове поле", orderError: "Помилка при відправці замовлення", orderReceived: "Замовлення прийнято", successBody: "Дякуємо за ваше замовлення! Наш менеджер зв'яжеться з вами найближчим часом", successNote: "Оплата не відбувається онлайн — це волонтерський проект. Менеджер узгодить з вами оплату та доставку.", reportsIntro: "Кожна закупівля — з ваших замовлень. Фотозвіти підрозділу.", reportFpv: "На матеріали для виготовлення ініціаторів для FPV", aboutP1: "Цей сайт створено виключно як волонтерський проект. Ідея з'явилася через численні прохання підписників зробити мерч та як ще одна можливість зібрати ресурс для закриття потреб підшефного спецпідрозділу.", aboutP2Live: "Усі кошти з продаж підуть на закупівлі спорядження, витратних матеріалів, ремонт техніки. Після старту продаж тут з'явиться ще один розділ із звітами.", aboutP2Base: "Усі кошти з продаж підуть на закупівлі спорядження, витратних матеріалів, ремонт техніки.", aboutPropPre: "Фотозвіти з кожної закупівлі — у ", aboutPropLink: "розділі звітів", nfTitle: "Сторінку не знайдено", nfBody: "Такої сторінки немає. Можливо, товар знято з продажу.", nfCta: "До мерчу" },
+    en: { home: "home", merch: "merch", reports: "reports", about: "about", order: "Order Now", out: "Out Of Stock", inStock: "In stock", add: "Add to Cart", quantity: "Quantity", size: "Size", description: "Description", outMsg: "Currently out of stock. Follow updates on Instagram.", cartTitle: "Cart", total: "Total", proceed: "Proceed to Checkout", emptyTitle: "Your cart is empty", emptyHint: "Add products to your cart in", here: "here", removeTitle: "Remove item?", removeBody: "{title} will be removed from your cart.", cancel: "Cancel", removeConfirm: "Remove", close: "Close", checkout: "checkout", customer: "Customer details", delivery: "Delivery details", firstName: "First Name", firstPh: "John", lastName: "Last Name", lastPh: "Wick", phone: "Phone Number / Telegram Nickname", phonePh: "555-0100", country: "Country", countryPh: "Ukraine", region: "Region / State", regionPh: "Lviv Region", city: "City", cityPh: "Lviv", address: "Address", addressPh: "Fairy Tale City Street 1", additional: "Additional Information", summary: "Order summary", placeOrder: "Place Order", review: "Review your details above and continue when you're ready.", required: "Required field", orderError: "Error when placing an order", orderReceived: "Order received", successBody: "Thank you for your order! Our manager will contact you shortly", successNote: "No online payment — this is a volunteer project. Our manager will arrange payment and delivery with you.", reportsIntro: "Every purchase is funded by your orders. Photo reports from the unit.", reportFpv: "For material for the manufacture of initiators for FPV", aboutP1: "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the unit we support.", aboutP2Live: "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. After the start of sales, another section with reports will appear here.", aboutP2Base: "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment.", aboutPropPre: "Photo reports from every purchase are in the ", aboutPropLink: "reports section", nfTitle: "Page not found", nfBody: "This page doesn't exist. The item may have been removed.", nfCta: "To merch" },
   };
   function ukPlural(n, forms) {
     var m10 = n % 10, m100 = n % 100;
@@ -52,9 +52,14 @@
   function byCategory(slug) {
     return products.filter(function (p) { return p.category === slug; });
   }
+  function categoryExists(slug) { return categories.some(function (c) { return c.slug === slug; }); }
+  function productExists(catSlug, prodSlug) { return products.some(function (p) { return p.category === catSlug && p.slug === prodSlug; }); }
   function categoryHref(slug, locale) { return "../category/Category.dc.html#cat=" + slug + "&lang=" + locale; }
   function productHref(catSlug, prodSlug, locale) { return "../product/Product.dc.html#cat=" + catSlug + "&product=" + prodSlug + "&lang=" + locale; }
   function checkoutHref(locale) { return "../checkout/Checkout.dc.html#lang=" + locale; }
+  function reportsHref(locale) { return "../reports/Reports.dc.html#lang=" + locale; }
+  function aboutHref(locale) { return "../about/About.dc.html#lang=" + locale; }
+  function notFoundHref(locale) { return "../404/NotFound.dc.html#lang=" + locale; }
   /* cart store — localStorage-backed, seeded once with the design-load cart (sized line, long set title, qty > 1) */
   var CART_KEY = "utg_cart_v1";
   var cartListeners = [];
@@ -121,6 +126,19 @@
     categoryHref: categoryHref,
     productHref: productHref,
     checkoutHref: checkoutHref,
+    reportsHref: reportsHref,
+    aboutHref: aboutHref,
+    notFoundHref: notFoundHref,
+    categoryExists: categoryExists,
+    productExists: productExists,
+    reports: function (locale) {
+      var d = dict[locale];
+      var out = [];
+      for (var i = 1; i <= 8; i++) {
+        out.push({ image: "../../assets/reports/report-" + i + ".jpg", index: String(i).padStart(2, "0"), caption: i === 3 ? d.reportFpv : null });
+      }
+      return out;
+    },
     cart: cart,
     catalogHref: catalogHref,
     homeHref: function (locale) { return "../home/Home.dc.html#lang=" + locale; },
@@ -132,7 +150,7 @@
     },
     navLinks: function (locale) {
       var d = dict[locale];
-      return [[d.home, "../home/Home.dc.html#lang=" + locale], [d.merch, catalogHref(locale)], [d.reports, "#reports"], [d.about, "#about"]];
+      return [[d.home, "../home/Home.dc.html#lang=" + locale], [d.merch, catalogHref(locale)], [d.reports, reportsHref(locale)], [d.about, aboutHref(locale)]];
     },
     summaries: function (locale) {
       var d = dict[locale];

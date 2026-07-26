@@ -115,6 +115,10 @@ class Component extends DCLogic {
     const shape = (this.props.shape ?? "patches/waiting").split("/");
     const catSlug = hash.cat ?? shape[0];
     const prodSlug = hash.product ?? shape[1];
+    if (C && !this._redir && (hash.cat || hash.product) && !C.productExists(catSlug, prodSlug)) {
+      this._redir = true;
+      location.replace(C.notFoundHref(locale));
+    }
     const v = C ? C.productView(catSlug, prodSlug, locale) : { categorySlug: catSlug, categoryName: "", title: "", description: null, sizes: null, price: 0, isAvailable: false, image: "" };
     const d = C ? C.dict[locale] : {};
     const available = (this.props.demoInStock ?? false) ? true : v.isAvailable;
