@@ -8,6 +8,7 @@ import {
   Container,
   Icon,
   IconLink,
+  SectionBand,
   Separator,
   Typography,
 } from "@root/design-system";
@@ -77,16 +78,12 @@ export default function HomeScreen({ categories }: IHomeScreenProps) {
         </Container>
       </section>
 
-      <section
-        id="merch"
-        className="scroll-mt-20 bg-band py-8 text-band-foreground"
-      >
-        <Container className="flex flex-wrap items-baseline justify-between gap-4">
-          <Typography variant="h2">{dictionary.shared.merch}</Typography>
-          <Typography variant="caption" as="span" className="text-band-muted">
-            {dictionary.main.counter}
-          </Typography>
-        </Container>
+      <section id="merch" className="scroll-mt-20">
+        <SectionBand
+          as="h2"
+          title={dictionary.shared.merch}
+          meta={dictionary.main.counter}
+        />
       </section>
 
       <section className="pt-8 pb-24">
