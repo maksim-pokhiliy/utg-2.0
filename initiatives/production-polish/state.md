@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (4f prod-verified live on `d556f04`; next: D3.5 brief)
+**Updated:** 2026-07-27 (4f prod-verified live; D3.5 brief ISSUED — user carries)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -26,11 +26,13 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green, D-12
-   `currency` in the shipped chunk). Now: refresh the Desktop snapshot and write
-   the D3.5 reports/about/404 brief into the same cumulative dialog (swiper dies
-   per D-9); the D3.5 export pass also refreshes the wired Home/Catalog/Category
-   exports (deferred — demo-plumbing delta only).
+1. USER: carry `design-7-reports-about-404-prompt.md` into the cumulative design
+   dialog (one message + the fresh Desktop snapshot, refreshed 2026-07-27) and
+   review the D3.5 prototype visually. Then: planner fidelity review via
+   DesignSync (mind the two-account juggling — `/design-login` must point at the
+   cumulative project), ratify + export (the export pass also refreshes the wired
+   Home/Catalog/Category exports — demo-plumbing delta only), then the 4g step
+   prompt.
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
