@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
+import { useReturnFocus } from "../../lib/use-return-focus";
 import { Icon } from "../icon/icon";
 import { IconButton } from "../icon-button/icon-button";
 import { Typography } from "../typography/typography";
@@ -57,6 +58,8 @@ export function Dialog({
   actions,
   size = "panel",
 }: DialogProps): ReactElement {
+  const { captureOpener, restoreOpener } = useReturnFocus();
+
   const titleNode = (
     <DialogPrimitive.Title asChild>
       <Typography variant="h3" as="h2">
@@ -80,6 +83,8 @@ export function Dialog({
         <DialogPrimitive.Content
           className={dialogContent({ size })}
           aria-describedby={undefined}
+          onOpenAutoFocus={captureOpener}
+          onCloseAutoFocus={restoreOpener}
         >
           {size === "full" ? (
             <>

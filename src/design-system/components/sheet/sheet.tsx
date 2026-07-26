@@ -4,6 +4,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog";
 import type { ComponentPropsWithoutRef, ReactElement } from "react";
 
 import { cn } from "../../lib/cn";
+import { useReturnFocus } from "../../lib/use-return-focus";
 
 export const Sheet = SheetPrimitive.Root;
 export const SheetTrigger = SheetPrimitive.Trigger;
@@ -29,8 +30,12 @@ function SheetOverlay({
 export function SheetContent({
   className,
   children,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: ComponentPropsWithoutRef<typeof SheetPrimitive.Content>): ReactElement {
+  const { captureOpener, restoreOpener } = useReturnFocus();
+
   return (
     <SheetPrimitive.Portal>
       <SheetOverlay />
@@ -41,6 +46,14 @@ export function SheetContent({
           className
         )}
         {...props}
+        onOpenAutoFocus={(event) => {
+          captureOpener(event);
+          onOpenAutoFocus?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          restoreOpener(event);
+        }}
       >
         {children}
       </SheetPrimitive.Content>
