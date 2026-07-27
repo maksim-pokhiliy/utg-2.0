@@ -46,8 +46,14 @@ const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0`;
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
+const viewerHeightBoundWidth = (width: number, height: number): string =>
+  `calc((${VIEWER_VIEWPORT_HEIGHT}vh - ${VIEWER_CHROME_HEIGHT}px) * ${(width / height).toFixed(ASPECT_PRECISION)})`;
+
 const viewerSizes = (width: number, height: number): string =>
-  `min(${VIEWER_MAX_WIDTH}px, ${VIEWER_VIEWPORT_WIDTH}vw, calc((${VIEWER_VIEWPORT_HEIGHT}vh - ${VIEWER_CHROME_HEIGHT}px) * ${(width / height).toFixed(ASPECT_PRECISION)}))`;
+  `min(${VIEWER_MAX_WIDTH}px, ${VIEWER_VIEWPORT_WIDTH}vw, ${viewerHeightBoundWidth(width, height)})`;
+
+const viewerWidth = (width: number, height: number): string =>
+  `min(100%, ${viewerHeightBoundWidth(width, height)})`;
 
 export default function ReportsScreen() {
   const dictionary = useDictionary();
@@ -166,7 +172,10 @@ export default function ReportsScreen() {
         nextLabel={dictionary.reports.next}
         closeLabel={dictionary.shared.close}
         media={
-          <div className="relative">
+          <div
+            className="relative mx-auto"
+            style={{ width: viewerWidth(viewed.width, viewed.height) }}
+          >
             <Skeleton
               className={
                 isViewedSettled
