@@ -26,11 +26,11 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. Verify the Vercel deploy on `71dbb63` + live-smoke /uk/reports. Then: planner
-   writes the step-5 SEO prompt (riders scheduled to its window: DEF-22
-   getCategoryName, DEF-25 autoComplete, DEF-30 shared.close, DEF-31 viewer
-   loading; decisions due: DEF-4 abuse protection, DEF-24 cent rounding,
-   DEF-29 soft-404 revisit-or-accept).
+1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green — grid
+   labels + both locales). Next: planner writes the step-5 SEO prompt (riders
+   scheduled to its window: DEF-22 getCategoryName, DEF-25 autoComplete, DEF-30
+   shared.close, DEF-31 viewer loading; decisions due: DEF-4 abuse protection,
+   DEF-24 cent rounding, DEF-29 soft-404 revisit-or-accept).
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
