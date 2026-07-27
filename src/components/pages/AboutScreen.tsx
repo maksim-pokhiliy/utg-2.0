@@ -11,11 +11,11 @@ const REPORTS_LINK_TOKEN = "{link}";
 const IMAGE_SIZES = "(min-width: 568px) 520px, calc(100vw - 48px)";
 const IMAGE_ALT = "FOR DONATIONS · NO COMMERCIAL · @UKRAINIAN_TACTICAL_GEAR";
 
-const splitAtToken = (text: string): [string, string] => {
+const splitAtToken = (text: string): [string, string] | null => {
   const tokenStart = text.indexOf(REPORTS_LINK_TOKEN);
 
   if (tokenStart === -1) {
-    return [text, ""];
+    return null;
   }
 
   return [
@@ -27,7 +27,7 @@ const splitAtToken = (text: string): [string, string] => {
 export default function AboutScreen() {
   const dictionary = useDictionary();
 
-  const [beforeLink, afterLink] = splitAtToken(dictionary.about.all_proceeds);
+  const segments = splitAtToken(dictionary.about.all_proceeds);
 
   return (
     <>
@@ -41,11 +41,17 @@ export default function AboutScreen() {
             </Typography>
 
             <Typography variant="body" as="p" className="text-pretty">
-              {beforeLink}
-              <NavLink href="/reports" className="text-flag-blue">
-                {dictionary.about.reports_link}
-              </NavLink>
-              {afterLink}
+              {segments === null ? (
+                dictionary.about.all_proceeds
+              ) : (
+                <>
+                  {segments[0]}
+                  <NavLink href="/reports" className="text-flag-blue">
+                    {dictionary.about.reports_link}
+                  </NavLink>
+                  {segments[1]}
+                </>
+              )}
             </Typography>
 
             <div className="relative mt-2 aspect-square w-full max-w-[520px] border-2 border-ink bg-white">

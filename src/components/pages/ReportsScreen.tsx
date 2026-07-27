@@ -9,7 +9,7 @@ const REPORT_COUNT = 8;
 const FPV_REPORT_NUMBER = 3;
 const IMAGE_SIZES = [
   "(min-width: 1200px) 347px",
-  "(min-width: 884px) calc(33.33vw - 53px)",
+  "(min-width: 940px) calc(33.33vw - 53px)",
   "(min-width: 768px) calc(50vw - 68px)",
   "(min-width: 592px) calc(50vw - 36px)",
   "calc(100vw - 48px)",
@@ -27,7 +27,7 @@ export default function ReportsScreen() {
       image: `/images/reports/report_${number}.jpg`,
       index: formatIndex(number),
       caption:
-        number === FPV_REPORT_NUMBER ? dictionary.reports.fpvCaption : null,
+        number === FPV_REPORT_NUMBER ? dictionary.reports.fpv_caption : null,
     };
   });
 

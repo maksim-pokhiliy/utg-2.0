@@ -3,7 +3,14 @@
 import { useCallback, useRef } from "react";
 
 const ENCLOSING_LAYER = "[role='dialog']";
-const FOCUSABLE = "button, a[href], input, select, textarea, [tabindex]";
+const FOCUSABLE = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(", ");
 
 interface ReturnFocus {
   captureOpener: (event: Event) => void;
@@ -28,12 +35,15 @@ const firstConnected = (
 
 const resolveOpener = (): HTMLElement | null => {
   const { activeElement } = document;
+  const interaction = lastInteraction;
+
+  lastInteraction = null;
 
   if (activeElement instanceof HTMLElement && activeElement !== document.body) {
     return activeElement;
   }
 
-  return lastInteraction?.closest<HTMLElement>(FOCUSABLE) ?? null;
+  return interaction?.closest<HTMLElement>(FOCUSABLE) ?? null;
 };
 
 export function useReturnFocus(): ReturnFocus {

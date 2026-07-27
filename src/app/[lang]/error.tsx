@@ -31,11 +31,9 @@ export default function Error({
 
       <section className="pt-8 pb-24">
         <Container>
-          <div className="flex max-w-[560px] flex-col items-start gap-6">
-            <Button variant="outline" onClick={reset}>
-              {message.retry}
-            </Button>
-          </div>
+          <Button variant="outline" onClick={reset}>
+            {message.retry}
+          </Button>
         </Container>
       </section>
     </>
