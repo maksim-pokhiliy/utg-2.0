@@ -26,6 +26,29 @@ export const REQUIRED_FIELDS: readonly CheckoutFieldName[] = [
 export const isRequiredField = (name: CheckoutFieldName): boolean =>
   REQUIRED_FIELDS.includes(name);
 
+export type AutofillToken =
+  | "given-name"
+  | "family-name"
+  | "tel"
+  | "country-name"
+  | "address-level1"
+  | "address-level2"
+  | "street-address";
+
+export const AUTOFILL_TOKENS: Record<
+  CheckoutFieldName,
+  AutofillToken | undefined
+> = {
+  first_name: "given-name",
+  last_name: "family-name",
+  telephone: "tel",
+  country: "country-name",
+  state: "address-level1",
+  city: "address-level2",
+  address: "street-address",
+  additional: undefined,
+};
+
 export const trimFormValues = (
   values: CheckoutFormValues
 ): CheckoutFormValues => ({
