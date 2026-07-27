@@ -4,7 +4,8 @@
     "about": "about",
     "home": "home",
     "reports": "reports",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "close": "Close"
   },
   "main": {
     "get": "Get Merch",
@@ -37,7 +38,6 @@
     "empty_cart": "Your cart is empty",
     "add_to_cart": "Add products to your cart in",
     "here": "here",
-    "close": "Close",
     "customer_details": "Customer details",
     "first_name": "First Name",
     "first_name_placeholder": "John",

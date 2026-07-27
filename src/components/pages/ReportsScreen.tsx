@@ -142,7 +142,7 @@ export default function ReportsScreen() {
         hasNext={viewedPosition < REPORT_COUNT - 1}
         prevLabel={dictionary.reports.prev}
         nextLabel={dictionary.reports.next}
-        closeLabel={dictionary.cart.close}
+        closeLabel={dictionary.shared.close}
         media={
           <Image
             key={viewed.image}
