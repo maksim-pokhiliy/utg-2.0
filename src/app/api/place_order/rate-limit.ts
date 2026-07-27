@@ -8,8 +8,6 @@ const RATE_LIMIT_RETAINED_CLIENTS = 750;
 
 const MAX_CLIENT_KEY_LENGTH = 45;
 
-const LOCAL_CLIENT_KEY = "local";
-
 const FORWARDED_FOR_HEADER = "x-forwarded-for";
 
 const REAL_IP_HEADER = "x-real-ip";
@@ -72,7 +70,7 @@ const toRetryAfterSeconds = (oldestHit: number, now: number): number => {
   );
 };
 
-export const resolveClientKey = (request: Request): string => {
+export const resolveClientKey = (request: Request): string | null => {
   const forwardedFor = request.headers.get(FORWARDED_FOR_HEADER);
   const firstHop =
     forwardedFor === null ? "" : readFirstHop(forwardedFor).trim();
@@ -83,12 +81,14 @@ export const resolveClientKey = (request: Request): string => {
 
   const realIp = request.headers.get(REAL_IP_HEADER)?.trim() ?? "";
 
-  return realIp === ""
-    ? LOCAL_CLIENT_KEY
-    : realIp.slice(0, MAX_CLIENT_KEY_LENGTH);
+  return realIp === "" ? null : realIp.slice(0, MAX_CLIENT_KEY_LENGTH);
 };
 
-export const consumeRateLimit = (key: string): RateLimitVerdict => {
+export const consumeRateLimit = (key: string | null): RateLimitVerdict => {
+  if (key === null) {
+    return { isAllowed: true };
+  }
+
   const now = Date.now();
   const recentHits = readRecentHits(hits.get(key) ?? [], now);
   const isAllowed = recentHits.length < RATE_LIMIT_MAX_REQUESTS;
