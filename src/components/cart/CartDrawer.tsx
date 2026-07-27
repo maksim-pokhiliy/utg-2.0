@@ -100,7 +100,7 @@ export default function CartDrawer(): ReactElement {
           </div>
 
           <SheetClose asChild>
-            <IconButton variant="band" aria-label={dictionary.cart.close}>
+            <IconButton variant="band" aria-label={dictionary.shared.close}>
               <Icon name="x" />
             </IconButton>
           </SheetClose>

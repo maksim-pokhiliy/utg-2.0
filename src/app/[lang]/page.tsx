@@ -2,19 +2,32 @@ import type { Metadata } from "next";
 
 import { getCategorySummaries } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
+import { buildPageMetadata, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import HomeScreen from "@root/components/pages/HomeScreen";
 
-export const metadata: Metadata = {
-  title: "UTG | Main",
-  description: "Donate and fight with us",
-};
+import { getDictionary } from "./dictionaries";
 
-export default async function Home({
-  params,
-}: {
+interface IHomePageProps {
   params: Promise<{ lang: string }>;
-}) {
+}
+
+export async function generateMetadata({
+  params,
+}: IHomePageProps): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = resolveLocale(lang);
+  const dictionary = getDictionary(locale);
+
+  return buildPageMetadata({
+    locale,
+    path: "",
+    description: dictionary.footer.mission,
+    image: SITE_OG_IMAGE,
+  });
+}
+
+export default async function Home({ params }: IHomePageProps) {
   const { lang } = await params;
   const categories = getCategorySummaries(resolveLocale(lang));
 

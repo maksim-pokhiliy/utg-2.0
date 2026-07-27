@@ -4,7 +4,8 @@
     "about": "про нас",
     "home": "головна",
     "reports": "звіти",
-    "quantity": "Кількість"
+    "quantity": "Кількість",
+    "close": "Закрити"
   },
   "main": {
     "get": "Замовити мерч",
@@ -37,7 +38,6 @@
     "empty_cart": "Ваш кошик порожній",
     "add_to_cart": "Додайте товари до свого кошика",
     "here": "тут",
-    "close": "Закрити",
     "customer_details": "Інформація про замовника",
     "first_name": "Ім'я",
     "first_name_placeholder": "John",

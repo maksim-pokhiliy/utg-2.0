@@ -5,7 +5,11 @@ import type { ChangeEventHandler, ReactElement } from "react";
 import { Field, Input } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
 
-import { isRequiredField, type CheckoutFieldName } from "./fields";
+import {
+  AUTOFILL_TOKENS,
+  isRequiredField,
+  type CheckoutFieldName,
+} from "./fields";
 
 interface CheckoutFieldProps {
   label: string;
@@ -41,6 +45,7 @@ export function CheckoutField({
         id={name}
         name={name}
         type={type}
+        autoComplete={AUTOFILL_TOKENS[name]}
         value={value}
         placeholder={placeholder}
         onChange={onChange}

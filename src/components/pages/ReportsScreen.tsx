@@ -8,6 +8,7 @@ import {
   Lightbox,
   MediaFigure,
   SectionBand,
+  Skeleton,
   Typography,
 } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
@@ -31,14 +32,36 @@ const IMAGE_SIZES = [
   "(min-width: 592px) calc(50vw - 36px)",
   "calc(100vw - 48px)",
 ].join(", ");
-const VIEWER_SIZES = "(max-width: 956px) 92vw, 880px";
+const VIEWER_MAX_WIDTH = 880;
+const VIEWER_VIEWPORT_WIDTH = 92;
+const VIEWER_VIEWPORT_HEIGHT = 92;
+const VIEWER_CHROME_HEIGHT = 60;
+const ASPECT_PRECISION = 4;
+const VIEWER_FADE_BASE = "transition-opacity duration-300";
+const VIEWER_IMAGE_LOADING = `${VIEWER_FADE_BASE} opacity-0`;
+const VIEWER_IMAGE_LOADED = `${VIEWER_FADE_BASE} opacity-100`;
+const VIEWER_SKELETON_BASE = `absolute inset-0 pointer-events-none ${VIEWER_FADE_BASE}`;
+const VIEWER_SKELETON_VISIBLE = `${VIEWER_SKELETON_BASE} opacity-100`;
+const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0`;
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
+
+const viewerHeightBoundWidth = (width: number, height: number): string =>
+  `calc((${VIEWER_VIEWPORT_HEIGHT}vh - ${VIEWER_CHROME_HEIGHT}px) * ${(width / height).toFixed(ASPECT_PRECISION)})`;
+
+const viewerSizes = (width: number, height: number): string =>
+  `min(${VIEWER_MAX_WIDTH}px, ${VIEWER_VIEWPORT_WIDTH}vw, ${viewerHeightBoundWidth(width, height)})`;
+
+const viewerWidth = (width: number, height: number): string =>
+  `min(100%, ${viewerHeightBoundWidth(width, height)})`;
 
 export default function ReportsScreen() {
   const dictionary = useDictionary();
   const [viewedPosition, setViewedPosition] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [settledImages, setSettledImages] = useState<ReadonlySet<string>>(
+    new Set()
+  );
 
   const reports = REPORT_DIMENSIONS.map((dimensions, position) => {
     const number = position + 1;
@@ -57,6 +80,11 @@ export default function ReportsScreen() {
   });
 
   const viewed = reports[viewedPosition];
+  const isViewedSettled = settledImages.has(viewed.image);
+
+  const settleImage = (image: string) => {
+    setSettledImages((previous) => new Set(previous).add(image));
+  };
 
   const openViewer = (position: number) => {
     setViewedPosition(position);
@@ -142,17 +170,35 @@ export default function ReportsScreen() {
         hasNext={viewedPosition < REPORT_COUNT - 1}
         prevLabel={dictionary.reports.prev}
         nextLabel={dictionary.reports.next}
-        closeLabel={dictionary.cart.close}
+        closeLabel={dictionary.shared.close}
         media={
-          <Image
-            key={viewed.image}
-            src={viewed.image}
-            alt=""
-            width={viewed.width}
-            height={viewed.height}
-            quality={100}
-            sizes={VIEWER_SIZES}
-          />
+          <div
+            className="relative mx-auto"
+            style={{ width: viewerWidth(viewed.width, viewed.height) }}
+          >
+            <Skeleton
+              className={
+                isViewedSettled
+                  ? VIEWER_SKELETON_HIDDEN
+                  : VIEWER_SKELETON_VISIBLE
+              }
+            />
+
+            <Image
+              key={viewed.image}
+              src={viewed.image}
+              alt=""
+              width={viewed.width}
+              height={viewed.height}
+              quality={100}
+              sizes={viewerSizes(viewed.width, viewed.height)}
+              onLoad={() => settleImage(viewed.image)}
+              onError={() => settleImage(viewed.image)}
+              className={
+                isViewedSettled ? VIEWER_IMAGE_LOADED : VIEWER_IMAGE_LOADING
+              }
+            />
+          </div>
         }
       />
     </>

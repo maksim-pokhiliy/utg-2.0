@@ -1,11 +1,31 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
+
+import { resolveLocale } from "@root/utils/locale";
+import { buildPageMetadata, capitalize, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import ReportsScreen from "@root/components/pages/ReportsScreen";
 
-export const metadata: Metadata = {
-  title: "UTG | Reports",
-  description: "Donate and fight with us",
-};
+import { getDictionary } from "../dictionaries";
+
+interface IReportsPageProps {
+  params: Promise<{ lang: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: IReportsPageProps): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = resolveLocale(lang);
+  const dictionary = getDictionary(locale);
+
+  return buildPageMetadata({
+    locale,
+    path: "/reports",
+    title: capitalize(dictionary.shared.reports),
+    description: dictionary.reports.intro,
+    image: SITE_OG_IMAGE,
+  });
+}
 
 export default function Reports() {
   return <ReportsScreen />;

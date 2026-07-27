@@ -218,6 +218,9 @@ export const getProductView = (
 export const getCategorySlugs = (): CategorySlug[] =>
   categories.map((category) => category.slug);
 
+export const getCategoryName = (slug: string, locale: Locale): string | null =>
+  categories.find((category) => category.slug === slug)?.name[locale] ?? null;
+
 export const getProductSlugs = (categorySlug: string): string[] =>
   products
     .filter((product) => product.category === categorySlug)

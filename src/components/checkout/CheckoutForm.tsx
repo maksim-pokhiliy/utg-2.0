@@ -64,7 +64,7 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
     };
 
     try {
-      const response = await fetch("/api/place_order/", {
+      const response = await fetch("/api/place_order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

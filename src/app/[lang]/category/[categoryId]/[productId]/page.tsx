@@ -2,15 +2,23 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import {
+  getCategoryName,
   getCategorySlugs,
-  getCategoryView,
   getProductSlugs,
   getProductView,
 } from "@root/data";
 
 import { resolveLocale } from "@root/utils/locale";
+import {
+  buildPageMetadata,
+  buildProductJsonLd,
+  productOgImage,
+  serializeJsonLd,
+} from "@root/utils/seo";
 
 import ProductScreen from "@root/components/pages/ProductScreen";
+
+import { getDictionary } from "../../../dictionaries";
 
 interface IProductPageProps {
   params: Promise<{ lang: string; categoryId: string; productId: string }>;
@@ -28,33 +36,52 @@ export async function generateMetadata({
   params,
 }: IProductPageProps): Promise<Metadata> {
   const { lang, categoryId, productId } = await params;
-  const product = getProductView(categoryId, productId, resolveLocale(lang));
+  const locale = resolveLocale(lang);
+  const product = getProductView(categoryId, productId, locale);
+  const categoryName = getCategoryName(categoryId, locale);
+  const dictionary = getDictionary(locale);
 
-  if (!product) {
-    return { title: "UTG | Merch" };
+  if (!product || categoryName === null) {
+    notFound();
   }
 
-  return {
-    title: `${product.title} | UTG`,
-    description: product.description ?? "Donate and fight with us",
-  };
+  return buildPageMetadata({
+    locale,
+    path: `/category/${categoryId}/${productId}`,
+    title: product.title,
+    description: `${product.title} — ${categoryName}. ${
+      product.description ?? dictionary.footer.mission
+    }`,
+    image: productOgImage(product),
+  });
 }
 
 export default async function Product({ params }: IProductPageProps) {
   const { lang, categoryId, productId } = await params;
   const locale = resolveLocale(lang);
   const product = getProductView(categoryId, productId, locale);
-  const category = getCategoryView(categoryId, locale);
+  const categoryName = getCategoryName(categoryId, locale);
 
-  if (!product || !category) {
+  if (!product || categoryName === null) {
     notFound();
   }
 
   return (
-    <ProductScreen
-      key={`${categoryId}/${productId}`}
-      product={product}
-      categoryName={category.name}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(
+            buildProductJsonLd(product, categoryName, locale)
+          ),
+        }}
+      />
+
+      <ProductScreen
+        key={`${categoryId}/${productId}`}
+        product={product}
+        categoryName={categoryName}
+      />
+    </>
   );
 }
