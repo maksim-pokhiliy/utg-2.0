@@ -19,6 +19,24 @@ export const OG_LOCALES: Record<Locale, string> = {
   en: "en_US",
 };
 
+const CATEGORY_PATH = "/category";
+
+const SCHEMA_CONTEXT = "https://schema.org";
+
+const PRODUCT_SCHEMA_TYPE = "Product";
+
+const OFFER_SCHEMA_TYPE = "Offer";
+
+const BRAND_SCHEMA_TYPE = "Brand";
+
+const IN_STOCK_URL = "https://schema.org/InStock";
+
+const OUT_OF_STOCK_URL = "https://schema.org/OutOfStock";
+
+const NEW_CONDITION_URL = "https://schema.org/NewCondition";
+
+const PRICE_CURRENCY = "UAH";
+
 export interface OgImage {
   url: string;
   width?: number;
@@ -38,6 +56,31 @@ export interface PageMetadataInput {
   title?: string;
   description: string;
   image: OgImage;
+}
+
+export interface ProductBrand {
+  "@type": typeof BRAND_SCHEMA_TYPE;
+  name: typeof SITE_NAME;
+}
+
+export interface ProductOffer {
+  "@type": typeof OFFER_SCHEMA_TYPE;
+  price: number;
+  priceCurrency: typeof PRICE_CURRENCY;
+  availability: typeof IN_STOCK_URL | typeof OUT_OF_STOCK_URL;
+  itemCondition: typeof NEW_CONDITION_URL;
+  url: string;
+}
+
+export interface ProductJsonLd {
+  "@context": typeof SCHEMA_CONTEXT;
+  "@type": typeof PRODUCT_SCHEMA_TYPE;
+  name: string;
+  image: string;
+  category: string;
+  description?: string;
+  brand: ProductBrand;
+  offers: ProductOffer;
 }
 
 const IMAGE_DIMENSIONS: Record<
@@ -87,6 +130,34 @@ export const productOgImage = (product: ProductView): OgImage => ({
   ...IMAGE_DIMENSIONS[product.image],
   alt: product.title,
 });
+
+const productPath = (product: ProductView): string =>
+  `${CATEGORY_PATH}/${product.category}/${product.slug}`;
+
+export const buildProductJsonLd = (
+  product: ProductView,
+  categoryName: string,
+  locale: Locale
+): ProductJsonLd => ({
+  "@context": SCHEMA_CONTEXT,
+  "@type": PRODUCT_SCHEMA_TYPE,
+  name: product.title,
+  image: absoluteUrl(product.image),
+  category: categoryName,
+  description: product.description,
+  brand: { "@type": BRAND_SCHEMA_TYPE, name: SITE_NAME },
+  offers: {
+    "@type": OFFER_SCHEMA_TYPE,
+    price: product.price,
+    priceCurrency: PRICE_CURRENCY,
+    availability: product.isAvailable ? IN_STOCK_URL : OUT_OF_STOCK_URL,
+    itemCondition: NEW_CONDITION_URL,
+    url: absoluteUrl(localePath(locale, productPath(product))),
+  },
+});
+
+export const serializeJsonLd = (data: ProductJsonLd): string =>
+  JSON.stringify(data).replace(/</g, "\\u003c");
 
 export const buildPageMetadata = ({
   locale,

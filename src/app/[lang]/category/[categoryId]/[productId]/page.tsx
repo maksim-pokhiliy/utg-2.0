@@ -9,7 +9,13 @@ import {
 } from "@root/data";
 
 import { resolveLocale } from "@root/utils/locale";
-import { buildPageMetadata, capitalize, productOgImage } from "@root/utils/seo";
+import {
+  buildPageMetadata,
+  buildProductJsonLd,
+  capitalize,
+  productOgImage,
+  serializeJsonLd,
+} from "@root/utils/seo";
 
 import ProductScreen from "@root/components/pages/ProductScreen";
 
@@ -62,10 +68,21 @@ export default async function Product({ params }: IProductPageProps) {
   }
 
   return (
-    <ProductScreen
-      key={`${categoryId}/${productId}`}
-      product={product}
-      categoryName={categoryName}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(
+            buildProductJsonLd(product, categoryName, locale)
+          ),
+        }}
+      />
+
+      <ProductScreen
+        key={`${categoryId}/${productId}`}
+        product={product}
+        categoryName={categoryName}
+      />
+    </>
   );
 }
