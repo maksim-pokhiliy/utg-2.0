@@ -54,7 +54,13 @@ const sealElements = [
 
 export default defineConfig([
   ...nextVitals,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "initiatives/**",
+  ]),
   {
     rules: {
       "react-hooks/set-state-in-effect": "off",

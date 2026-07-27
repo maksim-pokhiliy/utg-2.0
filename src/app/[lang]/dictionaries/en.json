@@ -65,9 +65,19 @@
     "remove_cancel": "Cancel",
     "remove_confirm": "Remove"
   },
+  "reports": {
+    "intro": "Every purchase is funded by your orders. Photo reports from the unit.",
+    "fpv_caption": "For material for the manufacture of initiators for FPV"
+  },
   "about": {
-    "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the under-boss’s special unit.",
-    "all_proceeds": "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. After the start of sales, another section with reports will appear here."
+    "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the unit we support.",
+    "all_proceeds": "All proceeds from the sale will be used to purchase equipment, consumables, and repair equipment. Photo reports from every purchase are in the {link}.",
+    "reports_link": "reports section"
+  },
+  "not_found": {
+    "title": "Page not found",
+    "body": "This page doesn't exist. The item may have been removed.",
+    "cta": "To merch"
   },
   "checkout": {
     "checkout": "checkout",
