@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getCategorySlugs, getCategoryView } from "@root/data";
+import { getCategoryName, getCategorySlugs, getCategoryView } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
 
 import CategoryScreen from "@root/components/pages/CategoryScreen";
@@ -20,14 +20,14 @@ export async function generateMetadata({
   params,
 }: ICategoryPageProps): Promise<Metadata> {
   const { lang, categoryId } = await params;
-  const category = getCategoryView(categoryId, resolveLocale(lang));
+  const categoryName = getCategoryName(categoryId, resolveLocale(lang));
 
-  if (!category) {
+  if (categoryName === null) {
     return { title: "UTG | Merch" };
   }
 
   return {
-    title: `${category.name} | UTG`,
+    title: `${categoryName} | UTG`,
     description: "Donate and fight with us",
   };
 }

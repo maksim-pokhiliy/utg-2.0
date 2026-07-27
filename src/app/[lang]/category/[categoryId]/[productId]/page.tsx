@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import {
+  getCategoryName,
   getCategorySlugs,
-  getCategoryView,
   getProductSlugs,
   getProductView,
 } from "@root/data";
@@ -44,9 +44,9 @@ export default async function Product({ params }: IProductPageProps) {
   const { lang, categoryId, productId } = await params;
   const locale = resolveLocale(lang);
   const product = getProductView(categoryId, productId, locale);
-  const category = getCategoryView(categoryId, locale);
+  const categoryName = getCategoryName(categoryId, locale);
 
-  if (!product || !category) {
+  if (!product || categoryName === null) {
     notFound();
   }
 
@@ -54,7 +54,7 @@ export default async function Product({ params }: IProductPageProps) {
     <ProductScreen
       key={`${categoryId}/${productId}`}
       product={product}
-      categoryName={category.name}
+      categoryName={categoryName}
     />
   );
 }

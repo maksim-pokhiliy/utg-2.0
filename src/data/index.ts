@@ -14,5 +14,6 @@ export {
   getCategoryView,
   getProductView,
   getCategorySlugs,
+  getCategoryName,
   getProductSlugs,
 } from "./catalog";
