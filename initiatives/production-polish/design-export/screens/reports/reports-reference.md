@@ -41,8 +41,11 @@ only through a ratified dictionary addition.
 - The current screen marks ALL images `priority` + `quality={100}` — the ratified
   design lazy-loads; above-the-fold eagerness for the first row is the executor's
   call at plan gate.
-- Empty `alt` + the visible numbered captions is the prototype's a11y stance; the
-  executor may argue alt text at plan gate.
+- Empty `alt` + the visible numbered captions is the prototype's a11y stance;
+  recorded trade-off (PR #12 review): a screen reader gets `01…08` and no content
+  description for the seven uncaptioned photos — accepted because any alt would
+  either duplicate the number or invent facts; revisit only if real captions ever
+  arrive.
 - swiper leaves `package.json`; both `swiper/css` imports die with it.
 - Header/footer/drawer per-screen mounts in the prototype are demo plumbing — the
   app's layout chrome already provides all of it.

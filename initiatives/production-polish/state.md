@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (D3.5 ratified & exported — design track COMPLETE; step-4g prompt issued)
+**Updated:** 2026-07-27 (PR #12 verified — six-item fix round ordered; DEF-27/28/29 added)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -26,11 +26,11 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. USER: carry the 4g step to a fresh executor tab — "Run
-   initiatives/production-polish/step-4g-reports-about-404-prompt.md — read that
-   file and execute it as your full prompt, verbatim." Planner reviews the plan
-   gate (expected OQs: about-link dictionary key shape, 404/error string placement,
-   DEF-23 focus mechanism finding, report-image a11y), then the PR.
+1. 4g in flight: PR #12 verified, the executor lands the six-item fix round
+   (sizes 940 threshold, splitAtToken null-contract, two hook hardenings, the
+   fpv_caption rename, the error.tsx wrapper cleanup); planner re-verifies the
+   round, then the USER runs the browser gates listed in the PR and
+   squash-merges.
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
