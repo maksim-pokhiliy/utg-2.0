@@ -8,13 +8,26 @@ import { useDictionary } from "@root/i18n";
 import { NavLink } from "@root/components/layout/NavLink";
 
 const REPORTS_LINK_TOKEN = "{link}";
-const IMAGE_SIZES = "(min-width: 568px) 520px, 100vw";
+const IMAGE_SIZES = "(min-width: 568px) 520px, calc(100vw - 48px)";
+const IMAGE_ALT = "FOR DONATIONS · NO COMMERCIAL · @UKRAINIAN_TACTICAL_GEAR";
+
+const splitAtToken = (text: string): [string, string] => {
+  const tokenStart = text.indexOf(REPORTS_LINK_TOKEN);
+
+  if (tokenStart === -1) {
+    return [text, ""];
+  }
+
+  return [
+    text.slice(0, tokenStart),
+    text.slice(tokenStart + REPORTS_LINK_TOKEN.length),
+  ];
+};
 
 export default function AboutScreen() {
   const dictionary = useDictionary();
 
-  const [beforeLink, afterLink = ""] =
-    dictionary.about.all_proceeds.split(REPORTS_LINK_TOKEN);
+  const [beforeLink, afterLink] = splitAtToken(dictionary.about.all_proceeds);
 
   return (
     <>
@@ -38,7 +51,7 @@ export default function AboutScreen() {
             <div className="relative mt-2 aspect-square w-full max-w-[520px] border-2 border-ink bg-white">
               <Image
                 src="/images/no_commercial.JPG"
-                alt=""
+                alt={IMAGE_ALT}
                 fill
                 quality={100}
                 sizes={IMAGE_SIZES}

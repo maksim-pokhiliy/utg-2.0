@@ -7,7 +7,13 @@ import { useDictionary } from "@root/i18n";
 
 const REPORT_COUNT = 8;
 const FPV_REPORT_NUMBER = 3;
-const IMAGE_SIZES = "(min-width: 1200px) 348px, (min-width: 568px) 50vw, 100vw";
+const IMAGE_SIZES = [
+  "(min-width: 1200px) 347px",
+  "(min-width: 884px) calc(33.33vw - 53px)",
+  "(min-width: 768px) calc(50vw - 68px)",
+  "(min-width: 592px) calc(50vw - 36px)",
+  "calc(100vw - 48px)",
+].join(", ");
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
