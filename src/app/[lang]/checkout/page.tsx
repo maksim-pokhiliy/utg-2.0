@@ -20,6 +20,7 @@ export async function generateMetadata({
   return {
     title: capitalize(dictionary.checkout.checkout),
     robots: { index: false },
+    openGraph: null,
   };
 }
 

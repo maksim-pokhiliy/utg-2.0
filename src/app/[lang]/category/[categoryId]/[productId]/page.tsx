@@ -12,7 +12,6 @@ import { resolveLocale } from "@root/utils/locale";
 import {
   buildPageMetadata,
   buildProductJsonLd,
-  capitalize,
   productOgImage,
   serializeJsonLd,
 } from "@root/utils/seo";
@@ -43,7 +42,7 @@ export async function generateMetadata({
   const dictionary = getDictionary(locale);
 
   if (!product || categoryName === null) {
-    return { title: capitalize(dictionary.shared.merch) };
+    notFound();
   }
 
   return buildPageMetadata({

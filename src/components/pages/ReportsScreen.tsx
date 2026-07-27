@@ -37,9 +37,12 @@ const VIEWER_VIEWPORT_WIDTH = 92;
 const VIEWER_VIEWPORT_HEIGHT = 92;
 const VIEWER_CHROME_HEIGHT = 60;
 const ASPECT_PRECISION = 4;
-const VIEWER_IMAGE_BASE = "transition-opacity duration-300";
-const VIEWER_IMAGE_LOADING = `${VIEWER_IMAGE_BASE} opacity-0`;
-const VIEWER_IMAGE_LOADED = `${VIEWER_IMAGE_BASE} opacity-100`;
+const VIEWER_FADE_BASE = "transition-opacity duration-300";
+const VIEWER_IMAGE_LOADING = `${VIEWER_FADE_BASE} opacity-0`;
+const VIEWER_IMAGE_LOADED = `${VIEWER_FADE_BASE} opacity-100`;
+const VIEWER_SKELETON_BASE = `absolute inset-0 pointer-events-none ${VIEWER_FADE_BASE}`;
+const VIEWER_SKELETON_VISIBLE = `${VIEWER_SKELETON_BASE} opacity-100`;
+const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0`;
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
@@ -50,7 +53,9 @@ export default function ReportsScreen() {
   const dictionary = useDictionary();
   const [viewedPosition, setViewedPosition] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [loadedImage, setLoadedImage] = useState<string | null>(null);
+  const [settledImages, setSettledImages] = useState<ReadonlySet<string>>(
+    new Set()
+  );
 
   const reports = REPORT_DIMENSIONS.map((dimensions, position) => {
     const number = position + 1;
@@ -69,7 +74,11 @@ export default function ReportsScreen() {
   });
 
   const viewed = reports[viewedPosition];
-  const isViewedLoaded = loadedImage === viewed.image;
+  const isViewedSettled = settledImages.has(viewed.image);
+
+  const settleImage = (image: string) => {
+    setSettledImages((previous) => new Set(previous).add(image));
+  };
 
   const openViewer = (position: number) => {
     setViewedPosition(position);
@@ -158,7 +167,13 @@ export default function ReportsScreen() {
         closeLabel={dictionary.shared.close}
         media={
           <div className="relative">
-            {isViewedLoaded ? null : <Skeleton className="absolute inset-0" />}
+            <Skeleton
+              className={
+                isViewedSettled
+                  ? VIEWER_SKELETON_HIDDEN
+                  : VIEWER_SKELETON_VISIBLE
+              }
+            />
 
             <Image
               key={viewed.image}
@@ -168,9 +183,10 @@ export default function ReportsScreen() {
               height={viewed.height}
               quality={100}
               sizes={viewerSizes(viewed.width, viewed.height)}
-              onLoad={() => setLoadedImage(viewed.image)}
+              onLoad={() => settleImage(viewed.image)}
+              onError={() => settleImage(viewed.image)}
               className={
-                isViewedLoaded ? VIEWER_IMAGE_LOADED : VIEWER_IMAGE_LOADING
+                isViewedSettled ? VIEWER_IMAGE_LOADED : VIEWER_IMAGE_LOADING
               }
             />
           </div>

@@ -4,6 +4,10 @@ const RATE_LIMIT_MAX_REQUESTS = 5;
 
 const RATE_LIMIT_MAX_CLIENTS = 1000;
 
+const RATE_LIMIT_RETAINED_CLIENTS = 750;
+
+const MAX_CLIENT_KEY_LENGTH = 45;
+
 const LOCAL_CLIENT_KEY = "local";
 
 const FORWARDED_FOR_HEADER = "x-forwarded-for";
@@ -30,11 +34,14 @@ const readFirstHop = (headerValue: string): string => {
     : headerValue.slice(0, separatorIndex);
 };
 
-const sweepStaleClients = (windowStart: number): void => {
+const readRecentHits = (timestamps: number[], now: number): number[] =>
+  timestamps.filter(
+    (timestamp) => timestamp > now - RATE_LIMIT_WINDOW_MS && timestamp <= now
+  );
+
+const sweepStaleClients = (now: number): void => {
   for (const [clientKey, timestamps] of hits) {
-    const recentHits = timestamps.filter(
-      (timestamp) => timestamp > windowStart
-    );
+    const recentHits = readRecentHits(timestamps, now);
 
     if (recentHits.length === 0) {
       hits.delete(clientKey);
@@ -43,6 +50,16 @@ const sweepStaleClients = (windowStart: number): void => {
     }
 
     hits.set(clientKey, recentHits);
+  }
+};
+
+const evictLeastRecentClients = (): void => {
+  for (const clientKey of hits.keys()) {
+    if (hits.size <= RATE_LIMIT_RETAINED_CLIENTS) {
+      return;
+    }
+
+    hits.delete(clientKey);
   }
 };
 
@@ -61,26 +78,27 @@ export const resolveClientKey = (request: Request): string => {
     forwardedFor === null ? "" : readFirstHop(forwardedFor).trim();
 
   if (firstHop !== "") {
-    return firstHop;
+    return firstHop.slice(0, MAX_CLIENT_KEY_LENGTH);
   }
 
   const realIp = request.headers.get(REAL_IP_HEADER)?.trim() ?? "";
 
-  return realIp === "" ? LOCAL_CLIENT_KEY : realIp;
+  return realIp === ""
+    ? LOCAL_CLIENT_KEY
+    : realIp.slice(0, MAX_CLIENT_KEY_LENGTH);
 };
 
 export const consumeRateLimit = (key: string): RateLimitVerdict => {
   const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const recentHits = (hits.get(key) ?? []).filter(
-    (timestamp) => timestamp > windowStart
-  );
+  const recentHits = readRecentHits(hits.get(key) ?? [], now);
   const isAllowed = recentHits.length < RATE_LIMIT_MAX_REQUESTS;
 
+  hits.delete(key);
   hits.set(key, isAllowed ? [...recentHits, now] : recentHits);
 
   if (hits.size > RATE_LIMIT_MAX_CLIENTS) {
-    sweepStaleClients(windowStart);
+    sweepStaleClients(now);
+    evictLeastRecentClients();
   }
 
   if (isAllowed) {

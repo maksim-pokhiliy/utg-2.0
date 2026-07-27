@@ -9,7 +9,7 @@ import {
 } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
 import { formatItemCount } from "@root/utils/plural";
-import { buildPageMetadata, capitalize, siteOgImage } from "@root/utils/seo";
+import { buildPageMetadata, siteOgImage } from "@root/utils/seo";
 
 import CategoryScreen from "@root/components/pages/CategoryScreen";
 
@@ -34,7 +34,7 @@ export async function generateMetadata({
   const categoryName = getCategoryName(categoryId, locale);
 
   if (categoryName === null) {
-    return { title: capitalize(dictionary.shared.merch) };
+    notFound();
   }
 
   const itemCount = formatItemCount(

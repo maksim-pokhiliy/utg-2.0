@@ -19,6 +19,7 @@ export async function generateMetadata({
   return {
     title: dictionary.not_found.title,
     robots: { index: false },
+    openGraph: null,
   };
 }
 
