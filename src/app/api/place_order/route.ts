@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { consumeRateLimit, resolveClientKey } from "./rate-limit";
+
 export async function POST(request: NextRequest) {
+  const verdict = consumeRateLimit(resolveClientKey(request));
+
+  if (!verdict.isAllowed) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(verdict.retryAfterSeconds) },
+      }
+    );
+  }
+
   const placeOrderUrl = process.env.PLACE_ORDER_URL;
 
   if (!placeOrderUrl) {
