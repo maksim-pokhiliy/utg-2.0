@@ -26,8 +26,8 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. Verify the Vercel deploy on `300333d` + live-smoke reports/about/404 on
-   ua-tactical-gear.com (use `-L`/www — the apex 308s).
+1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green — 404
+   chrome+locale, reports captions, about link, swiper zero).
 2. USER: carry `design-8-reports-lightbox-prompt.md` into the cumulative design
    dialog (fresh snapshot attached) — D3.6, the owner-requested reports lightbox;
    planner fidelity-reviews, ratifies + exports, then writes the step-4h prompt.
