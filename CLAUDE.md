@@ -37,6 +37,10 @@ Path alias: `@root/*` → `src/*`.
 - Dictionaries live in `src/app/[lang]/dictionaries/{uk,en}.json`, loaded server-side by `getDictionary` (`server-only`), typed as `typeof en` with a `satisfies Record<Locale, Dictionary>` drift-guard (a missing uk key is a compile error), and delivered to client components via `I18nProvider`.
 - Catalog pages (`/`, `/category`, `/category/[categoryId]`, `/category/[categoryId]/[productId]`) are plain segments — server components with `generateStaticParams` + `generateMetadata`, fully SSG. `about`, `checkout`, `reports` are client/`*Screen`-based segments. `error.tsx` lives under `[lang]`; the 404 is an ordinary catch-all page (`/[lang]/[...rest]`) rendered inside the real layout — dead URLs under a valid locale answer 200 + `robots noindex` (soft-404, DEF-29; there is deliberately no `not-found.tsx` — a boundary cannot compose with the root layout living inside the dynamic segment).
 
+### SEO
+
+Every page builds its metadata through `buildPageMetadata()` in `src/utils/seo.ts` (canonical + hreflang uk/en/x-default + per-page OG on the `https://www.ua-tactical-gear.com` metadataBase — the apex 308s to www); the layout owns the invariants (title template, robots, twitter, OG defaults) because a child `openGraph` REPLACES the parent's, never merges. `sitemap.ts` (38 URLs from catalog accessors; checkout and the 404 excluded) + `robots.ts`; product pages carry Product JSON-LD with offers always in UAH (the operator charges UAH — display currency is informational). Zero invented copy: descriptions derive from dictionary strings; `SITE_NAME` is the one locale-neutral constant.
+
 ### Page pattern
 
 Catalog `page.tsx` files are server components: they read the catalog module synchronously, resolve the locale, and pass localized view objects as props to presentational `*Screen` components (`src/components/pages/`). Screens are `"use client"` and read `{locale, dictionary, money}` from `src/i18n/` context hooks (`useDictionary`/`useMoney`/`useLocale`).
@@ -46,7 +50,7 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 - `src/data/` is the catalog: `catalog.types.ts` (canonical bilingual types + flat `*View` types), `catalog.ts` (data verbatim from the recovered 1.0 sources + accessors returning locale-resolved views), `index.ts` (barrel, incl. `resolveLocale`).
 - Catalog data is sacred business data (titles, UAH integer prices, availability, sizes, uk/en descriptions) — never invent or edit it without an explicit decision; `initiatives/production-polish/extracted/` holds the recovered sources of truth.
 - URL slugs are lowercase (`patches`, `tshirts`, `patches/waiting`, `tshirts/death-black`).
-- The only API route left is `POST /api/place_order` — proxies the checkout payload to the external `PLACE_ORDER_URL` relay, forwarding upstream status; its 500 body carries no internal details. The payload field shape (`first_name`…`cart[{title,quantity,productUrl,…}]`, `locale`, `total`, `currency` per D-12) is a sacred contract with the bot (the bot reads `currency` in a separate bot-repo follow-up).
+- The only API route left is `POST /api/place_order` — proxies the checkout payload to the external `PLACE_ORDER_URL` relay, forwarding upstream status; its 500 body carries no internal details. A per-IP in-memory rate limiter (5/60s, 429 + Retry-After) runs before body parsing and fails OPEN when no client identity exists — a false 429 costs a real volunteer order. The payload field shape (`first_name`…`cart[{title,quantity,productUrl,…}]`, `locale`, `total`, `currency` per D-12) is a sacred contract with the bot (the bot reads `currency` in a separate bot-repo follow-up).
 - All images are local under `public/images/` (products, reports, `no_commercial.JPG`), logo at `public/logo.png` (intrinsic 640×448), favicon via `src/app/favicon.ico`.
 
 ### State & money
