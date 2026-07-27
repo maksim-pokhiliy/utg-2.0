@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (PR #12 verified — six-item fix round ordered; DEF-27/28/29 added)
+**Updated:** 2026-07-27 (user gate broke the root-404 — round 3 ordered: catch-all page; lightbox → 4h)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -26,11 +26,11 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. 4g in flight: PR #12 verified, the executor lands the six-item fix round
-   (sizes 940 threshold, splitAtToken null-contract, two hook hardenings, the
-   fpv_caption rename, the error.tsx wrapper cleanup); planner re-verifies the
-   round, then the USER runs the browser gates listed in the PR and
-   squash-merges.
+1. 4g in flight, round 3: the root not-found dies for a `/[lang]/[...rest]`
+   catch-all PAGE (200+noindex, per-request locale, chrome back — spec in the
+   2026-07-27 round-3 journal entry); planner re-verifies, user re-runs the
+   browser gates (incl. the nested-html repro), squash-merges. Then: the 4h
+   reports-lightbox micro-step (DS addition — needs ratification).
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
