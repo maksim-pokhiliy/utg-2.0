@@ -60,6 +60,13 @@ export function Lightbox({
 }: LightboxProps): ReactElement {
   const { captureOpener, restoreOpener } = useReturnFocus();
   const swipeRef = useRef<SwipeOrigin | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  const handleOpenAutoFocus = (event: Event): void => {
+    captureOpener(event);
+    event.preventDefault();
+    panelRef.current?.focus({ preventScroll: true });
+  };
 
   const step = (delta: number): void => {
     if (delta < 0 && hasPrev) {
@@ -88,7 +95,7 @@ export function Lightbox({
     }
   };
 
-  const handleMediaMouseDown = (event: MouseEvent<HTMLDivElement>): void => {
+  const preventMediaDrag = (event: MouseEvent<HTMLDivElement>): void => {
     event.preventDefault();
   };
 
@@ -144,10 +151,12 @@ export function Lightbox({
         <DialogOverlay />
 
         <DialogPrimitive.Content
+          ref={panelRef}
           className="fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 flex flex-col w-[min(92vw,880px)] max-h-[92vh] border-2 border-ink bg-paper focus:outline-none data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]"
           aria-label={ariaLabel}
+          aria-labelledby={undefined}
           aria-describedby={undefined}
-          onOpenAutoFocus={captureOpener}
+          onOpenAutoFocus={handleOpenAutoFocus}
           onCloseAutoFocus={restoreOpener}
           onKeyDown={handleKeyDown}
         >
@@ -156,6 +165,7 @@ export function Lightbox({
               <Typography
                 variant="caption"
                 as="span"
+                aria-live="polite"
                 className="flex grow items-baseline gap-3 min-w-0"
               >
                 <span className="flex-none text-band-muted">{index}</span>
@@ -197,7 +207,7 @@ export function Lightbox({
           </div>
 
           <div
-            onMouseDown={handleMediaMouseDown}
+            onMouseDown={preventMediaDrag}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
