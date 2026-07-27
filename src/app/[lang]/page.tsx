@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { getCategorySummaries } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
-import { buildPageMetadata, siteOgImage } from "@root/utils/seo";
+import { buildPageMetadata, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import HomeScreen from "@root/components/pages/HomeScreen";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({
     locale,
     path: "",
     description: dictionary.footer.mission,
-    image: siteOgImage(),
+    image: SITE_OG_IMAGE,
   });
 }
 

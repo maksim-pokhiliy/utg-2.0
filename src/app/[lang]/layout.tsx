@@ -15,12 +15,12 @@ import { resolveLocale } from "@root/utils/locale";
 import {
   OG_LOCALES,
   SITE_NAME,
+  SITE_OG_IMAGE,
   SITE_URL,
   TITLE_TEMPLATE,
   absoluteUrl,
   localePath,
   otherLocale,
-  siteOgImage,
 } from "@root/utils/seo";
 
 import { fontVariables } from "../fonts";
@@ -83,7 +83,7 @@ export async function generateMetadata({
       url: absoluteUrl(localePath(locale, "")),
       title: SITE_NAME,
       description: dictionary.footer.mission,
-      images: [siteOgImage()],
+      images: [SITE_OG_IMAGE],
     },
     twitter: { card: "summary" },
   };

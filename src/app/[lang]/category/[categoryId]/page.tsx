@@ -9,7 +9,7 @@ import {
 } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
 import { formatItemCount } from "@root/utils/plural";
-import { buildPageMetadata, siteOgImage } from "@root/utils/seo";
+import { buildPageMetadata, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import CategoryScreen from "@root/components/pages/CategoryScreen";
 
@@ -48,7 +48,7 @@ export async function generateMetadata({
     path: `/category/${categoryId}`,
     title: categoryName,
     description: `${categoryName} — ${itemCount}. ${dictionary.footer.mission}`,
-    image: siteOgImage(),
+    image: SITE_OG_IMAGE,
   });
 }
 

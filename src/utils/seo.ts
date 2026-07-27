@@ -119,11 +119,11 @@ export const languageAlternates = (path: string): LanguageAlternates => ({
   "x-default": absoluteUrl(localePath(DEFAULT_LOCALE, path)),
 });
 
-export const siteOgImage = (): OgImage => ({
+export const SITE_OG_IMAGE: OgImage = {
   url: absoluteUrl(LOGO_PATH),
   ...IMAGE_DIMENSIONS[LOGO_PATH],
   alt: SITE_NAME,
-});
+};
 
 export const productOgImage = (product: ProductView): OgImage => ({
   url: absoluteUrl(product.image),

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { resolveLocale } from "@root/utils/locale";
-import { buildPageMetadata, capitalize, siteOgImage } from "@root/utils/seo";
+import { buildPageMetadata, capitalize, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import AboutScreen from "@root/components/pages/AboutScreen";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({
     path: "/about",
     title: capitalize(dictionary.shared.about),
     description: dictionary.about.site_created,
-    image: siteOgImage(),
+    image: SITE_OG_IMAGE,
   });
 }
 

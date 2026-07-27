@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getCategorySummaries } from "@root/data";
 import { resolveLocale } from "@root/utils/locale";
 import { formatCategoryCount } from "@root/utils/plural";
-import { buildPageMetadata, capitalize, siteOgImage } from "@root/utils/seo";
+import { buildPageMetadata, capitalize, SITE_OG_IMAGE } from "@root/utils/seo";
 
 import CategoriesScreen from "@root/components/pages/CategoriesScreen";
 
@@ -30,7 +30,7 @@ export async function generateMetadata({
     path: "/category",
     title: capitalize(dictionary.shared.merch),
     description: `${categoryCount}. ${dictionary.footer.mission}`,
-    image: siteOgImage(),
+    image: SITE_OG_IMAGE,
   });
 }
 
