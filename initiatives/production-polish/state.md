@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (user gate broke the root-404 — round 3 ordered: catch-all page; lightbox → 4h)
+**Updated:** 2026-07-27 (4g MERGED — PR #12 `300333d`, planner-merged on delegation; D3.6 lightbox brief issued)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -19,19 +19,19 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
 | D3    | Per-page screen designs (Claude Design)                                          | ✅ done — all five page designs ratified & exported; D3.5 closed 07-27 (about copy change ADOPTED; wired-export refresh done) | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11, `e428fcb` — currency per D-12, prod-verified live 07-27); 4g prompt issued    | `step-4d-catalog-category-prompt.md` |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12, `300333d` — catch-all 404, swiper dead, 3 fix rounds)        | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
 | 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                    | plan.md                              |
 | 7     | README + presentation                                                            | ⬜ pending                                                                                                                    | plan.md                              |
 
 ## Next action
 
-1. 4g in flight, round 3: the root not-found dies for a `/[lang]/[...rest]`
-   catch-all PAGE (200+noindex, per-request locale, chrome back — spec in the
-   2026-07-27 round-3 journal entry); planner re-verifies, user re-runs the
-   browser gates (incl. the nested-html repro), squash-merges. Then: the 4h
-   reports-lightbox micro-step (DS addition — needs ratification).
-2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
+1. Verify the Vercel deploy on `300333d` + live-smoke reports/about/404 on
+   ua-tactical-gear.com (use `-L`/www — the apex 308s).
+2. USER: carry `design-8-reports-lightbox-prompt.md` into the cumulative design
+   dialog (fresh snapshot attached) — D3.6, the owner-requested reports lightbox;
+   planner fidelity-reviews, ratifies + exports, then writes the step-4h prompt.
+3. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
 ## Open decisions awaiting ratification
@@ -44,9 +44,10 @@ DEF-4 (order endpoint abuse protection — decide later), DEF-9 (hero photo seal
 Firebase; support ticket pending; non-blocking — the shipped Home carries a photo
 slot), DEF-13 (site half SHIPPED in 4f; closes when the bot reads `currency`), DEF-18
 (react-hooks v6 — any React Compiler decision), DEF-22 (`getCategoryName`, step 5),
-DEF-24 (USD cent rounding — step 5/6 or DROP), DEF-25 (autoComplete — step 5); riding
-the issued 4g prompt: DEF-14 D3.5 strings, DEF-21 Home band retrofit, DEF-23 drawer
-focus, DEF-26 eslint-ignore.
+DEF-24 (USD cent rounding — step 5/6 or DROP), DEF-25 (autoComplete — step 5),
+DEF-27 (useReturnFocus hygiene — step 5/6 DS window), DEF-28 (dead SectionBand.center
+prop — next sanctioned DS window), DEF-29 (soft-404 on dead URLs — step 5 revisits or
+accepts; terminal fix = a real root layout).
 
 ## Gotchas a resuming session must know
 

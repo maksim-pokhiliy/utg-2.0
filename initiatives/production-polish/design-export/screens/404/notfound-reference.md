@@ -34,18 +34,26 @@ column, title «Щось пішло не так»/"Something went wrong", outlin
 - The prototype redirects unknown mock-routes via `location.replace` — mock plumbing
   ONLY. The app keeps native Next behavior: the 404 renders at the requested URL, no
   redirect.
-- ROUTING REALITY (4g plan-gate discovery, prod-verified 2026-07-27): with the root
-  layout living inside the dynamic `[lang]` segment, `[lang]/not-found.tsx` is DEAD
-  code — Next serves its built-in bare 404 for dead URLs AND for `notFound()` throws
-  (live prod confirmed: the English built-in on /uk/zzz; a nested boundary renders
-  only the `__next_error__` shell without layout/CSS). The ratified surface ships as
-  a ROOT `src/app/not-found.tsx` thin shell (pulls globals.css + fonts itself, via a
-  shared `src/app/fonts.ts`) + `NotFoundScreen` resolving locale from the pathname;
-  the dead `[lang]` file is deleted.
-- Ratified deviation (plan gate 2026-07-27): no header/footer chrome on the 404 —
-  the route renders outside the `[lang]` layout and its providers; the composition +
-  outline CTA stand alone. The screen sets `document.documentElement.lang` from the
-  resolved locale on mount (the shell's `<html>` cannot know it server-side).
-- Strings live in a local const — the surface renders outside `I18nProvider`
-  (`useDictionary` would throw); byte-verbatim from the copy above, both locales.
-  The DEF-14 centralization deviation is recorded in the PR.
+- ROUTING REALITY (final — PR #12 round 3, shipped `300333d`): with the root layout
+  living inside the dynamic `[lang]` segment, a nested `[lang]/not-found.tsx`
+  boundary renders only the bare `__next_error__` shell (no layout/CSS), and the
+  intermediate root `app/not-found.tsx` shell materialized a second `<html>` above
+  `[lang]` — client-navigating out of it nested `<html>` inside `<body>`
+  (user-caught hydration errors). The shipped form is an ordinary catch-all PAGE —
+  `/[lang]/[...rest]/page.tsx` rendering `NotFoundScreen` inside the REAL layout:
+  full chrome (closer to the approved prototype than the abandoned no-chrome
+  deviation), per-request server locale (no flash possible), `generateMetadata`
+  carrying the 404 title + `robots noindex`.
+- RECORDED TRADE-OFF (DEF-29): locale-prefixed dead URLs answer HTTP 200 + noindex
+  (soft-404) — Next cannot give both the real layout and a true 404 status while
+  the root layout lives inside the dynamic segment (executor-measured either/or).
+  Terminal fix = a real `src/app/layout.tsx` owning `<html>`/`<body>`; step 5
+  revisits or accepts. Middleware-excluded residue (dotted paths, unknown locales)
+  keeps the built-in bare 404 — a crawler-only surface.
+- Strings live in the dictionaries under `not_found` (DEF-14 holds — the surface
+  renders inside `I18nProvider`), byte-verbatim from the copy above in both locales
+  (verified against the exported prototype `catalog.js`). `error.tsx` keeps local
+  consts — the boundary must not depend on the context it may be reporting on.
+- The defensive `notFound()` guards in the category/product pages stay: unreachable
+  with a static catalog, and the catch-all wins unknown-param URLs first
+  (`dynamicParams = false` cascades from the `[lang]` layout).
