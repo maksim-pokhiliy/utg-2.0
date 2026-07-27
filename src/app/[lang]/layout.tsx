@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { getDictionary } from "./dictionaries";
 
 import Footer from "@root/components/layout/Footer";
@@ -10,8 +12,22 @@ import { Toaster } from "@root/design-system";
 import "@root/app/globals.css";
 import { resolveMoney } from "@root/utils/formatPrice";
 import { resolveLocale } from "@root/utils/locale";
+import {
+  OG_LOCALES,
+  SITE_NAME,
+  SITE_URL,
+  absoluteUrl,
+  localePath,
+  otherLocale,
+  siteOgImage,
+} from "@root/utils/seo";
 
 import { fontVariables } from "../fonts";
+
+interface IRootLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}
 
 export const dynamicParams = false;
 
@@ -46,13 +62,35 @@ async function getConversionRates(): Promise<Record<string, number>> {
   }
 }
 
+export async function generateMetadata({
+  params,
+}: Pick<IRootLayoutProps, "params">): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = resolveLocale(lang);
+  const dictionary = getDictionary(locale);
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    description: dictionary.footer.mission,
+    robots: { index: true, follow: true, "max-image-preview": "large" },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: OG_LOCALES[locale],
+      alternateLocale: OG_LOCALES[otherLocale(locale)],
+      url: absoluteUrl(localePath(locale, "")),
+      title: SITE_NAME,
+      description: dictionary.footer.mission,
+      images: [siteOgImage()],
+    },
+    twitter: { card: "summary" },
+  };
+}
+
 export default async function RootLayout({
   children,
   params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: Promise<{ lang: string }>;
-}>) {
+}: Readonly<IRootLayoutProps>) {
   const conversionRates = await getConversionRates();
   const { lang } = await params;
   const locale = resolveLocale(lang);
