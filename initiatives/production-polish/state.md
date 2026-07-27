@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (D3.6 lightbox RATIFIED & exported; step-4h prompt issued — user carries)
+**Updated:** 2026-07-27 (4h MERGED — PR #13 `71dbb63`, planner-merged on delegation; next: step-5 prompt)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -19,18 +19,18 @@ carry-forwards → `deferred.md`. **Resume here.**
 | 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                                 | PR #7                                |
 | D3    | Per-page screen designs (Claude Design)                                          | ✅ done — five page designs + the D3.6 lightbox addendum ratified & exported (MediaFigure/Lightbox DS additions sanctioned 07-27) | `design-export/screens/`             |
 | 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                              | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12, `300333d` — catch-all 404, swiper dead, 3 fix rounds)            | `step-4d-catalog-category-prompt.md` |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12) · 4h ✅ (PR #13, `71dbb63` — lightbox, aria-disabled ratified)   | `step-4d-catalog-category-prompt.md` |
 | 5     | SEO pack                                                                         | ⬜ pending                                                                                                                        | plan.md                              |
 | 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                        | plan.md                              |
 | 7     | README + presentation                                                            | ⬜ pending                                                                                                                        | plan.md                              |
 
 ## Next action
 
-1. USER: carry the 4h step to a fresh executor tab — "Run
-   initiatives/production-polish/step-4h-reports-lightbox-prompt.md — read that
-   file and execute it as your full prompt, verbatim." Planner reviews the plan
-   gate (expected OQs: MediaFigure/Lightbox APIs, missing chevron glyphs, the
-   Radix composition), then the PR.
+1. Verify the Vercel deploy on `71dbb63` + live-smoke /uk/reports. Then: planner
+   writes the step-5 SEO prompt (riders scheduled to its window: DEF-22
+   getCategoryName, DEF-25 autoComplete, DEF-30 shared.close, DEF-31 viewer
+   loading; decisions due: DEF-4 abuse protection, DEF-24 cent rounding,
+   DEF-29 soft-404 revisit-or-accept).
 2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
