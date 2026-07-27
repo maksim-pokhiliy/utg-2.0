@@ -1,37 +1,37 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (4g MERGED — PR #12 `300333d`, planner-merged on delegation; D3.6 lightbox brief issued)
+**Updated:** 2026-07-27 (D3.6 lightbox RATIFIED & exported; step-4h prompt issued — user carries)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
 
 ## Board
 
-| #     | Step                                                                             | Status                                                                                                                        | Pointer                              |
-| ----- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| 0     | Quick wins                                                                       | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                     | PR #2                                |
-| 1     | Rescue / de-Firebase + RSC                                                       | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates) | PR #3                                |
-| 2     | Recoil → Zustand + cart fixes                                                    | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                     | PR #4                                |
-| 3     | Next 16 + React 19                                                               | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                     | PR #5                                |
-| 4a    | Port design system (sealed, D-10)                                                | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                   | PR #6                                |
-| D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                   | project `62bf007e-…` = visual SSOT   |
-| D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                             | `kit-screens-reference.md`           |
-| 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                             | PR #7                                |
-| D3    | Per-page screen designs (Claude Design)                                          | ✅ done — all five page designs ratified & exported; D3.5 closed 07-27 (about copy change ADOPTED; wired-export refresh done) | `design-export/screens/`             |
-| 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                          | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12, `300333d` — catch-all 404, swiper dead, 3 fix rounds)        | `step-4d-catalog-category-prompt.md` |
-| 5     | SEO pack                                                                         | ⬜ pending                                                                                                                    | plan.md                              |
-| 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                    | plan.md                              |
-| 7     | README + presentation                                                            | ⬜ pending                                                                                                                    | plan.md                              |
+| #     | Step                                                                             | Status                                                                                                                            | Pointer                              |
+| ----- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 0     | Quick wins                                                                       | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                         | PR #2                                |
+| 1     | Rescue / de-Firebase + RSC                                                       | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates)     | PR #3                                |
+| 2     | Recoil → Zustand + cart fixes                                                    | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                         | PR #4                                |
+| 3     | Next 16 + React 19                                                               | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                         | PR #5                                |
+| 4a    | Port design system (sealed, D-10)                                                | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                       | PR #6                                |
+| D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                       | project `62bf007e-…` = visual SSOT   |
+| D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                                 | `kit-screens-reference.md`           |
+| 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                                 | PR #7                                |
+| D3    | Per-page screen designs (Claude Design)                                          | ✅ done — five page designs + the D3.6 lightbox addendum ratified & exported (MediaFigure/Lightbox DS additions sanctioned 07-27) | `design-export/screens/`             |
+| 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                              | PR #8                                |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12, `300333d` — catch-all 404, swiper dead, 3 fix rounds)            | `step-4d-catalog-category-prompt.md` |
+| 5     | SEO pack                                                                         | ⬜ pending                                                                                                                        | plan.md                              |
+| 6     | Tests + CI                                                                       | ⬜ pending                                                                                                                        | plan.md                              |
+| 7     | README + presentation                                                            | ⬜ pending                                                                                                                        | plan.md                              |
 
 ## Next action
 
-1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green — 404
-   chrome+locale, reports captions, about link, swiper zero).
-2. USER: carry `design-8-reports-lightbox-prompt.md` into the cumulative design
-   dialog (fresh snapshot attached) — D3.6, the owner-requested reports lightbox;
-   planner fidelity-reviews, ratifies + exports, then writes the step-4h prompt.
-3. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
+1. USER: carry the 4h step to a fresh executor tab — "Run
+   initiatives/production-polish/step-4h-reports-lightbox-prompt.md — read that
+   file and execute it as your full prompt, verbatim." Planner reviews the plan
+   gate (expected OQs: MediaFigure/Lightbox APIs, missing chevron glyphs, the
+   Radix composition), then the PR.
+2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
    new `currency` field (D-12); DEF-13 closes when it lands.
 
 ## Open decisions awaiting ratification

@@ -49,3 +49,52 @@ only through a ratified dictionary addition.
 - swiper leaves `package.json`; both `swiper/css` imports die with it.
 - Header/footer/drawer per-screen mounts in the prototype are demo plumbing — the
   app's layout chrome already provides all of it.
+
+## Lightbox (D3.6 addendum — ratified 2026-07-27, user-approved; implemented in 4h)
+
+Click-to-view on the grid. TWO ratified DS additions (+ Icon glyphs); the exported
+`Reports.dc.html` alongside is the D3.6 revision (grid unchanged, viewer added).
+
+### MediaFigure (new DS composite)
+
+The framed square becomes the control: full-width `aspect-square` button, 2px ink
+border, white matte, `overflow-hidden`; image `object-cover` with hover zoom
+`scale(1.03)` on `--dur`/`--ease`; focus-visible = 2px `--secondary` ring, offset 2
+(the SizeSelector precedent). Accessible name composed by the app (reports title +
+index + optional caption). The mono-caps caption row stays OUTSIDE the control in
+app-land.
+
+### Lightbox (new DS composite — a distinct intent, NOT a Dialog extension)
+
+Image-first viewer on the standard scrim (ink 50%, the Sheet treatment):
+
+- Panel: `min(92vw, 880px)` wide, max-height 92vh, column flex, 2px ink border,
+  paper bg.
+- Header strip: band bg/foreground, min-height 56px, pad `6px 6px 6px 16px`;
+  caption vocabulary (mono caps) — index in `band-muted`, then the caption for
+  report 03 ONLY (honesty rule rides into the viewer; bare index elsewhere).
+- Controls right, each 44px, transparent bg, band-foreground, inverse hover
+  (paper/ink), paper focus ring: prev/next chevrons (22px) + close X.
+- Prev/next semantics: clamped at 01/08 — disabled end = 35% opacity, inert; ←/→
+  keys; touch swipe ≥40px. Deliberately NOT a wrap-around carousel (D-9 stands).
+- Media area: white bg, image `width:100%; height:auto`, max-height
+  `calc(92vh − 56px)`, `object-contain` — the UNCROPPED photo (ratified: the grid
+  crops to 1:1, the viewer reveals the full frame; same asset, no hi-res exists).
+- Zero accent anywhere in the viewer.
+
+### Implementation mapping notes (4h)
+
+- The Lightbox composes the DS-INTERNAL Radix Dialog primitives — focus trap,
+  scroll lock, Esc-close, scrim-close and the `useReturnFocus` law come from the
+  shipped machinery; the prototype hand-rolls all of it (mock plumbing: body
+  overflow writes, window keydown, `_opener` refs — do not copy).
+- Icon set gains the chevron glyphs (the designer inlined Lucide paths — declared;
+  the executor adds whichever of chevron-left/right are actually missing).
+- NEW dictionary keys (planner-adopted at ratification, the 4f `close` precedent):
+  `reports.prev` «Попередній звіт»/"Previous report", `reports.next» «Наступний
+  звіт»/"Next report" — the prototype's neighbor-index aria-labels are REJECTED
+  as SR vocabulary.
+- Viewer image `alt=""` — the header strip is the visible text; the prototype's
+  `alt={dialog label}` double-announces and is REJECTED.
+- Raw `<button>`s in the prototype are presentational vocabulary (the SizeChips
+  precedent) — they map to the two composites above.
