@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-27 (4h MERGED — PR #13 `71dbb63`, planner-merged on delegation; next: step-5 prompt)
+**Updated:** 2026-07-27 (step-5 SEO prompt ISSUED with DEF-4/24/29 rulings; bot phase parked after app work)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -26,13 +26,16 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. Prod verification DONE 2026-07-27 (deploy READY, live smoke green — grid
-   labels + both locales). Next: planner writes the step-5 SEO prompt (riders
-   scheduled to its window: DEF-22 getCategoryName, DEF-25 autoComplete, DEF-30
-   shared.close, DEF-31 viewer loading; decisions due: DEF-4 abuse protection,
-   DEF-24 cent rounding, DEF-29 soft-404 revisit-or-accept).
-2. USER follow-up outside this repo: teach `utg-tg-order-bot` to read the payload's
-   new `currency` field (D-12); DEF-13 closes when it lands.
+1. USER: carry step 5 to a fresh executor tab — "Run
+   initiatives/production-polish/step-5-seo-prompt.md — read that file and
+   execute it as your full prompt, verbatim." Planner reviews the plan gate
+   (expected OQs: metadata architecture, og:image strategy, meta-description
+   sourcing for owner ratification, sitemap list, DEF-31 approach, DEF-4
+   numbers), then the PR. Rulings baked into the prompt: DEF-4 in-route rate
+   limit, DEF-24 DROPPED, DEF-29 soft-404 ACCEPTED.
+2. PARKED by user sequencing (2026-07-27): the `utg-tg-order-bot` `currency`
+   read (D-12/DEF-13) waits until the app work (steps 5-7) completes — a
+   dedicated bot-polish phase follows the initiative.
 
 ## Open decisions awaiting ratification
 
@@ -40,14 +43,13 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Live carry-forwards
 
-DEF-4 (order endpoint abuse protection — decide later), DEF-9 (hero photo sealed in
-Firebase; support ticket pending; non-blocking — the shipped Home carries a photo
-slot), DEF-13 (site half SHIPPED in 4f; closes when the bot reads `currency`), DEF-18
-(react-hooks v6 — any React Compiler decision), DEF-22 (`getCategoryName`, step 5),
-DEF-24 (USD cent rounding — step 5/6 or DROP), DEF-25 (autoComplete — step 5),
-DEF-27 (useReturnFocus hygiene — step 5/6 DS window), DEF-28 (dead SectionBand.center
-prop — next sanctioned DS window), DEF-29 (soft-404 on dead URLs — step 5 revisits or
-accepts; terminal fix = a real root layout).
+Riding the issued step-5 prompt: DEF-4 (rate limit, ruled), DEF-22
+(`getCategoryName`), DEF-25 (autoComplete), DEF-30 (`shared.close`), DEF-31
+(lightbox loading). Ruled 2026-07-27: DEF-24 DROPPED, DEF-29 DROPPED-as-accepted.
+Still live: DEF-9 (hero photo — Firebase ticket pending), DEF-13 (bot `currency`
+read — PARKED to the post-app bot phase by user sequencing), DEF-18 (react-hooks
+v6 — any React Compiler decision), DEF-27/DEF-28/DEF-32 (DS hygiene — one
+sanctioned window, step 5/6), DEF-33 (REPORT_DIMENSIONS drift-guard — step 6).
 
 ## Gotchas a resuming session must know
 
