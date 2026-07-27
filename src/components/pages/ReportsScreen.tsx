@@ -47,7 +47,7 @@ const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0`;
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
 const viewerSizes = (width: number, height: number): string =>
-  `min(${VIEWER_VIEWPORT_WIDTH}vw, ${VIEWER_MAX_WIDTH}px, calc((${VIEWER_VIEWPORT_HEIGHT}vh - ${VIEWER_CHROME_HEIGHT}px) * ${(width / height).toFixed(ASPECT_PRECISION)}))`;
+  `min(${VIEWER_MAX_WIDTH}px, ${VIEWER_VIEWPORT_WIDTH}vw, calc((${VIEWER_VIEWPORT_HEIGHT}vh - ${VIEWER_CHROME_HEIGHT}px) * ${(width / height).toFixed(ASPECT_PRECISION)}))`;
 
 export default function ReportsScreen() {
   const dictionary = useDictionary();
