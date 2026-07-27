@@ -133,6 +133,7 @@ export default function ReportsScreen() {
       <Lightbox
         open={isViewerOpen}
         onClose={() => setIsViewerOpen(false)}
+        ariaLabel={viewed.ariaLabel}
         index={viewed.index}
         caption={viewed.caption ?? undefined}
         onPrev={() => step(-1)}
@@ -144,6 +145,7 @@ export default function ReportsScreen() {
         closeLabel={dictionary.cart.close}
         media={
           <Image
+            key={viewed.image}
             src={viewed.image}
             alt=""
             width={viewed.width}

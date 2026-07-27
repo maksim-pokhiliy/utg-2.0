@@ -2,9 +2,9 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
-  useEffect,
   useRef,
   type KeyboardEvent,
+  type MouseEvent,
   type ReactElement,
   type ReactNode,
   type TouchEvent,
@@ -19,11 +19,18 @@ import { Typography } from "../typography/typography";
 const SWIPE_THRESHOLD = 40;
 const CONTROL_ICON_SIZE = 22;
 const CONTROL_CLASS =
-  "flex-none hover:bg-paper hover:text-ink focus-visible:outline-paper disabled:opacity-35 disabled:pointer-events-none disabled:cursor-default";
+  "flex-none hover:bg-paper hover:text-ink focus-visible:outline-paper aria-disabled:opacity-35 aria-disabled:pointer-events-none";
+
+interface SwipeOrigin {
+  id: number;
+  x: number;
+  y: number;
+}
 
 interface LightboxProps {
   open: boolean;
   onClose: () => void;
+  ariaLabel: string;
   index: string;
   caption?: string;
   media: ReactNode;
@@ -39,6 +46,7 @@ interface LightboxProps {
 export function Lightbox({
   open,
   onClose,
+  ariaLabel,
   index,
   caption,
   media,
@@ -51,14 +59,7 @@ export function Lightbox({
   closeLabel,
 }: LightboxProps): ReactElement {
   const { captureOpener, restoreOpener } = useReturnFocus();
-  const panelRef = useRef<HTMLDivElement>(null);
-  const touchStartRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (document.activeElement === document.body) {
-      panelRef.current?.focus();
-    }
-  }, [hasPrev, hasNext]);
+  const swipeRef = useRef<SwipeOrigin | null>(null);
 
   const step = (delta: number): void => {
     if (delta < 0 && hasPrev) {
@@ -71,6 +72,13 @@ export function Lightbox({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    const isModified =
+      event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+
+    if (isModified || event.defaultPrevented) {
+      return;
+    }
+
     if (event.key === "ArrowLeft") {
       step(-1);
     }
@@ -80,25 +88,47 @@ export function Lightbox({
     }
   };
 
+  const handleMediaMouseDown = (event: MouseEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+  };
+
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>): void => {
-    touchStartRef.current = event.touches[0]?.clientX ?? null;
+    const touch = event.touches[0];
+
+    swipeRef.current =
+      event.touches.length === 1 && touch !== undefined
+        ? { id: touch.identifier, x: touch.clientX, y: touch.clientY }
+        : null;
   };
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>): void => {
-    const start = touchStartRef.current;
-    const end = event.changedTouches[0]?.clientX;
+    const origin = swipeRef.current;
 
-    touchStartRef.current = null;
+    swipeRef.current = null;
 
-    if (start === null || end === undefined) {
+    if (origin === null) {
       return;
     }
 
-    const distance = end - start;
+    const touch = Array.from(event.changedTouches).find(
+      (candidate) => candidate.identifier === origin.id
+    );
 
-    if (Math.abs(distance) >= SWIPE_THRESHOLD) {
-      step(distance < 0 ? 1 : -1);
+    if (touch === undefined) {
+      return;
     }
+
+    const distanceX = touch.clientX - origin.x;
+    const distanceY = touch.clientY - origin.y;
+    const isHorizontal = Math.abs(distanceX) > Math.abs(distanceY);
+
+    if (isHorizontal && Math.abs(distanceX) >= SWIPE_THRESHOLD) {
+      step(distanceX < 0 ? 1 : -1);
+    }
+  };
+
+  const handleTouchCancel = (): void => {
+    swipeRef.current = null;
   };
 
   return (
@@ -114,8 +144,8 @@ export function Lightbox({
         <DialogOverlay />
 
         <DialogPrimitive.Content
-          ref={panelRef}
           className="fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 flex flex-col w-[min(92vw,880px)] max-h-[92vh] border-2 border-ink bg-paper focus:outline-none data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]"
+          aria-label={ariaLabel}
           aria-describedby={undefined}
           onOpenAutoFocus={captureOpener}
           onCloseAutoFocus={restoreOpener}
@@ -138,8 +168,8 @@ export function Lightbox({
             <IconButton
               variant="band"
               aria-label={prevLabel}
-              disabled={!hasPrev}
-              onClick={onPrev}
+              aria-disabled={!hasPrev}
+              onClick={() => step(-1)}
               className={CONTROL_CLASS}
             >
               <Icon name="chevron-left" size={CONTROL_ICON_SIZE} />
@@ -148,8 +178,8 @@ export function Lightbox({
             <IconButton
               variant="band"
               aria-label={nextLabel}
-              disabled={!hasNext}
-              onClick={onNext}
+              aria-disabled={!hasNext}
+              onClick={() => step(1)}
               className={CONTROL_CLASS}
             >
               <Icon name="chevron-right" size={CONTROL_ICON_SIZE} />
@@ -167,9 +197,11 @@ export function Lightbox({
           </div>
 
           <div
+            onMouseDown={handleMediaMouseDown}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="min-h-0 bg-white [&_img]:w-full [&_img]:h-auto [&_img]:max-h-[calc(92vh-56px)] [&_img]:object-contain"
+            onTouchCancel={handleTouchCancel}
+            className="min-h-0 overflow-hidden bg-white [&_img]:w-full [&_img]:h-auto [&_img]:max-h-[calc(92vh-60px)] [&_img]:object-contain"
           >
             {media}
           </div>
