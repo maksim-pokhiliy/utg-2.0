@@ -16,6 +16,7 @@ import {
   OG_LOCALES,
   SITE_NAME,
   SITE_URL,
+  TITLE_TEMPLATE,
   absoluteUrl,
   localePath,
   otherLocale,
@@ -71,6 +72,7 @@ export async function generateMetadata({
 
   return {
     metadataBase: new URL(SITE_URL),
+    title: { default: SITE_NAME, template: TITLE_TEMPLATE },
     description: dictionary.footer.mission,
     robots: { index: true, follow: true, "max-image-preview": "large" },
     openGraph: {

@@ -9,8 +9,11 @@ import {
 } from "@root/data";
 
 import { resolveLocale } from "@root/utils/locale";
+import { buildPageMetadata, capitalize, productOgImage } from "@root/utils/seo";
 
 import ProductScreen from "@root/components/pages/ProductScreen";
+
+import { getDictionary } from "../../../dictionaries";
 
 interface IProductPageProps {
   params: Promise<{ lang: string; categoryId: string; productId: string }>;
@@ -28,16 +31,24 @@ export async function generateMetadata({
   params,
 }: IProductPageProps): Promise<Metadata> {
   const { lang, categoryId, productId } = await params;
-  const product = getProductView(categoryId, productId, resolveLocale(lang));
+  const locale = resolveLocale(lang);
+  const product = getProductView(categoryId, productId, locale);
+  const categoryName = getCategoryName(categoryId, locale);
+  const dictionary = getDictionary(locale);
 
-  if (!product) {
-    return { title: "UTG | Merch" };
+  if (!product || categoryName === null) {
+    return { title: capitalize(dictionary.shared.merch) };
   }
 
-  return {
-    title: `${product.title} | UTG`,
-    description: product.description ?? "Donate and fight with us",
-  };
+  return buildPageMetadata({
+    locale,
+    path: `/category/${categoryId}/${productId}`,
+    title: product.title,
+    description: `${product.title} — ${categoryName}. ${
+      product.description ?? dictionary.footer.mission
+    }`,
+    image: productOgImage(product),
+  });
 }
 
 export default async function Product({ params }: IProductPageProps) {

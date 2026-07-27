@@ -1,4 +1,8 @@
-import type { Locale } from "@root/data";
+import type { Metadata } from "next";
+
+import type { Locale, ProductView } from "@root/data";
+
+import { DEFAULT_LOCALE } from "./locale";
 
 export const SITE_URL = "https://www.ua-tactical-gear.com";
 
@@ -22,7 +26,21 @@ export interface OgImage {
   alt: string;
 }
 
-export const IMAGE_DIMENSIONS: Record<
+export type LanguageAlternates = {
+  uk: string;
+  en: string;
+  "x-default": string;
+};
+
+export interface PageMetadataInput {
+  locale: Locale;
+  path: string;
+  title?: string;
+  description: string;
+  image: OgImage;
+}
+
+const IMAGE_DIMENSIONS: Record<
   string,
   { width: number; height: number } | undefined
 > = {
@@ -49,8 +67,49 @@ export const localePath = (locale: Locale, path: string): string =>
 
 export const absoluteUrl = (path: string): string => `${SITE_URL}${path}`;
 
+export const capitalize = (text: string): string =>
+  text.charAt(0).toUpperCase() + text.slice(1);
+
+export const languageAlternates = (path: string): LanguageAlternates => ({
+  uk: absoluteUrl(localePath("uk", path)),
+  en: absoluteUrl(localePath("en", path)),
+  "x-default": absoluteUrl(localePath(DEFAULT_LOCALE, path)),
+});
+
 export const siteOgImage = (): OgImage => ({
   url: absoluteUrl(LOGO_PATH),
   ...IMAGE_DIMENSIONS[LOGO_PATH],
   alt: SITE_NAME,
 });
+
+export const productOgImage = (product: ProductView): OgImage => ({
+  url: absoluteUrl(product.image),
+  ...IMAGE_DIMENSIONS[product.image],
+  alt: product.title,
+});
+
+export const buildPageMetadata = ({
+  locale,
+  path,
+  title,
+  description,
+  image,
+}: PageMetadataInput): Metadata => {
+  const url = absoluteUrl(localePath(locale, path));
+
+  return {
+    ...(title === undefined ? {} : { title }),
+    description,
+    alternates: { canonical: url, languages: languageAlternates(path) },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: OG_LOCALES[locale],
+      alternateLocale: OG_LOCALES[otherLocale(locale)],
+      url,
+      title: title ?? SITE_NAME,
+      description,
+      images: [image],
+    },
+  };
+};
