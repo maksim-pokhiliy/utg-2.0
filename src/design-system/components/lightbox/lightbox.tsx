@@ -1,0 +1,180 @@
+"use client";
+
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type TouchEvent,
+} from "react";
+
+import { useReturnFocus } from "../../lib/use-return-focus";
+import { DialogOverlay } from "../dialog/dialog";
+import { Icon } from "../icon/icon";
+import { IconButton } from "../icon-button/icon-button";
+import { Typography } from "../typography/typography";
+
+const SWIPE_THRESHOLD = 40;
+const CONTROL_ICON_SIZE = 22;
+const CONTROL_CLASS =
+  "flex-none hover:bg-paper hover:text-ink focus-visible:outline-paper disabled:opacity-35 disabled:pointer-events-none disabled:cursor-default";
+
+interface LightboxProps {
+  open: boolean;
+  onClose: () => void;
+  index: string;
+  caption?: string;
+  media: ReactNode;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+  prevLabel: string;
+  nextLabel: string;
+  closeLabel: string;
+}
+
+export function Lightbox({
+  open,
+  onClose,
+  index,
+  caption,
+  media,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+  prevLabel,
+  nextLabel,
+  closeLabel,
+}: LightboxProps): ReactElement {
+  const { captureOpener, restoreOpener } = useReturnFocus();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (document.activeElement === document.body) {
+      panelRef.current?.focus();
+    }
+  }, [hasPrev, hasNext]);
+
+  const step = (delta: number): void => {
+    if (delta < 0 && hasPrev) {
+      onPrev();
+    }
+
+    if (delta > 0 && hasNext) {
+      onNext();
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === "ArrowLeft") {
+      step(-1);
+    }
+
+    if (event.key === "ArrowRight") {
+      step(1);
+    }
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>): void => {
+    touchStartRef.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>): void => {
+    const start = touchStartRef.current;
+    const end = event.changedTouches[0]?.clientX;
+
+    touchStartRef.current = null;
+
+    if (start === null || end === undefined) {
+      return;
+    }
+
+    const distance = end - start;
+
+    if (Math.abs(distance) >= SWIPE_THRESHOLD) {
+      step(distance < 0 ? 1 : -1);
+    }
+  };
+
+  return (
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogOverlay />
+
+        <DialogPrimitive.Content
+          ref={panelRef}
+          className="fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 flex flex-col w-[min(92vw,880px)] max-h-[92vh] border-2 border-ink bg-paper focus:outline-none data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]"
+          aria-describedby={undefined}
+          onOpenAutoFocus={captureOpener}
+          onCloseAutoFocus={restoreOpener}
+          onKeyDown={handleKeyDown}
+        >
+          <div className="flex items-center gap-2 min-h-14 bg-band py-1.5 pr-1.5 pl-4 text-band-foreground">
+            <DialogPrimitive.Title asChild>
+              <Typography
+                variant="caption"
+                as="span"
+                className="flex grow items-baseline gap-3 min-w-0"
+              >
+                <span className="flex-none text-band-muted">{index}</span>
+                {caption ? (
+                  <span className="text-pretty">{caption}</span>
+                ) : null}
+              </Typography>
+            </DialogPrimitive.Title>
+
+            <IconButton
+              variant="band"
+              aria-label={prevLabel}
+              disabled={!hasPrev}
+              onClick={onPrev}
+              className={CONTROL_CLASS}
+            >
+              <Icon name="chevron-left" size={CONTROL_ICON_SIZE} />
+            </IconButton>
+
+            <IconButton
+              variant="band"
+              aria-label={nextLabel}
+              disabled={!hasNext}
+              onClick={onNext}
+              className={CONTROL_CLASS}
+            >
+              <Icon name="chevron-right" size={CONTROL_ICON_SIZE} />
+            </IconButton>
+
+            <DialogPrimitive.Close asChild>
+              <IconButton
+                variant="band"
+                aria-label={closeLabel}
+                className={CONTROL_CLASS}
+              >
+                <Icon name="x" size={CONTROL_ICON_SIZE} />
+              </IconButton>
+            </DialogPrimitive.Close>
+          </div>
+
+          <div
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="min-h-0 bg-white [&_img]:w-full [&_img]:h-auto [&_img]:max-h-[calc(92vh-56px)] [&_img]:object-contain"
+          >
+            {media}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}

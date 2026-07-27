@@ -20,6 +20,8 @@ export type { IconLinkVariant } from "./components/icon-link/icon-link";
 
 export { CategoryTile } from "./components/category-tile/category-tile";
 
+export { MediaFigure } from "./components/media-figure/media-figure";
+
 export { ProductCard } from "./components/product-card/product-card";
 
 export { Badge } from "./components/badge/badge";
@@ -51,6 +53,8 @@ export { toast, Toaster } from "./components/toast/toast";
 export { Dialog } from "./components/dialog/dialog";
 export type { DialogSize } from "./components/dialog/dialog";
 export { ConfirmDialog } from "./components/dialog/confirm-dialog";
+
+export { Lightbox } from "./components/lightbox/lightbox";
 
 export {
   Sheet,
