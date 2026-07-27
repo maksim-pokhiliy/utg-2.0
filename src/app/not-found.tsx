@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+
 import NotFoundScreen from "@root/components/pages/NotFoundScreen";
 
 import { fontRootStyle } from "./fonts";
 
 import "@root/app/globals.css";
+
+export const metadata: Metadata = {
+  title: "UTG | 404",
+};
 
 export default function NotFound() {
   return (
@@ -11,7 +17,9 @@ export default function NotFound() {
         {fontRootStyle}
       </style>
 
-      <NotFoundScreen />
+      <main className="flex-1">
+        <NotFoundScreen />
+      </main>
     </div>
   );
 }
