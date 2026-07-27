@@ -21,5 +21,3 @@ const mono = IBM_Plex_Mono({
 });
 
 export const fontVariables = `${display.variable} ${body.variable} ${mono.variable}`;
-
-export const fontRootStyle = `:root{--font-oswald:${display.style.fontFamily};--font-ibm-plex-sans:${body.style.fontFamily};--font-ibm-plex-mono:${mono.style.fontFamily}}`;

@@ -1,49 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-
 import {
   Button,
   Container,
   SectionBand,
   Typography,
 } from "@root/design-system";
-import type { Locale } from "@root/data";
-import { DEFAULT_LOCALE, resolveLocale } from "@root/utils/locale";
+import { useDictionary } from "@root/i18n";
+
+import { NavLink } from "@root/components/layout/NavLink";
 
 const KICKER = "/ 404";
 
-const messages = {
-  uk: {
-    title: "Сторінку не знайдено",
-    body: "Такої сторінки немає. Можливо, товар знято з продажу.",
-    cta: "До мерчу",
-  },
-  en: {
-    title: "Page not found",
-    body: "This page doesn't exist. The item may have been removed.",
-    cta: "To merch",
-  },
-};
-
 export default function NotFoundScreen() {
-  const pathname = usePathname();
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
-
-  useEffect(() => {
-    const resolved = resolveLocale(pathname.split("/")[1]);
-
-    setLocale(resolved);
-    document.documentElement.lang = resolved;
-  }, [pathname]);
-
-  const message = messages[locale];
+  const dictionary = useDictionary();
 
   return (
     <>
-      <SectionBand kicker={KICKER} title={message.title} />
+      <SectionBand kicker={KICKER} title={dictionary.not_found.title} />
 
       <section className="pt-8 pb-24">
         <Container>
@@ -53,11 +27,11 @@ export default function NotFoundScreen() {
               as="p"
               className="text-pretty text-ink-soft"
             >
-              {message.body}
+              {dictionary.not_found.body}
             </Typography>
 
             <Button asChild variant="outline">
-              <Link href={`/${locale}/category`}>{message.cta}</Link>
+              <NavLink href="/category">{dictionary.not_found.cta}</NavLink>
             </Button>
           </div>
         </Container>
