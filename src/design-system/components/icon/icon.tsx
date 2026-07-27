@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   LoaderCircle,
   Menu,
@@ -22,6 +23,7 @@ const LUCIDE_GLYPHS = {
   minus: Minus,
   "trash-2": Trash2,
   "chevron-down": ChevronDown,
+  "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   "arrow-right": ArrowRight,
   check: Check,
@@ -30,7 +32,7 @@ const LUCIDE_GLYPHS = {
 
 export type IconName = keyof typeof LUCIDE_GLYPHS | "instagram";
 
-export type IconSize = 20 | 24 | 40;
+export type IconSize = 20 | 22 | 24 | 40;
 
 interface IconProps {
   name: IconName;

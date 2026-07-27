@@ -67,7 +67,9 @@
   },
   "reports": {
     "intro": "Every purchase is funded by your orders. Photo reports from the unit.",
-    "fpv_caption": "For material for the manufacture of initiators for FPV"
+    "fpv_caption": "For material for the manufacture of initiators for FPV",
+    "prev": "Previous report",
+    "next": "Next report"
   },
   "about": {
     "site_created": "This site was created exclusively as a volunteer project. The idea appeared due to numerous requests from subscribers to make merch and as another opportunity to collect a resource to cover the needs of the unit we support.",
