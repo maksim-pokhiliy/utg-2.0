@@ -29,7 +29,6 @@ export const isRequiredField = (name: CheckoutFieldName): boolean =>
 export type AutofillToken =
   | "given-name"
   | "family-name"
-  | "tel"
   | "country-name"
   | "address-level1"
   | "address-level2"
@@ -41,7 +40,7 @@ export const AUTOFILL_TOKENS: Record<
 > = {
   first_name: "given-name",
   last_name: "family-name",
-  telephone: "tel",
+  telephone: undefined,
   country: "country-name",
   state: "address-level1",
   city: "address-level2",
