@@ -2,19 +2,18 @@ import { NextResponse } from "next/server";
 import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 
-const locales = ["uk", "en"];
+import { DEFAULT_LOCALE, LOCALES } from "@root/utils/locale";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
 function getLocale(request: Request): string {
   const headers = {
-    "accept-language": request.headers.get("accept-language") || "uk",
+    "accept-language": request.headers.get("accept-language") || DEFAULT_LOCALE,
   };
 
   const languages = new Negotiator({ headers }).languages();
-  const defaultLocale = "uk";
 
-  return match(languages, locales, defaultLocale);
+  return match(languages, LOCALES, DEFAULT_LOCALE);
 }
 
 export function proxy(request: Request) {
@@ -24,7 +23,7 @@ export function proxy(request: Request) {
     return NextResponse.next();
   }
 
-  const pathnameHasLocale = locales.some(
+  const pathnameHasLocale = LOCALES.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 

@@ -1,10 +1,8 @@
 import type { MetadataRoute } from "next";
 
-import type { Locale } from "@root/data";
 import { getCategorySlugs, getProductSlugs } from "@root/data";
+import { LOCALES } from "@root/utils/locale";
 import { absoluteUrl, languageAlternates, localePath } from "@root/utils/seo";
-
-const LOCALES: Locale[] = ["uk", "en"];
 
 const CATEGORY_PATH = "/category";
 
