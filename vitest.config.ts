@@ -2,9 +2,9 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
 
-const NODE_INCLUDE = ["tests/**/*.test.ts"];
-const NODE_EXCLUDE = ["tests/**/*.dom.test.ts"];
-const DOM_INCLUDE = ["tests/**/*.dom.test.{ts,tsx}"];
+const NODE_INCLUDE = ["tests/**/*.{test,spec}.{ts,tsx}"];
+const NODE_EXCLUDE = ["tests/**/*.dom.{test,spec}.{ts,tsx}"];
+const DOM_INCLUDE = ["tests/**/*.dom.{test,spec}.{ts,tsx}"];
 const DOM_SETUP = ["./tests/setup/dom.ts"];
 
 export default defineConfig({

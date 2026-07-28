@@ -11,9 +11,12 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
+  forbidOnly: !!process.env.CI,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: BASE_URL,
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [
     {
@@ -24,7 +27,7 @@ export default defineConfig({
   webServer: {
     command: `yarn start --port ${PORT}`,
     url: `${BASE_URL}/uk`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: WEB_SERVER_TIMEOUT,
     env: {
       PLACE_ORDER_URL: "",

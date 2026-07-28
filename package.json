@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "e2e": "yarn build && playwright test"
+    "e2e": "PLACE_ORDER_URL= EXCHANGE_RATE_API_URL= EXCHANGE_RATE_API_KEY= yarn build && playwright test"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.4",

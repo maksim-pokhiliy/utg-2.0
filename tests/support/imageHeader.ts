@@ -21,6 +21,7 @@ const JPEG_SEGMENT_HEADER_LENGTH = 2;
 const JPEG_LENGTH_OFFSET = 2;
 const JPEG_HEIGHT_OFFSET = 5;
 const JPEG_WIDTH_OFFSET = 7;
+const UINT16_LENGTH = 2;
 
 const START_OF_FRAME_MARKERS = new Set([
   0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
@@ -54,7 +55,7 @@ const readJpegSize = (bytes: Buffer): ImageSize | null => {
 
   let offset = JPEG_SEGMENT_HEADER_LENGTH;
 
-  while (offset + JPEG_WIDTH_OFFSET < bytes.length) {
+  while (offset + JPEG_WIDTH_OFFSET + UINT16_LENGTH <= bytes.length) {
     if (bytes[offset] !== MARKER_PREFIX) {
       offset += 1;
       continue;
