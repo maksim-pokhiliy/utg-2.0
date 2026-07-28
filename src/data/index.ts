@@ -2,6 +2,7 @@ export type {
   Locale,
   CategorySlug,
   LocalizedText,
+  ImageSize,
   CatalogProduct,
   CatalogCategory,
   ProductView,
