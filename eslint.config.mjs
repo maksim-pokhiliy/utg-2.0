@@ -60,6 +60,9 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     "initiatives/**",
+    "playwright-report/**",
+    "test-results/**",
+    "blob-report/**",
   ]),
   {
     rules: {
