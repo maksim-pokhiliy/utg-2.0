@@ -18,3 +18,5 @@ export {
   getCategoryName,
   getProductSlugs,
 } from "./catalog";
+
+export { REPORT_DIMENSIONS } from "./reports";
