@@ -13,7 +13,7 @@ artifacts (`CLAUDE.md`, `initiatives/`) into PRs.
 
 ## Project
 
-E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 16 App Router (Turbopack) + React 19, TypeScript (strict), Zustand + React context for state, Tailwind 4 with a SEALED in-repo design system (`src/design-system/` — see below), and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. There are no tests and no CI.
+E-commerce merch store for Ukrainian Tactical Gear (volunteer initiative): Next.js 16 App Router (Turbopack) + React 19, TypeScript (strict), Zustand + React context for state, Tailwind 4 with a SEALED in-repo design system (`src/design-system/` — see below), and a typed static in-repo catalog (`src/data/`) — no database. Two locales: `uk` (default) and `en`. Tests: Vitest + RTL units (`tests/`) and Playwright e2e (`e2e/`); GitHub Actions runs the full battery on every PR. Node is pinned to 24.x via `engines.node` (D-13) — the one pin read by Vercel (it overrides the dashboard setting), yarn (hard-enforced on every install), and CI (`node-version-file`).
 
 ## Commands
 
@@ -23,6 +23,9 @@ Yarn is the package manager.
 - `yarn build` — production build
 - `yarn lint` / `yarn lint:fix` — ESLint 9 flat config (`eslint.config.mjs`): `next/core-web-vitals` with `react-hooks/exhaustive-deps` active; the two react-hooks v6 Compiler-era rules are deliberately off (DEF-18); `initiatives/` is ignored. The config also enforces the design-system seal with hard errors outside `src/design-system/`: no raw color values, no raw text-size utilities, no deep imports past the barrel, no raw `<button>`/`<a>` JSX, no Dialog-internals imports.
 - `yarn format` — Prettier over the repo (`initiatives/production-polish/extracted/` is excluded — documentary recovered sources stay verbatim)
+- `yarn typecheck` — both TS programs: the app (`tsconfig.json`, which excludes tests) and `tsconfig.test.json` (`tests/`, `e2e/`, the two test configs)
+- `yarn test` / `yarn test:watch` — Vitest, two projects split by filename infix (`*.dom.test.tsx` → jsdom, everything else → node); no globals
+- `yarn e2e` — blank-env `yarn build` + Playwright against `next start`: the script and `webServer.env` both blank `PLACE_ORDER_URL`/`EXCHANGE_RATE_API_*`, so checkout's real 503 is the deterministic error fixture and the suite can never hit the live relay (nor flake on live rates)
 
 The app boots and builds with zero env vars (the exchange-rates fetch is guarded → prices fall back to UAH for both locales). `.env.example` documents the three optional keys: `EXCHANGE_RATE_API_URL`, `EXCHANGE_RATE_API_KEY` (USD conversion for `en`), `PLACE_ORDER_URL` (order relay — checkout returns 503 without it).
 
@@ -33,7 +36,7 @@ Path alias: `@root/*` → `src/*`.
 ### Routing & i18n
 
 - There is no `src/app/layout.tsx` — `src/app/[lang]/layout.tsx` is the root layout (renders `<html>`, loads the dictionary, fetches exchange rates with `revalidate: 3600`, mounts `I18nProvider`). Every page URL is locale-prefixed; `dynamicParams = false` makes unknown locales 404. `params` are async (`Promise<{lang}>`) everywhere per Next 16.
-- `src/proxy.ts` (Next 16 name for middleware) redirects locale-less paths to `/uk/...` or `/en/...` via Accept-Language negotiation; `_next`, `api`, and public files are excluded.
+- `src/proxy.ts` (Next 16 name for middleware) redirects locale-less paths to `/uk/...` or `/en/...` via Accept-Language negotiation; `_next`, `api`, and public files are excluded. The locale list is the `LOCALES` export in `src/utils/locale.ts` (single source, also feeding the sitemap; a skipped locale fails the sitemap-count test).
 - Dictionaries live in `src/app/[lang]/dictionaries/{uk,en}.json`, loaded server-side by `getDictionary` (`server-only`), typed as `typeof en` with a `satisfies Record<Locale, Dictionary>` drift-guard (a missing uk key is a compile error), and delivered to client components via `I18nProvider`.
 - Catalog pages (`/`, `/category`, `/category/[categoryId]`, `/category/[categoryId]/[productId]`) are plain segments — server components with `generateStaticParams` + `generateMetadata`, fully SSG. `about`, `checkout`, `reports` are client/`*Screen`-based segments. `error.tsx` lives under `[lang]`; the 404 is an ordinary catch-all page (`/[lang]/[...rest]`) rendered inside the real layout — dead URLs under a valid locale answer 200 + `robots noindex` (soft-404, DEF-29; there is deliberately no `not-found.tsx` — a boundary cannot compose with the root layout living inside the dynamic segment).
 
@@ -47,7 +50,7 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 
 ### Data
 
-- `src/data/` is the catalog: `catalog.types.ts` (canonical bilingual types + flat `*View` types), `catalog.ts` (data verbatim from the recovered 1.0 sources + accessors returning locale-resolved views), `index.ts` (barrel, incl. `resolveLocale`).
+- `src/data/` is the catalog: `catalog.types.ts` (canonical bilingual types + flat `*View` types + `ImageSize`), `catalog.ts` (data verbatim from the recovered 1.0 sources + accessors returning locale-resolved views; every product carries a required `imageSize`, drift-guarded byte-exact against the real file headers by the test suite), `reports.ts` (the reports-gallery photo dimensions), `index.ts` (barrel). `resolveLocale`/`DEFAULT_LOCALE`/`LOCALES` live in `src/utils/locale.ts`.
 - Catalog data is sacred business data (titles, UAH integer prices, availability, sizes, uk/en descriptions) — never invent or edit it without an explicit decision; `initiatives/production-polish/extracted/` holds the recovered sources of truth.
 - URL slugs are lowercase (`patches`, `tshirts`, `patches/waiting`, `tshirts/death-black`).
 - The only API route left is `POST /api/place_order` — proxies the checkout payload to the external `PLACE_ORDER_URL` relay, forwarding upstream status; its 500 body carries no internal details. A per-IP in-memory rate limiter (5/60s, 429 + Retry-After) runs before body parsing and fails OPEN when no client identity exists — a false 429 costs a real volunteer order. The payload field shape (`first_name`…`cart[{title,quantity,productUrl,…}]`, `locale`, `total`, `currency` per D-12) is a sacred contract with the bot (the bot reads `currency` in a separate bot-repo follow-up).
@@ -65,6 +68,12 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 - Raw colors (hex/rgb/hsl/oklch) and raw font-size utilities exist ONLY inside the DS. App text renders through `Typography` (variants hero/h1/h2/h3/nav/body/small/caption/price); page width through `Container` (maxWidth prop). Styled interactive elements are DS components (`Button`, `IconButton`, `TextTab`, `IconLink` — whose optional `label` renders the sealed icon+mono-caps treatment, `SizeSelector` — controlled single-select chip row); raw `<button>`/`<a>` outside the DS is a lint error. `bg-white` is the one palette-named utility exempt from the seal lint (it resolves to the DS `--color-white` token; the default palette is wiped). Composite patterns are closed intent-API exports (`Dialog` title/children/actions + size panel|full, `ConfirmDialog`, `CategoryTile` index/name/media + optional meta, `ProductCard` title/price/media + availability states, `SectionBand` title/meta/linkable-kicker, `CartLine` media/title/quantity/total + remove, `MediaFigure` clickable framed-media control, `Lightbox` image-first viewer with clamped prev/next — its end chevrons use `aria-disabled`, never `disabled`: a real `disabled` on the focused control strands focus outside the Radix trap) — building blocks stay internal. Layout containers (div/flex/gap/spacing) remain app-land.
 - Fonts self-hosted via `next/font/google` (declared once in `src/app/fonts.ts`): Oswald (display, uppercase), IBM Plex Sans (body), IBM Plex Mono (prices/meta labels) — latin + cyrillic subsets, zero external font/CDN requests.
 - The visual spec is `initiatives/production-polish/design-export/` (verbatim from the ratified Claude Design project — read-only); violations of the seal fail `yarn lint`, and there is no `eslint-disable` escape hatch (comments are banned repo-wide).
+
+### Tests & CI
+
+- `tests/` and `e2e/` mirror `src/` from the repo root — deliberately outside `src/` so the DS seal lint never fights test fixtures; they compile in their own TS program (`tsconfig.test.json`), so the production build never typechecks test tooling.
+- The floor is contract-shaped: the payload test pins the checkout key set against the bot contract (`extracted/bot-contract-index.js`); drift-guards assert every declared image dimension (catalog `imageSize`, `reports.ts`, `LOGO_SIZE`) byte-matches the PNG/JPEG headers under `public/images/` (hand-rolled reader in `tests/support/imageHeader.ts`); the sitemap test pins 38 URLs.
+- `.github/workflows/ci.yml` — one battery job on every PR and master push: install → lint → prettier → typecheck → vitest → zero-env build (the three env keys explicitly blanked) → Playwright (chromium cached). Secretless by construction.
 
 ## Quirks
 
