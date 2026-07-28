@@ -49,6 +49,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/BLACK.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "welcome-black",
@@ -59,6 +60,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/BLACK1.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "death-green",
@@ -69,6 +71,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/GREEN.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "welcome-green",
@@ -79,6 +82,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/GREEN1.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "death-grey",
@@ -89,6 +93,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/GREY.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "welcome-grey",
@@ -99,6 +104,7 @@ const products: CatalogProduct[] = [
     isAvailable: false,
     sizes: TSHIRT_SIZES,
     image: "/images/products/GREY1.jpg",
+    imageSize: { width: 2000, height: 2000 },
   },
   {
     slug: "waiting",
@@ -107,6 +113,7 @@ const products: CatalogProduct[] = [
     price: 300,
     isAvailable: true,
     image: "/images/products/patches_waiting.jpg",
+    imageSize: { width: 960, height: 1280 },
   },
   {
     slug: "welcome",
@@ -115,6 +122,7 @@ const products: CatalogProduct[] = [
     price: 300,
     isAvailable: true,
     image: "/images/products/patches_welcome.jpg",
+    imageSize: { width: 960, height: 1280 },
   },
   {
     slug: "death",
@@ -123,6 +131,7 @@ const products: CatalogProduct[] = [
     price: 300,
     isAvailable: true,
     image: "/images/products/patches_with_you.jpg",
+    imageSize: { width: 960, height: 1280 },
   },
   {
     slug: "utg",
@@ -131,6 +140,7 @@ const products: CatalogProduct[] = [
     price: 300,
     isAvailable: true,
     image: "/images/products/patches_utg.jpg",
+    imageSize: { width: 931, height: 1080 },
   },
   {
     slug: "set",
@@ -142,6 +152,7 @@ const products: CatalogProduct[] = [
     price: 800,
     isAvailable: true,
     image: "/images/products/patches_set.jpg",
+    imageSize: { width: 960, height: 1280 },
   },
   {
     slug: "sticker-pack",
@@ -150,6 +161,7 @@ const products: CatalogProduct[] = [
     price: 250,
     isAvailable: true,
     image: "/images/products/stickers2.JPG",
+    imageSize: { width: 1200, height: 1600 },
   },
 ];
 
@@ -165,6 +177,7 @@ const localizeProduct = (
   isAvailable: product.isAvailable,
   sizes: product.sizes,
   image: product.image,
+  imageSize: product.imageSize,
 });
 
 const localizeCategory = (

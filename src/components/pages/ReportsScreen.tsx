@@ -11,18 +11,9 @@ import {
   Skeleton,
   Typography,
 } from "@root/design-system";
+import { REPORT_DIMENSIONS } from "@root/data";
 import { useDictionary } from "@root/i18n";
 
-const REPORT_DIMENSIONS = [
-  { width: 1015, height: 1280 },
-  { width: 1072, height: 1168 },
-  { width: 1125, height: 821 },
-  { width: 960, height: 1280 },
-  { width: 1280, height: 995 },
-  { width: 1280, height: 1280 },
-  { width: 1126, height: 1280 },
-  { width: 960, height: 1280 },
-];
 const REPORT_COUNT = REPORT_DIMENSIONS.length;
 const FPV_REPORT_NUMBER = 3;
 const IMAGE_SIZES = [

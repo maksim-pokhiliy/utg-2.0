@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { ReactElement } from "react";
 
 import { Container, Icon, IconButton, Typography } from "@root/design-system";
+import { useDictionary } from "@root/i18n";
 import { useCartStore, selectItemCount } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 
@@ -14,6 +15,7 @@ import { NavOverlay } from "./NavOverlay";
 export default function Header(): ReactElement {
   const itemsCount = useCartStore(selectItemCount);
   const openCart = useSidebarStore((state) => state.open);
+  const dictionary = useDictionary();
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b-2 border-ink">
@@ -38,7 +40,9 @@ export default function Header(): ReactElement {
         <LanguageSwitcher />
 
         <IconButton
-          aria-label={`Cart: ${itemsCount}`}
+          aria-label={`${dictionary.cart.cart}: ${itemsCount}`}
+          data-testid="cart-button"
+          data-cart-count={itemsCount}
           onClick={openCart}
           className="relative"
         >

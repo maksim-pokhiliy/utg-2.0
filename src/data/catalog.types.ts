@@ -7,6 +7,11 @@ export interface LocalizedText {
   en: string;
 }
 
+export interface ImageSize {
+  width: number;
+  height: number;
+}
+
 export interface CatalogProduct {
   slug: string;
   category: CategorySlug;
@@ -16,6 +21,7 @@ export interface CatalogProduct {
   isAvailable: boolean;
   sizes?: string[];
   image: string;
+  imageSize: ImageSize;
 }
 
 export interface CatalogCategory {
@@ -33,6 +39,7 @@ export interface ProductView {
   isAvailable: boolean;
   sizes?: string[];
   image: string;
+  imageSize: ImageSize;
 }
 
 export interface CategoryView {

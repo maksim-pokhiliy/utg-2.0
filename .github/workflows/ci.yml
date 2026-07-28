@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  battery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn lint
+
+      - run: yarn prettier --check .
+
+      - run: yarn typecheck
+
+      - run: yarn test
+
+      - run: yarn build
+        env:
+          PLACE_ORDER_URL: ""
+          EXCHANGE_RATE_API_URL: ""
+          EXCHANGE_RATE_API_KEY: ""
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: ms-playwright-${{ runner.os }}-
+
+      - run: yarn playwright install --with-deps chromium
+
+      - run: yarn playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
