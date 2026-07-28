@@ -33,6 +33,10 @@ export const REPORT_COUNT = REPORT_DIMENSIONS.length;
 
 export const ORDER_ROUTE_GLOB = "**/api/place_order";
 
+const CART_BUTTON_TESTID = "cart-button";
+
+const PRODUCT_PRICE_TESTID = "product-price";
+
 const catalogProduct = (locale: Locale): ProductView => {
   const product = getProductView(PRODUCT_CATEGORY_SLUG, PRODUCT_SLUG, locale);
 
@@ -77,7 +81,7 @@ export const productHeading = (page: Page): Locator =>
   page.getByRole("heading", { level: 1 });
 
 export const productPrice = (page: Page): Locator =>
-  page.locator("span.type-price-big");
+  page.getByTestId(PRODUCT_PRICE_TESTID);
 
 export const reportThumbnail = (page: Page): Locator =>
   page.locator("figure img");
@@ -86,7 +90,9 @@ export const addToCartButton = (page: Page): Locator =>
   page.getByRole("button", { name: UK_DICTIONARY.product.add, exact: true });
 
 export const cartButton = (page: Page, count: number): Locator =>
-  page.locator(`button[aria-label="Cart: ${count}"]`);
+  page.locator(
+    `[data-testid="${CART_BUTTON_TESTID}"][data-cart-count="${count}"]`
+  );
 
 export const cartDrawer = (page: Page): Locator => page.getByRole("dialog");
 

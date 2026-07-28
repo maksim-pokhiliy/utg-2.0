@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const NODE_INCLUDE = ["tests/**/*.{test,spec}.{ts,tsx}"];
 const NODE_EXCLUDE = ["tests/**/*.dom.{test,spec}.{ts,tsx}"];
@@ -24,7 +24,7 @@ export default defineConfig({
           name: "node",
           environment: "node",
           include: NODE_INCLUDE,
-          exclude: NODE_EXCLUDE,
+          exclude: [...configDefaults.exclude, ...NODE_EXCLUDE],
         },
       },
       {

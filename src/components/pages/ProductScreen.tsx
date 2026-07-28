@@ -118,9 +118,11 @@ export default function ProductScreen({
             </div>
 
             <div className="flex min-w-0 flex-col gap-6">
-              <Price size="big" muted={!product.isAvailable}>
-                {formatPrice(product.price, money, locale)}
-              </Price>
+              <div data-testid="product-price">
+                <Price size="big" muted={!product.isAvailable}>
+                  {formatPrice(product.price, money, locale)}
+                </Price>
+              </div>
 
               {product.sizes && product.sizes.length > 0 ? (
                 <div className="flex flex-col gap-3">

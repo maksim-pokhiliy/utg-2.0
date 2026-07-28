@@ -86,7 +86,6 @@ describe("POST /api/place_order", () => {
     expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
     expect(bodyTrap).not.toHaveBeenCalled();
     expect(fetchStub).not.toHaveBeenCalled();
-    expectUpstreamOnly(fetchStub.mock.calls);
   });
 
   it("answers 429 with a Retry-After header on the sixth request from one client", async () => {
