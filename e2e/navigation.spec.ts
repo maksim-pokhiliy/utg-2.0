@@ -1,8 +1,23 @@
 import { expect, test, type Page, type Response } from "@playwright/test";
 
-import { SITE_URL, UK_DICTIONARY } from "./support/app";
+import {
+  EN_PRODUCT,
+  EN_PRODUCT_PATH,
+  REPORTS_PATH,
+  REPORT_COUNT,
+  SITE_URL,
+  UK_DICTIONARY,
+  productPrice,
+  reportThumbnail,
+} from "./support/app";
 
 const OK_STATUS = 200;
+
+const UNLOADED_IMAGE_WIDTH = 0;
+
+const HRYVNIA_SIGN = "₴";
+
+const DOLLAR_SIGN = "$";
 
 const SITEMAP_URL_COUNT = 38;
 
@@ -76,6 +91,46 @@ test.describe("dead URLs", () => {
 
     expect(response.status()).toBe(OK_STATUS);
     await expectNotFoundPage(page);
+  });
+});
+
+test.describe("the reports gallery", () => {
+  test("renders every report thumbnail from a source the server actually serves", async ({
+    page,
+  }) => {
+    await visit(page, REPORTS_PATH);
+
+    const thumbnails = reportThumbnail(page);
+
+    await expect(thumbnails).toHaveCount(REPORT_COUNT);
+
+    for (const thumbnail of await thumbnails.all()) {
+      await thumbnail.scrollIntoViewIfNeeded();
+
+      await expect
+        .poll(() =>
+          thumbnail.evaluate((node) =>
+            node instanceof HTMLImageElement
+              ? node.naturalWidth
+              : UNLOADED_IMAGE_WIDTH
+          )
+        )
+        .toBeGreaterThan(UNLOADED_IMAGE_WIDTH);
+    }
+  });
+});
+
+test.describe("the en money path", () => {
+  test("prices a product in hryvnia when the build carries no exchange rate key", async ({
+    page,
+  }) => {
+    await visit(page, EN_PRODUCT_PATH);
+
+    const price = await productPrice(page).innerText();
+
+    expect(price).toContain(HRYVNIA_SIGN);
+    expect(price).not.toContain(DOLLAR_SIGN);
+    expect(price).toContain(EN_PRODUCT.price.toFixed(2));
   });
 });
 

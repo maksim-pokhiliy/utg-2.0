@@ -1,6 +1,9 @@
 import type { Locator, Page } from "@playwright/test";
 
 import ukDictionary from "../../src/app/[lang]/dictionaries/uk.json" with { type: "json" };
+import { getProductView } from "../../src/data/catalog";
+import type { Locale, ProductView } from "../../src/data/catalog.types";
+import { REPORT_DIMENSIONS } from "../../src/data/reports";
 
 export const UK_DICTIONARY = ukDictionary;
 
@@ -10,13 +13,41 @@ export const CART_STORAGE_KEY = "utg-cart-v2";
 
 export const HOME_PATH = "/uk";
 
-export const CATEGORY_PATH = "/uk/category/patches";
+const EN_HOME_PATH = "/en";
 
-export const PRODUCT_PATH = "/uk/category/patches/waiting";
+const PRODUCT_CATEGORY_SLUG = "patches";
 
-export const CHECKOUT_PATH = "/uk/checkout";
+const PRODUCT_SLUG = "waiting";
+
+export const CATEGORY_PATH = `${HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}`;
+
+export const PRODUCT_PATH = `${CATEGORY_PATH}/${PRODUCT_SLUG}`;
+
+export const EN_PRODUCT_PATH = `${EN_HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}/${PRODUCT_SLUG}`;
+
+export const CHECKOUT_PATH = `${HOME_PATH}/checkout`;
+
+export const REPORTS_PATH = `${HOME_PATH}/reports`;
+
+export const REPORT_COUNT = REPORT_DIMENSIONS.length;
 
 export const ORDER_ROUTE_GLOB = "**/api/place_order";
+
+const catalogProduct = (locale: Locale): ProductView => {
+  const product = getProductView(PRODUCT_CATEGORY_SLUG, PRODUCT_SLUG, locale);
+
+  if (product === null) {
+    throw new Error(
+      `The catalog holds no ${PRODUCT_CATEGORY_SLUG}/${PRODUCT_SLUG} product`
+    );
+  }
+
+  return product;
+};
+
+export const UK_PRODUCT = catalogProduct("uk");
+
+export const EN_PRODUCT = catalogProduct("en");
 
 interface CheckoutValue {
   id: string;
@@ -44,6 +75,12 @@ export const checkoutLink = (page: Page): Locator =>
 
 export const productHeading = (page: Page): Locator =>
   page.getByRole("heading", { level: 1 });
+
+export const productPrice = (page: Page): Locator =>
+  page.locator("span.type-price-big");
+
+export const reportThumbnail = (page: Page): Locator =>
+  page.locator("figure img");
 
 export const addToCartButton = (page: Page): Locator =>
   page.getByRole("button", { name: UK_DICTIONARY.product.add, exact: true });

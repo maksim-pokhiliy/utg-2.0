@@ -81,6 +81,18 @@ const readStorage = (): unknown =>
 
 const readItems = (): ICartItem[] => useCartStore.getState().items;
 
+const persistedStorage = () => {
+  const { storage } = useCartStore.persist.getOptions();
+
+  if (storage === undefined) {
+    throw new Error("The cart store persists through no storage");
+  }
+
+  return storage;
+};
+
+const decodeStorage = async () => persistedStorage().getItem(CART_STORAGE_KEY);
+
 const rehydrate = async (): Promise<void> => {
   await useCartStore.persist.rehydrate();
 };
@@ -138,20 +150,28 @@ describe("the cart storage decoder", () => {
     expect(readItems()[0].quantity).toBe(1);
   });
 
-  it("rejects a zustand state envelope and leaves the cart empty", async () => {
+  it("returns the stored lines wrapped in a state envelope for a raw json array", async () => {
+    const legacy = storedLine();
+    seedStorage([legacy]);
+
+    expect(await decodeStorage()).toEqual({
+      state: { items: [legacy] },
+      version: 0,
+    });
+  });
+
+  it("returns null for a zustand state envelope so a nested shape never reaches the cart", async () => {
     seedRawStorage(
       JSON.stringify({ state: { items: [storedLine()] }, version: 0 })
     );
-    await rehydrate();
 
-    expect(readItems()).toEqual([]);
+    expect(await decodeStorage()).toBeNull();
   });
 
-  it("rejects malformed json and leaves the cart empty", async () => {
+  it("returns null for malformed json instead of throwing", async () => {
     seedRawStorage(MALFORMED_STORAGE);
-    await rehydrate();
 
-    expect(readItems()).toEqual([]);
+    expect(await decodeStorage()).toBeNull();
   });
 
   it("keeps a legacy bare-slug line intact", async () => {

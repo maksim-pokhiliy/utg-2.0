@@ -67,51 +67,57 @@ const SUBTOTAL_UAH = 2300;
 
 const EXPECTED_UAH_TOTAL = "2300.00";
 
+const ADDITIONAL_NOTE = UK_DICTIONARY.cart.review;
+
 const withPadding = (value: string): string => `  ${value}  `;
 
+const customerField = (
+  name: CheckoutFieldName,
+  label: string,
+  value: string
+): CustomerField => ({
+  name,
+  label,
+  typed: withPadding(value),
+  expected: value,
+});
+
 const CUSTOMER_FIELDS: readonly CustomerField[] = [
-  {
-    name: "first_name",
-    label: UK_DICTIONARY.cart.first_name,
-    typed: withPadding(UK_DICTIONARY.cart.first_name_placeholder),
-    expected: UK_DICTIONARY.cart.first_name_placeholder,
-  },
-  {
-    name: "last_name",
-    label: UK_DICTIONARY.cart.last_name,
-    typed: UK_DICTIONARY.cart.last_name_placeholder,
-    expected: UK_DICTIONARY.cart.last_name_placeholder,
-  },
-  {
-    name: "telephone",
-    label: UK_DICTIONARY.cart.telephone,
-    typed: UK_DICTIONARY.cart.telephone_placeholder,
-    expected: UK_DICTIONARY.cart.telephone_placeholder,
-  },
-  {
-    name: "country",
-    label: UK_DICTIONARY.cart.country,
-    typed: UK_DICTIONARY.cart.country_placeholder,
-    expected: UK_DICTIONARY.cart.country_placeholder,
-  },
-  {
-    name: "state",
-    label: UK_DICTIONARY.cart.state,
-    typed: UK_DICTIONARY.cart.state_placeholder,
-    expected: UK_DICTIONARY.cart.state_placeholder,
-  },
-  {
-    name: "city",
-    label: UK_DICTIONARY.cart.city,
-    typed: UK_DICTIONARY.cart.city_placeholder,
-    expected: UK_DICTIONARY.cart.city_placeholder,
-  },
-  {
-    name: "address",
-    label: UK_DICTIONARY.cart.address,
-    typed: withPadding(UK_DICTIONARY.cart.address_placeholder),
-    expected: UK_DICTIONARY.cart.address_placeholder,
-  },
+  customerField(
+    "first_name",
+    UK_DICTIONARY.cart.first_name,
+    UK_DICTIONARY.cart.first_name_placeholder
+  ),
+  customerField(
+    "last_name",
+    UK_DICTIONARY.cart.last_name,
+    UK_DICTIONARY.cart.last_name_placeholder
+  ),
+  customerField(
+    "telephone",
+    UK_DICTIONARY.cart.telephone,
+    UK_DICTIONARY.cart.telephone_placeholder
+  ),
+  customerField(
+    "country",
+    UK_DICTIONARY.cart.country,
+    UK_DICTIONARY.cart.country_placeholder
+  ),
+  customerField(
+    "state",
+    UK_DICTIONARY.cart.state,
+    UK_DICTIONARY.cart.state_placeholder
+  ),
+  customerField(
+    "city",
+    UK_DICTIONARY.cart.city,
+    UK_DICTIONARY.cart.city_placeholder
+  ),
+  customerField(
+    "address",
+    UK_DICTIONARY.cart.address,
+    UK_DICTIONARY.cart.address_placeholder
+  ),
 ];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -160,6 +166,12 @@ const fillRequiredFields = (): void => {
       target: { value: field.typed },
     });
   }
+};
+
+const fillOptionalField = (value: string): void => {
+  fireEvent.change(screen.getByLabelText(UK_DICTIONARY.cart.additional), {
+    target: { value },
+  });
 };
 
 const submit = async (): Promise<void> => {
@@ -321,6 +333,16 @@ describe("CheckoutForm order payload — the contract with the order bot in init
     }
   });
 
+  it("sends the trimmed note the shopper typed into the optional field", async () => {
+    renderWithI18n(<CheckoutForm onPlaced={onPlaced} />);
+    fillRequiredFields();
+    fillOptionalField(withPadding(ADDITIONAL_NOTE));
+
+    await submit();
+
+    expect(readPayload().additional).toBe(ADDITIONAL_NOTE);
+  });
+
   it("sends an empty string for the untouched optional field", async () => {
     await placeOrder();
 
@@ -468,6 +490,26 @@ describe("CheckoutForm failure path", () => {
 
     expect(onPlaced).not.toHaveBeenCalled();
     expect(useCartStore.getState().items).toEqual([...CART_LINES]);
+  });
+
+  it("raises the order error toast when the relay answers 503", async () => {
+    fetchMock.mockResolvedValue(respondWith(SERVICE_UNAVAILABLE_STATUS));
+
+    await placeOrder();
+
+    const toast = await screen.findByText(UK_DICTIONARY.cart.order_error);
+
+    expect(toast.textContent).toBe(UK_DICTIONARY.cart.order_error);
+  });
+
+  it("raises the order error toast when the request itself fails", async () => {
+    fetchMock.mockRejectedValue(new Error("network down"));
+
+    await placeOrder();
+
+    const toast = await screen.findByText(UK_DICTIONARY.cart.order_error);
+
+    expect(toast.textContent).toBe(UK_DICTIONARY.cart.order_error);
   });
 });
 

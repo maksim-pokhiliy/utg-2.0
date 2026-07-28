@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 
 import ukDictionary from "@root/app/[lang]/dictionaries/uk.json";
 import type { Locale } from "@root/data";
+import { Toaster } from "@root/design-system";
 import { I18nProvider, type Dictionary } from "@root/i18n";
 import type { IMoney } from "@root/utils/formatPrice";
 
@@ -31,6 +32,7 @@ export const renderWithI18n = (
   return render(
     <I18nProvider locale={locale} dictionary={dictionary} money={money}>
       {ui}
+      <Toaster />
     </I18nProvider>
   );
 };

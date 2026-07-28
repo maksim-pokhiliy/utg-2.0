@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
+  CART_STORAGE_KEY,
   composeCartLine,
   selectItemCount,
   selectSubtotal,
@@ -42,6 +43,18 @@ const cartItem = (overrides: Partial<ICartItem> = {}): ICartItem => ({
 });
 
 const readItems = (): ICartItem[] => useCartStore.getState().items;
+
+const persistedStorage = () => {
+  const { storage } = useCartStore.persist.getOptions();
+
+  if (storage === undefined) {
+    throw new Error("The cart store persists through no storage");
+  }
+
+  return storage;
+};
+
+const decodeStorage = async () => persistedStorage().getItem(CART_STORAGE_KEY);
 
 beforeEach(() => {
   useCartStore.setState({ items: [] });
@@ -152,10 +165,8 @@ describe("the cart store on the server", () => {
     expect(typeof window).toBe("undefined");
   });
 
-  it("leaves the cart empty when rehydrating without a window", async () => {
-    await useCartStore.persist.rehydrate();
-
-    expect(readItems()).toEqual([]);
+  it("returns null from the storage decoder rather than reaching for a window that does not exist", async () => {
+    expect(await decodeStorage()).toBeNull();
   });
 
   it("does not throw when the mutators run without a window", () => {
