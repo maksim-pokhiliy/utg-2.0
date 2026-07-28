@@ -55,6 +55,12 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Facts.** Prod = Vercel project `utg` (team maksim-pokhiliys-projects), domains `ua-tactical-gear.com` / `www` / `utg.vercel.app`; `firebase.json` hosting config is vestigial. The order bot is the user's own public repo (`utg-tg-order-bot`), deployed as Vercel project `telegram-bot-server`. **Prod is partially down**: Firebase Storage serves 402 on all images (Spark plan), `GET /api/categories/[id]` 504s reproducibly — category/product pages are empty, no images load anywhere on the site.
 - **Impact.** The initiative gained a rescue dimension: step 1 (de-Firebase) restores a fully working site. Remaining env need shrinks to `EXCHANGE_RATE_API_*` + `PLACE_ORDER_URL` after step 1; user-provided values still wanted for checkout e2e verification.
 
+### D-6 — Recoil → Zustand; Next 16 + React 19 ordering
+
+- **Status:** RATIFIED (approved with roadmap sign-off, 2026-07-17).
+- **Decision.** Replace Recoil with Zustand (cart + sidebar only; dictionary/rates move to server props in step 1). Upgrade Next 14 → 16 with React 19 after Recoil is out.
+- **Rationale.** Recoil is abandoned by Meta and incompatible with React 19 — both a real blocker for upgrades and a dated-stack signal. Zustand is the lightweight standard for this size of client state. Upgrade ordering is forced: Recoil must leave before React 19 arrives.
+
 ### D-7 — Drop Firebase; static in-repo catalog, local assets
 
 - **Status:** RATIFIED (user directed the Firebase exit 2026-07-17 and delegated the storage choice "Neon or local config"; planner resolved: static config).
@@ -93,6 +99,8 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Decision.** The checkout payload adds ONE key: `currency: "UAH" | "USD"`, valued from the server-resolved money context (the currency actually displayed to the buyer). Every existing key stays byte-identical. The bot currently destructures known fields only (verified in `extracted/bot-contract-index.js`), so the addition is ignored until a bot-side read lands — that read is a separate task in the user's own `utg-tg-order-bot` repo, out of this initiative's scope.
 - **Rationale.** DEF-13's defect is exactly that the bot derives currency from `locale` (`currencyMap[locale]`): rates-down + `en` sends UAH magnitudes labeled `$` in the operator's Telegram. Only an explicit currency signal kills the ambiguity; the additive path keeps the sacred contract backward-compatible in both directions (old bot ignores the key; updated bot falls back to the locale map when the key is absent).
 
-- **Status:** RATIFIED (approved with roadmap sign-off, 2026-07-17).
-- **Decision.** Replace Recoil with Zustand (cart + sidebar only; dictionary/rates move to server props in step 1). Upgrade Next 14 → 16 with React 19 after Recoil is out.
-- **Rationale.** Recoil is abandoned by Meta and incompatible with React 19 — both a real blocker for upgrades and a dated-stack signal. Zustand is the lightweight standard for this size of client state. Upgrade ordering is forced: Recoil must leave before React 19 arrives.
+### D-13 — One Node major, pinned in the repo (24.x via `engines.node`)
+
+- **Status:** RATIFIED (planner, 2026-07-28, PR #15 review round; evidence: the Vercel deploy log — jsdom@30 `engines` vs prod Node 20.20.2 — plus Vercel's deprecation notice mandating 24.x by 2026-10-01).
+- **Decision.** The whole toolchain runs ONE Node major — 24 — and the single binding pin is `"engines": { "node": "24.x" }` in `package.json`: Vercel reads `engines.node` and it overrides the dashboard Node setting; yarn 1 hard-enforces engines on every install (local and CI); CI consumes the same pin via setup-node `node-version-file: package.json`. No second pin file (`.nvmrc` rejected: Vercel ignores it, and a second file is its own drift surface). `--ignore-engines` is banned as a skip-flag — an engines conflict is a root-cause item, never a bypass. The Vercel dashboard flips to 24.x as belt-and-braces only AFTER the PR's preview deploy proves the repo pin alone binds the build. Major bumps are deliberate decisions, never drift.
+- **Rationale.** The suite's first PR shipped green Actions on Node 22 while the Vercel build died on Node 20 at `yarn install` — exactly the "green in CI, red in prod" class the CI exists to kill, caused by three consumers (local, CI, Vercel) bound by nothing. A version range instead of a major pin would re-admit the drift; 22.x (the planner's first instruction, corrected here) would only postpone the same cliff to Vercel's 2026-10-01 Node-20 cutoff with 22's own EOL behind it.
