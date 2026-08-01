@@ -9,6 +9,8 @@ import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import CartDrawer from "@root/components/cart/CartDrawer";
+import ProductScreen from "@root/components/pages/ProductScreen";
+import type { ProductView } from "@root/data";
 import { Icon, IconButton } from "@root/design-system";
 import { I18nProvider } from "@root/i18n";
 import { composeCartLine, useCartStore } from "@root/store/cart";
@@ -29,6 +31,7 @@ const OPENER_LABEL = "Cart";
 
 const CART = UK_DICTIONARY.cart;
 const CLOSE_LABEL = UK_DICTIONARY.shared.close;
+const ADD_LABEL = UK_DICTIONARY.product.add;
 const REMOVE_LABEL = `${CART.remove_confirm}: ${"«Waiting»"}`;
 
 const PATCH = {
@@ -41,6 +44,16 @@ const PATCH = {
   productUrl: "/uk/category/patches/waiting",
 };
 
+const PRODUCT: ProductView = {
+  slug: PATCH.slug,
+  category: "patches",
+  title: PATCH.title,
+  price: PATCH.price,
+  isAvailable: true,
+  image: PATCH.image,
+  imageSize: { width: 960, height: 1280 },
+};
+
 function Harness(): ReactElement {
   const open = useSidebarStore((state) => state.open);
 
@@ -49,6 +62,16 @@ function Harness(): ReactElement {
       <IconButton aria-label={OPENER_LABEL} onClick={open}>
         <Icon name="shopping-bag" />
       </IconButton>
+
+      <CartDrawer />
+    </>
+  );
+}
+
+function ProductHarness(): ReactElement {
+  return (
+    <>
+      <ProductScreen product={PRODUCT} categoryName={PRODUCT.category} />
 
       <CartDrawer />
     </>
@@ -111,11 +134,13 @@ const expectFocusOffTheOpener = async (): Promise<void> => {
   expect(document.activeElement).toBe(document.body);
 };
 
-const expectFocusOnTheOpener = async (): Promise<void> => {
+const expectFocusOn = async (target: () => HTMLElement): Promise<void> => {
   await waitFor(() => {
-    expect(document.activeElement).toBe(opener());
+    expect(document.activeElement).toBe(target());
   });
 };
+
+const expectFocusOnTheOpener = (): Promise<void> => expectFocusOn(opener);
 
 beforeEach(() => {
   route.pathname = CATALOG_PATH;
@@ -264,6 +289,26 @@ describe("the drawer closing by hand on the same route", () => {
 
     await expectDrawerClosed();
     await expectFocusOnTheOpener();
+  });
+});
+
+describe("the drawer opened by adding to cart, with no trigger and nothing focused", () => {
+  it("returns focus to the add-to-cart button, recovered from the recorded interaction", async () => {
+    render(<ProductHarness />, { wrapper: withI18n });
+
+    const add = screen.getByRole("button", { name: ADD_LABEL });
+
+    expect(document.activeElement).toBe(document.body);
+
+    fireEvent.pointerDown(add);
+    fireEvent.click(add);
+
+    await screen.findByRole("button", { name: CLOSE_LABEL });
+
+    closeByHand();
+
+    await expectDrawerClosed();
+    await expectFocusOn(() => add);
   });
 });
 
