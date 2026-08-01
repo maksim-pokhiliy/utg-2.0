@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
+import { useNavigationClose } from "@root/hooks/useNavigationClose";
 
 import { NavLink } from "./NavLink";
 import { INSTAGRAM_URL, NAV_ITEMS } from "./nav";
@@ -17,10 +18,21 @@ import { INSTAGRAM_URL, NAV_ITEMS } from "./nav";
 export function NavOverlay(): ReactElement {
   const dictionary = useDictionary();
   const [open, setOpen] = useState(false);
+  const menu = useNavigationClose();
+
+  const handleOpen = () => {
+    menu.markOpened();
+    setOpen(true);
+  };
+
+  const handleNavigateAway = () => {
+    menu.markNavigating();
+    setOpen(false);
+  };
 
   return (
     <>
-      <IconButton aria-label="Menu" onClick={() => setOpen(true)}>
+      <IconButton aria-label="Menu" onClick={handleOpen}>
         <Icon name="menu" />
       </IconButton>
 
@@ -29,6 +41,7 @@ export function NavOverlay(): ReactElement {
         onClose={() => setOpen(false)}
         title="UTG"
         size="full"
+        onCloseAutoFocus={menu.suppressReturnFocus}
       >
         <div className="flex-1 flex flex-col px-(--gutter) overflow-y-auto">
           <nav className="mt-[10vh] flex flex-col gap-1">
@@ -36,7 +49,7 @@ export function NavOverlay(): ReactElement {
               <NavLink
                 key={item.href}
                 href={item.href}
-                onClick={() => setOpen(false)}
+                onClick={handleNavigateAway}
                 className="flex items-baseline gap-4 no-underline text-band-foreground hover:text-flag-yellow"
               >
                 <Typography

@@ -33,6 +33,7 @@ interface DialogProps {
   children: ReactNode;
   actions?: ReactNode;
   size?: DialogSize;
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 export function Dialog({
@@ -42,6 +43,7 @@ export function Dialog({
   children,
   actions,
   size = "panel",
+  onCloseAutoFocus,
 }: DialogProps): ReactElement {
   const { captureOpener, restoreOpener } = useReturnFocus();
 
@@ -69,7 +71,10 @@ export function Dialog({
           className={dialogContent({ size })}
           aria-describedby={undefined}
           onOpenAutoFocus={captureOpener}
-          onCloseAutoFocus={restoreOpener}
+          onCloseAutoFocus={(event) => {
+            onCloseAutoFocus?.(event);
+            restoreOpener(event);
+          }}
         >
           {size === "full" ? (
             <>
