@@ -1,39 +1,43 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-28 (step-6b plan gate APPROVED — both deviations ratified, two riders; executor implementing)
+**Updated:** 2026-08-01 (PR #16 verified — Dialog-slot reversal RATIFIED, DEF-39 opened; micro-round + user browser gate pending)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
 
 ## Board
 
-| #     | Step                                                                             | Status                                                                                                                                                                              | Pointer                              |
-| ----- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| 0     | Quick wins                                                                       | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                                                                           | PR #2                                |
-| 1     | Rescue / de-Firebase + RSC                                                       | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates)                                                       | PR #3                                |
-| 2     | Recoil → Zustand + cart fixes                                                    | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                                                                           | PR #4                                |
-| 3     | Next 16 + React 19                                                               | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                                                                           | PR #5                                |
-| 4a    | Port design system (sealed, D-10)                                                | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                                                                         | PR #6                                |
-| D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                                                                         | project `62bf007e-…` = visual SSOT   |
-| D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                                                                                   | `kit-screens-reference.md`           |
-| 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                                                                                   | PR #7                                |
-| D3    | Per-page screen designs (Claude Design)                                          | ✅ done — five page designs + the D3.6 lightbox addendum ratified & exported (MediaFigure/Lightbox DS additions sanctioned 07-27)                                                   | `design-export/screens/`             |
-| 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                                                                                | PR #8                                |
-| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12) · 4h ✅ (PR #13, `71dbb63` — lightbox, aria-disabled ratified)                                                     | `step-4d-catalog-category-prompt.md` |
-| 5     | SEO pack                                                                         | ✅ done — PR #14 squash-merged (`095caad`) incl. review fix round; Lighthouse SEO 100 on every page (user devtools gate)                                                            | plan.md                              |
-| 6     | Tests + CI                                                                       | ✅ done — PR #15 squash-merged (`208e192`) incl. the D-13 Node-24 fix round; 265 units + 11 e2e; the PR proved its own CI green (charter acceptance); prod live-verified on Node 24 | PR #15                               |
-| 7     | README + presentation                                                            | ⬜ pending                                                                                                                                                                          | plan.md                              |
+| #     | Step                                                                             | Status                                                                                                                                                                                                   | Pointer                              |
+| ----- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 0     | Quick wins                                                                       | ✅ done — PR #2 squash-merged (`04fbbf9`)                                                                                                                                                                | PR #2                                |
+| 1     | Rescue / de-Firebase + RSC                                                       | ✅ done — PR #3 squash-merged (`49acce7`); **prod verified alive** (images 200, SSG titles, en $-prices via Vercel-env rates)                                                                            | PR #3                                |
+| 2     | Recoil → Zustand + cart fixes                                                    | ✅ done — PR #4 squash-merged (`e066ccc`)                                                                                                                                                                | PR #4                                |
+| 3     | Next 16 + React 19                                                               | ✅ done — R1 browser gate passed by user, PR #5 squash-merged (`f3f79bf`)                                                                                                                                | PR #5                                |
+| 4a    | Port design system (sealed, D-10)                                                | ✅ done — PR #6 + fix round squash-merged (`2e83503`); 6 seal layers proven                                                                                                                              | PR #6                                |
+| D1    | Design system (Claude Design)                                                    | ✅ done — user approved; D-4 fully ratified                                                                                                                                                              | project `62bf007e-…` = visual SSOT   |
+| D2    | Screen prototypes (Claude Design)                                                | SUPERSEDED by D-11 — kit screens are DS demos; real pages designed per-page in D3                                                                                                                        | `kit-screens-reference.md`           |
+| 4b    | DS alignment (NavOverlay + DEF-20)                                               | ✅ done — PR #7 squash-merged (`8d9a4ba`) incl. overflow fix round; DEF-20 CLOSED                                                                                                                        | PR #7                                |
+| D3    | Per-page screen designs (Claude Design)                                          | ✅ done — five page designs + the D3.6 lightbox addendum ratified & exported (MediaFigure/Lightbox DS additions sanctioned 07-27)                                                                        | `design-export/screens/`             |
+| 4c    | Implement Home per D3.1                                                          | ✅ done — PR #8 squash-merged (`dec9a78`) incl. 3-item fix round; prod live-verified                                                                                                                     | PR #8                                |
+| 4d–4g | Remaining pages (catalog/category → product → cart/checkout → reports/about/404) | 4d ✅ (PR #9) · 4e ✅ (PR #10) · 4f ✅ (PR #11) · 4g ✅ (PR #12) · 4h ✅ (PR #13, `71dbb63` — lightbox, aria-disabled ratified)                                                                          | `step-4d-catalog-category-prompt.md` |
+| 5     | SEO pack                                                                         | ✅ done — PR #14 squash-merged (`095caad`) incl. review fix round; Lighthouse SEO 100 on every page (user devtools gate)                                                                                 | plan.md                              |
+| 6     | Tests + CI                                                                       | ✅ done — PR #15 squash-merged (`208e192`) incl. the D-13 Node-24 fix round; 265 units + 11 e2e; the PR proved its own CI green (charter acceptance); prod live-verified on Node 24                      | PR #15                               |
+| 6b    | DS hygiene (DEF-27/28/32/38)                                                     | 🔶 PR #16 open — adapt round closed five DEF-27 focus regressions, Dialog-slot reversal ratified; 316 units (+51), both checks green; micro-round (open-on-add test) + 9-point user browser gate pending | PR #16                               |
+| 7     | README + presentation                                                            | ⬜ pending                                                                                                                                                                                               | plan.md                              |
 
 ## Next action
 
-1. Step-6b plan gate ANSWERED (approve; both deviations ratified — Dialog gets
-   no slot, DEF-38 = drop-the-guard keep-the-broad-catch; riders: the
-   flag-reset test sequence, `vi.mock` bounded to `next/navigation`). Executor
-   implements; planner then reviews the PR against the zero-visual-delta bar
-   (expect the browser-gate list in the PR: drawer open/close + return focus,
-   close-on-navigation, ConfirmDialog, Lightbox ends, reports band). Non-urgent
-   belt-and-braces per D-13 if not yet clicked: Vercel dashboard → Node.js
-   Version → 24.x. Rich Results on the live product URL stays optional.
+1. PR #16 (step 6b) endgame, in order: (a) USER carries the micro-round to the
+   executor tab (one test: the open-on-add focus path — the DEF-23 origin);
+   (b) USER runs the 9-point browser gate from the PR body — the two
+   animation-window items (reopen during exit, Back with ConfirmDialog open)
+   are manual-only by design, no machine has checked them; (a) and (b) can run
+   in parallel; (c) USER merges (squash). Planner then closes the loop (prod
+   verify + docs + DEF-27/28/32/38 dispositions), and step 7 (README) runs as
+   the /step skill's pilot. NOTE: the plan-gate "Dialog gets no slot" ruling is
+   REVERSED and ratified (journal 2026-08-01) — the code is right, the old
+   ruling was not. Non-urgent per D-13 if not yet clicked: Vercel dashboard →
+   Node.js Version → 24.x. Rich Results stays optional.
 2. PARKED by user sequencing (2026-07-27): the `utg-tg-order-bot` `currency`
    read (D-12/DEF-13) waits until the app work (steps 5-7) completes — a
    dedicated bot-polish phase follows the initiative.
@@ -47,10 +51,11 @@ carry-forwards → `deferred.md`. **Resume here.**
 Closed in step 6 (PR #15): DEF-33, DEF-34, DEF-35. Still live: DEF-9 (hero
 photo — Firebase ticket pending), DEF-13 (bot `currency` read — PARKED to the
 post-app bot phase by user sequencing), DEF-18 (react-hooks v6 — any React
-Compiler decision), DEF-27/DEF-28/DEF-32 + DEF-38 (DS hygiene + cart-codec
-cleanup — step 6b, prompt issued), DEF-36 (e2e limiter-bucket isolation —
-OPEN, next test window), DEF-37 (relay-forwarding path e2e — OPEN, next test
-window).
+Compiler decision), DEF-27/DEF-28/DEF-32 + DEF-38 (shipped in the open PR #16
+— close at merge), DEF-36 + DEF-37 (e2e limiter-bucket isolation;
+relay-forwarding e2e — OPEN), DEF-39 (cart decoder field validation + honest
+typing, one change — OPEN, surfaced by the PR #16 review; bundle candidate
+with DEF-36/37 into one hardening micro-step after step 7).
 
 ## Gotchas a resuming session must know
 
