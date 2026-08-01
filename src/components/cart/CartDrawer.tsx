@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useState, type MouseEvent, type ReactElement } from "react";
 
 import { usePathname } from "next/navigation";
 
@@ -27,7 +27,10 @@ import {
 } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
-import { useNavigationClose } from "@root/hooks/useNavigationClose";
+import {
+  useNavigationClose,
+  willNavigateAway,
+} from "@root/hooks/useNavigationClose";
 import { NavLink } from "@root/components/layout/NavLink";
 
 export default function CartDrawer(): ReactElement {
@@ -53,8 +56,11 @@ export default function CartDrawer(): ReactElement {
   const removeConfirm = useNavigationClose();
 
   useEffect(() => {
-    drawer.markNavigating();
-    removeConfirm.markNavigating();
+    if (useSidebarStore.getState().isOpen) {
+      drawer.markNavigating();
+      removeConfirm.markNavigating();
+    }
+
     close();
   }, [pathname, close, drawer, removeConfirm]);
 
@@ -73,8 +79,12 @@ export default function CartDrawer(): ReactElement {
     }
   };
 
-  const handleNavigateAway = () => {
-    drawer.markNavigating();
+  const handleNavigateAway = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (willNavigateAway(event, pathname)) {
+      drawer.markNavigating();
+      removeConfirm.markNavigating();
+    }
+
     close();
   };
 

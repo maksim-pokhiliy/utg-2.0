@@ -108,7 +108,7 @@ const settleReturnFocus = async (): Promise<void> => {
 const expectFocusOffTheOpener = async (): Promise<void> => {
   await settleReturnFocus();
 
-  expect(document.activeElement).not.toBe(opener());
+  expect(document.activeElement).toBe(document.body);
 };
 
 const expectFocusOnTheOpener = async (): Promise<void> => {
@@ -149,6 +149,35 @@ describe("the drawer's own links, which close and navigate in one click", () => 
 
     await expectDrawerClosed();
     await expectFocusOffTheOpener();
+  });
+});
+
+describe("a drawer link that leads to the route already showing", () => {
+  it("returns focus to the cart button, because the shopper went nowhere", async () => {
+    route.pathname = CHECKOUT_PATH;
+    fillCart();
+
+    renderDrawer();
+    await openDrawer();
+
+    fireEvent.click(screen.getByRole("link", { name: CART.proceed }));
+
+    await expectDrawerClosed();
+    await expectFocusOnTheOpener();
+  });
+
+  it("returns focus to the cart button when the link is opened in a new tab", async () => {
+    fillCart();
+
+    renderDrawer();
+    await openDrawer();
+
+    fireEvent.click(screen.getByRole("link", { name: CART.proceed }), {
+      metaKey: true,
+    });
+
+    await expectDrawerClosed();
+    await expectFocusOnTheOpener();
   });
 });
 
@@ -204,6 +233,17 @@ describe("the drawer closing by hand on the same route", () => {
 
     await openDrawer();
     closeByHand();
+
+    await expectDrawerClosed();
+    await expectFocusOnTheOpener();
+  });
+
+  it("still returns focus when a route change lands while the manual close is still animating out", async () => {
+    const { rerender } = renderDrawer();
+    await openDrawer();
+
+    closeByHand();
+    navigateTo(CHECKOUT_PATH, rerender);
 
     await expectDrawerClosed();
     await expectFocusOnTheOpener();

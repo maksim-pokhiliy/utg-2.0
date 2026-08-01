@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type ReactElement } from "react";
+import { useState, type MouseEvent, type ReactElement } from "react";
+
+import { usePathname } from "next/navigation";
 
 import {
   Dialog,
@@ -10,7 +12,10 @@ import {
   Typography,
 } from "@root/design-system";
 import { useDictionary } from "@root/i18n";
-import { useNavigationClose } from "@root/hooks/useNavigationClose";
+import {
+  useNavigationClose,
+  willNavigateAway,
+} from "@root/hooks/useNavigationClose";
 
 import { NavLink } from "./NavLink";
 import { INSTAGRAM_URL, NAV_ITEMS } from "./nav";
@@ -19,14 +24,18 @@ export function NavOverlay(): ReactElement {
   const dictionary = useDictionary();
   const [open, setOpen] = useState(false);
   const menu = useNavigationClose();
+  const pathname = usePathname();
 
   const handleOpen = () => {
     menu.markOpened();
     setOpen(true);
   };
 
-  const handleNavigateAway = () => {
-    menu.markNavigating();
+  const handleNavigateAway = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (willNavigateAway(event, pathname)) {
+      menu.markNavigating();
+    }
+
     setOpen(false);
   };
 
