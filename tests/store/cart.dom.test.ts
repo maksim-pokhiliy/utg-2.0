@@ -26,6 +26,8 @@ const NON_FINITE_QUANTITY_STORAGE =
 
 const MALFORMED_STORAGE = '[{"id":"waiting",';
 
+const NULL_LINE_STORAGE = "[null]";
+
 interface IStoredLine {
   id: string;
   title: string;
@@ -172,6 +174,26 @@ describe("the cart storage decoder", () => {
     seedRawStorage(MALFORMED_STORAGE);
 
     expect(await decodeStorage()).toBeNull();
+  });
+
+  it("returns null for an array holding a null line instead of throwing", async () => {
+    seedRawStorage(NULL_LINE_STORAGE);
+
+    expect(await decodeStorage()).toBeNull();
+  });
+
+  it("finishes hydration for an array holding a null line so the checkout screen never stalls", async () => {
+    seedRawStorage(NULL_LINE_STORAGE);
+
+    let hasFinished = false;
+    const unsubscribe = useCartStore.persist.onFinishHydration(() => {
+      hasFinished = true;
+    });
+
+    await rehydrate();
+    unsubscribe();
+
+    expect(hasFinished).toBe(true);
   });
 
   it("keeps a legacy bare-slug line intact", async () => {
