@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 
 import { usePathname } from "next/navigation";
 
@@ -48,7 +48,10 @@ export default function CartDrawer(): ReactElement {
   const [removeTarget, setRemoveTarget] = useState<ICartItem | null>(null);
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
+  const closedByNavigationRef = useRef(false);
+
   useEffect(() => {
+    closedByNavigationRef.current = useSidebarStore.getState().isOpen;
     close();
   }, [pathname, close]);
 
@@ -62,6 +65,15 @@ export default function CartDrawer(): ReactElement {
     if (!open) {
       close();
     }
+  };
+
+  const handleCloseAutoFocus = (event: Event) => {
+    if (!closedByNavigationRef.current) {
+      return;
+    }
+
+    closedByNavigationRef.current = false;
+    event.preventDefault();
   };
 
   const handleRemoveRequest = (item: ICartItem) => {
@@ -79,7 +91,10 @@ export default function CartDrawer(): ReactElement {
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent aria-describedby={undefined}>
+      <SheetContent
+        aria-describedby={undefined}
+        onCloseAutoFocus={handleCloseAutoFocus}
+      >
         <div className="bg-band text-band-foreground flex items-center justify-between gap-3 py-2.5 pl-4 pr-3">
           <div className="flex items-center gap-3">
             <SheetTitle asChild>
