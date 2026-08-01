@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-07-28 (step 6 MERGED — PR #15 `208e192`; prod live-verified on Node 24; step-6b prompt ISSUED)
+**Updated:** 2026-07-28 (step-6b plan gate APPROVED — both deviations ratified, two riders; executor implementing)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -26,15 +26,14 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. USER: carry step 6b to a fresh executor tab — "Run
-   initiatives/production-polish/step-6b-ds-hygiene-prompt.md — read that file
-   and execute it as your full prompt, verbatim." The DS-hygiene quartet
-   (DEF-27/28/32 + DEF-38) under the now-green suite; zero visual delta is the
-   bar. Also, non-urgent belt-and-braces per D-13: flip the Vercel dashboard
-   (utg → Settings → Build and Deployment → Node.js Version → 24.x) — the
-   engines pin already binds prod builds (proven in the PR #15 deploy log); the
-   click retires the stale setting and the deprecation banner. Rich Results on
-   the live product URL stays an optional user check (non-blocking).
+1. Step-6b plan gate ANSWERED (approve; both deviations ratified — Dialog gets
+   no slot, DEF-38 = drop-the-guard keep-the-broad-catch; riders: the
+   flag-reset test sequence, `vi.mock` bounded to `next/navigation`). Executor
+   implements; planner then reviews the PR against the zero-visual-delta bar
+   (expect the browser-gate list in the PR: drawer open/close + return focus,
+   close-on-navigation, ConfirmDialog, Lightbox ends, reports band). Non-urgent
+   belt-and-braces per D-13 if not yet clicked: Vercel dashboard → Node.js
+   Version → 24.x. Rich Results on the live product URL stays optional.
 2. PARKED by user sequencing (2026-07-27): the `utg-tg-order-bot` `currency`
    read (D-12/DEF-13) waits until the app work (steps 5-7) completes — a
    dedicated bot-polish phase follows the initiative.
