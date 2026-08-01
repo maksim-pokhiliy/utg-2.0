@@ -21,8 +21,11 @@ export type IconButtonVariant = NonNullable<
   VariantProps<typeof iconButton>["variant"]
 >;
 
+const INERT_TREATMENT = "opacity-35 pointer-events-none";
+
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: IconButtonVariant;
+  inert?: boolean;
   "aria-label": string;
 }
 
@@ -31,12 +34,18 @@ export function IconButton({
   className,
   children,
   type,
+  inert,
   ...rest
 }: IconButtonProps): ReactElement {
   return (
     <button
       type={type ?? "button"}
-      className={cn(iconButton({ variant }), className)}
+      aria-disabled={inert}
+      className={cn(
+        iconButton({ variant }),
+        inert === true && INERT_TREATMENT,
+        className
+      )}
       {...rest}
     >
       {children}
