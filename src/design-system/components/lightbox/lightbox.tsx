@@ -11,9 +11,9 @@ import {
 } from "react";
 
 import { useReturnFocus } from "../../lib/use-return-focus";
-import { DialogOverlay } from "../dialog/dialog";
 import { Icon } from "../icon/icon";
 import { IconButton } from "../icon-button/icon-button";
+import { Scrim } from "../scrim/scrim";
 import { Typography } from "../typography/typography";
 
 const SWIPE_THRESHOLD = 40;
@@ -148,7 +148,7 @@ export function Lightbox({
       }}
     >
       <DialogPrimitive.Portal>
-        <DialogOverlay />
+        <Scrim />
 
         <DialogPrimitive.Content
           ref={panelRef}

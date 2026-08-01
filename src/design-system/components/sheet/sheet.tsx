@@ -5,27 +5,13 @@ import type { ComponentPropsWithoutRef, ReactElement } from "react";
 
 import { cn } from "../../lib/cn";
 import { useReturnFocus } from "../../lib/use-return-focus";
+import { Scrim } from "../scrim/scrim";
 
 export const Sheet = SheetPrimitive.Root;
 export const SheetTrigger = SheetPrimitive.Trigger;
 export const SheetClose = SheetPrimitive.Close;
 export const SheetTitle = SheetPrimitive.Title;
 export const SheetDescription = SheetPrimitive.Description;
-
-function SheetOverlay({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>): ReactElement {
-  return (
-    <SheetPrimitive.Overlay
-      className={cn(
-        "fixed inset-0 z-[60] bg-scrim data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
-        className
-      )}
-      {...props}
-    />
-  );
-}
 
 export function SheetContent({
   className,
@@ -38,7 +24,7 @@ export function SheetContent({
 
   return (
     <SheetPrimitive.Portal>
-      <SheetOverlay />
+      <Scrim />
       <SheetPrimitive.Content
         className={cn(
           "fixed top-0 right-0 bottom-0 z-[70] flex flex-col w-[min(420px,100vw)] bg-paper border-l-2 border-ink focus:outline-none",

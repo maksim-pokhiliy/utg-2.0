@@ -2,28 +2,13 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva } from "class-variance-authority";
-import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
-import { cn } from "../../lib/cn";
 import { useReturnFocus } from "../../lib/use-return-focus";
 import { Icon } from "../icon/icon";
 import { IconButton } from "../icon-button/icon-button";
+import { Scrim } from "../scrim/scrim";
 import { Typography } from "../typography/typography";
-
-export function DialogOverlay({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>): ReactElement {
-  return (
-    <DialogPrimitive.Overlay
-      className={cn(
-        "fixed inset-0 z-[60] bg-scrim data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
-        className
-      )}
-      {...props}
-    />
-  );
-}
 
 const dialogContent = cva(
   "fixed z-[70] focus:outline-none data-[state=open]:animate-[utg-fade-in_120ms_var(--ease)] data-[state=closed]:animate-[utg-fade-out_120ms_var(--ease)]",
@@ -78,7 +63,7 @@ export function Dialog({
       }}
     >
       <DialogPrimitive.Portal>
-        <DialogOverlay />
+        <Scrim />
 
         <DialogPrimitive.Content
           className={dialogContent({ size })}
