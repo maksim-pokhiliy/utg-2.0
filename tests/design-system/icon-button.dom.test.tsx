@@ -58,6 +58,24 @@ describe("IconButton with inert true", () => {
   });
 });
 
+describe("IconButton as the sole owner of aria-disabled", () => {
+  it("ignores a raw aria-disabled attribute, which jsx cannot type-check away because of the hyphen", () => {
+    render(
+      <IconButton aria-label={LABEL} aria-disabled={true}>
+        <Icon name="chevron-right" />
+      </IconButton>
+    );
+
+    const button = screen.getByRole("button", { name: LABEL });
+
+    expect(button.hasAttribute("aria-disabled")).toBe(false);
+
+    for (const utility of INERT_CLASSES) {
+      expect(button.classList.contains(utility)).toBe(false);
+    }
+  });
+});
+
 describe("the ratified law that a focused control is never really disabled", () => {
   it("never forwards the prop to the dom inert attribute, which would strand focus inside the radix trap", () => {
     expect(renderButton(true).hasAttribute("inert")).toBe(false);

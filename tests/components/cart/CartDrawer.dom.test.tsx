@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import CartDrawer from "@root/components/cart/CartDrawer";
 import { Icon, IconButton } from "@root/design-system";
 import { I18nProvider } from "@root/i18n";
 import { useSidebarStore } from "@root/store/sidebar";
@@ -13,8 +14,6 @@ const route = vi.hoisted(() => ({ pathname: "/uk" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => route.pathname,
 }));
-
-const CartDrawer = (await import("@root/components/cart/CartDrawer")).default;
 
 const CATALOG_PATH = "/uk";
 const CHECKOUT_PATH = "/uk/checkout";

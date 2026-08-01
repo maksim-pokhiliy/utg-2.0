@@ -28,6 +28,8 @@ const MALFORMED_STORAGE = '[{"id":"waiting",';
 
 const NULL_LINE_STORAGE = "[null]";
 
+const SCALAR_STORAGE = ['"waiting"', "5", "null", "true", "{}"];
+
 interface IStoredLine {
   id: string;
   title: string;
@@ -181,6 +183,32 @@ describe("the cart storage decoder", () => {
 
     expect(await decodeStorage()).toBeNull();
   });
+
+  it.each(SCALAR_STORAGE)(
+    "returns null for the top-level non-array payload %s",
+    async (raw) => {
+      seedRawStorage(raw);
+
+      expect(await decodeStorage()).toBeNull();
+    }
+  );
+
+  it.each(SCALAR_STORAGE)(
+    "finishes hydration for the top-level non-array payload %s",
+    async (raw) => {
+      seedRawStorage(raw);
+
+      let hasFinished = false;
+      const unsubscribe = useCartStore.persist.onFinishHydration(() => {
+        hasFinished = true;
+      });
+
+      await rehydrate();
+      unsubscribe();
+
+      expect(hasFinished).toBe(true);
+    }
+  );
 
   it("finishes hydration for an array holding a null line so the checkout screen never stalls", async () => {
     seedRawStorage(NULL_LINE_STORAGE);
