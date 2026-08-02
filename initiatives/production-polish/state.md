@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-08-02 (CHARTER SATISFIED — Lighthouse perf/a11y accepted; initiative COMPLETE; retro in progress; bot phase unparked)
+**Updated:** 2026-08-02 (initiative COMPLETE, retro CLOSED in three rounds — /review-flow shipped, skills migrated to ai-shared; NEXT: the bot phase)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -27,16 +27,16 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. INITIATIVE CLOSE-OUT: (a) DONE — the user accepted the Lighthouse mobile
-   performance/accessibility run (2026-08-02); with SEO 100 from step 5, every
-   charter acceptance criterion is met — the CHARTER IS SATISFIED; (b) the
-   /step pilot RETRO — in progress in-session; outcomes promoted on decision;
-   (c) leftover housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
-   belt-and-braces, still showing 20.x), Rich Results on a live product URL
+1. THE BOT PHASE (user-confirmed next): plan it fresh with the user — the
+   `utg-tg-order-bot` repo, anchor task = the DEF-13 `currency` read (the app
+   already sends the key per D-12; contract in
+   `extracted/bot-contract-index.js`), plus whatever polish the bot needs;
+   likely its own initiative in the bot repo. First combat run of the /step +
+   /review-flow tooling. The initiative here is COMPLETE (charter satisfied
+   2026-08-02) and its retro is CLOSED (three rounds, journal 2026-08-02).
+2. Leftover housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
+   belt-and-braces, still showing 20.x); Rich Results on a live product URL
    (optional).
-2. UNPARKED (its condition — app steps 5–7 complete — is met): the bot-polish
-   phase in `utg-tg-order-bot` (D-12/DEF-13 `currency` read); a dedicated
-   phase, planned fresh when the user opens it.
 3. Post-initiative windows for the remaining ledger: hardening (DEF-36 +
    DEF-37 + DEF-39), the next DS window (DEF-41), external (DEF-9), any React
    Compiler decision (DEF-18).
