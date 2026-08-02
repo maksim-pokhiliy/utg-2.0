@@ -33,7 +33,7 @@ const VIEWER_IMAGE_LOADING = `${VIEWER_FADE_BASE} opacity-0`;
 const VIEWER_IMAGE_LOADED = `${VIEWER_FADE_BASE} opacity-100`;
 const VIEWER_SKELETON_BASE = `absolute inset-0 pointer-events-none ${VIEWER_FADE_BASE}`;
 const VIEWER_SKELETON_VISIBLE = `${VIEWER_SKELETON_BASE} opacity-100`;
-const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0`;
+const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0 animate-none`;
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
