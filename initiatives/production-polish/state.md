@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-08-02 (initiative COMPLETE, retro CLOSED in three rounds — /review-flow shipped, skills migrated to ai-shared; NEXT: the bot phase)
+**Updated:** 2026-08-02 (initiative COMPLETE; the BOT PHASE is RUNNING — `bot-polish` in `../utg-tg-order-bot/initiatives/bot-polish/`, step B1 in flight)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -27,12 +27,12 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. THE BOT PHASE (user-confirmed next): plan it fresh with the user — the
-   `utg-tg-order-bot` repo, anchor task = the DEF-13 `currency` read (the app
-   already sends the key per D-12; contract in
-   `extracted/bot-contract-index.js`), plus whatever polish the bot needs;
-   likely its own initiative in the bot repo. First combat run of the /step +
-   /review-flow tooling. The initiative here is COMPLETE (charter satisfied
+1. THE BOT PHASE — RUNNING: the `bot-polish` initiative lives in
+   `../utg-tg-order-bot/initiatives/bot-polish/` (workspace
+   `~/projects/contrib/utg/`); step B1 (relay rewrite incl. the DEF-13
+   `currency` read) drives through /step. This shop repo's turn comes at B2
+   (the `x-relay-secret` sender, `/feature small`). DEF-13 closes here when
+   B1+B2 are live. The initiative here is COMPLETE (charter satisfied
    2026-08-02) and its retro is CLOSED (three rounds, journal 2026-08-02).
 2. Leftover housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
    belt-and-braces, still showing 20.x); Rich Results on a live product URL
