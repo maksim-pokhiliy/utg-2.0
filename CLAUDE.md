@@ -26,6 +26,7 @@ Yarn is the package manager.
 - `yarn typecheck` — both TS programs: the app (`tsconfig.json`, which excludes tests) and `tsconfig.test.json` (`tests/`, `e2e/`, the two test configs)
 - `yarn test` / `yarn test:watch` — Vitest, two projects split by filename infix (`*.dom.test.tsx` → jsdom, everything else → node); no globals
 - `yarn e2e` — blank-env `yarn build` + Playwright against `next start`: the script and `webServer.env` both blank `PLACE_ORDER_URL`/`EXCHANGE_RATE_API_*`, so checkout's real 503 is the deterministic error fixture and the suite can never hit the live relay (nor flake on live rates)
+- `yarn screenshots` — blank-env build + Playwright capture (`playwright.screenshots.config.ts`, port 3101, outside the CI battery) regenerating the six README JPEGs under `screenshots/` byte-reproducibly
 
 The app boots and builds with zero env vars (the exchange-rates fetch is guarded → prices fall back to UAH for both locales). `.env.example` documents the three optional keys: `EXCHANGE_RATE_API_URL`, `EXCHANGE_RATE_API_KEY` (USD conversion for `en`), `PLACE_ORDER_URL` (order relay — checkout returns 503 without it).
 
