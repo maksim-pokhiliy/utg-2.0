@@ -11,15 +11,15 @@ import {
 } from "react";
 
 import { useReturnFocus } from "../../lib/use-return-focus";
-import { DialogOverlay } from "../dialog/dialog";
 import { Icon } from "../icon/icon";
 import { IconButton } from "../icon-button/icon-button";
+import { Scrim } from "../scrim/scrim";
 import { Typography } from "../typography/typography";
 
 const SWIPE_THRESHOLD = 40;
 const CONTROL_ICON_SIZE = 22;
 const CONTROL_CLASS =
-  "flex-none hover:bg-paper hover:text-ink focus-visible:outline-paper aria-disabled:opacity-35 aria-disabled:pointer-events-none";
+  "flex-none hover:bg-paper hover:text-ink focus-visible:outline-paper";
 
 interface SwipeOrigin {
   id: number;
@@ -148,7 +148,7 @@ export function Lightbox({
       }}
     >
       <DialogPrimitive.Portal>
-        <DialogOverlay />
+        <Scrim />
 
         <DialogPrimitive.Content
           ref={panelRef}
@@ -178,7 +178,7 @@ export function Lightbox({
             <IconButton
               variant="band"
               aria-label={prevLabel}
-              aria-disabled={!hasPrev}
+              inert={!hasPrev}
               onClick={() => step(-1)}
               className={CONTROL_CLASS}
             >
@@ -188,7 +188,7 @@ export function Lightbox({
             <IconButton
               variant="band"
               aria-label={nextLabel}
-              aria-disabled={!hasNext}
+              inert={!hasNext}
               onClick={() => step(1)}
               className={CONTROL_CLASS}
             >

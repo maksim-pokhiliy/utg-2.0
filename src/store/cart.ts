@@ -69,13 +69,7 @@ const cartStorage: PersistStorage<Pick<CartStore, "items">> = {
     }
 
     try {
-      const parsed = JSON.parse(raw);
-
-      if (!Array.isArray(parsed)) {
-        return null;
-      }
-
-      const items = parsed.map((item) => ({
+      const items = JSON.parse(raw).map((item: ICartItem) => ({
         ...item,
         quantity: normalizeQuantity(item.quantity),
       })) as ICartItem[];

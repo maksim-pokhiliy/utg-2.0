@@ -15,6 +15,7 @@ interface ConfirmDialogProps {
   cancelLabel: string;
   confirmLabel: string;
   destructive?: boolean;
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 export function ConfirmDialog({
@@ -26,12 +27,14 @@ export function ConfirmDialog({
   cancelLabel,
   confirmLabel,
   destructive = false,
+  onCloseAutoFocus,
 }: ConfirmDialogProps): ReactElement {
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={title}
+      onCloseAutoFocus={onCloseAutoFocus}
       actions={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>

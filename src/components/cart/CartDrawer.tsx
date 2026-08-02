@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useState, type MouseEvent, type ReactElement } from "react";
 
 import { usePathname } from "next/navigation";
 
@@ -27,6 +27,10 @@ import {
 } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
+import {
+  useNavigationClose,
+  willNavigateAway,
+} from "@root/hooks/useNavigationClose";
 import { NavLink } from "@root/components/layout/NavLink";
 
 export default function CartDrawer(): ReactElement {
@@ -48,15 +52,26 @@ export default function CartDrawer(): ReactElement {
   const [removeTarget, setRemoveTarget] = useState<ICartItem | null>(null);
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
+  const drawer = useNavigationClose();
+  const removeConfirm = useNavigationClose();
+
   useEffect(() => {
+    if (useSidebarStore.getState().isOpen) {
+      drawer.markNavigating();
+      removeConfirm.markNavigating();
+    }
+
     close();
-  }, [pathname, close]);
+  }, [pathname, close, drawer, removeConfirm]);
 
   useEffect(() => {
     if (!isOpen) {
       setIsRemoveOpen(false);
+      return;
     }
-  }, [isOpen]);
+
+    drawer.markOpened();
+  }, [isOpen, drawer]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -64,7 +79,17 @@ export default function CartDrawer(): ReactElement {
     }
   };
 
+  const handleNavigateAway = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (willNavigateAway(event, pathname)) {
+      drawer.markNavigating();
+      removeConfirm.markNavigating();
+    }
+
+    close();
+  };
+
   const handleRemoveRequest = (item: ICartItem) => {
+    removeConfirm.markOpened();
     setRemoveTarget(item);
     setIsRemoveOpen(true);
   };
@@ -79,7 +104,10 @@ export default function CartDrawer(): ReactElement {
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent aria-describedby={undefined}>
+      <SheetContent
+        aria-describedby={undefined}
+        onCloseAutoFocus={drawer.suppressReturnFocus}
+      >
         <div className="bg-band text-band-foreground flex items-center justify-between gap-3 py-2.5 pl-4 pr-3">
           <div className="flex items-center gap-3">
             <SheetTitle asChild>
@@ -144,7 +172,7 @@ export default function CartDrawer(): ReactElement {
               </div>
 
               <Button asChild variant="accent" block>
-                <NavLink href="/checkout" onClick={close}>
+                <NavLink href="/checkout" onClick={handleNavigateAway}>
                   {dictionary.cart.proceed}
                 </NavLink>
               </Button>
@@ -162,7 +190,7 @@ export default function CartDrawer(): ReactElement {
               {dictionary.cart.add_to_cart}{" "}
               <NavLink
                 href="/category"
-                onClick={close}
+                onClick={handleNavigateAway}
                 className="text-flag-blue"
               >
                 {dictionary.cart.here}
@@ -182,6 +210,7 @@ export default function CartDrawer(): ReactElement {
           )}
           cancelLabel={dictionary.cart.remove_cancel}
           confirmLabel={dictionary.cart.remove_confirm}
+          onCloseAutoFocus={removeConfirm.suppressReturnFocus}
           destructive
         />
       </SheetContent>

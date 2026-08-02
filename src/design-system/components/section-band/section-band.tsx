@@ -11,7 +11,6 @@ interface SectionBandBaseProps {
   title: string;
   as?: "h1" | "h2";
   meta?: string;
-  center?: boolean;
   className?: string;
 }
 
@@ -33,7 +32,6 @@ export function SectionBand({
   meta,
   kicker,
   kickerAsChild = false,
-  center = false,
   className,
 }: SectionBandProps): ReactElement {
   const kickerNode =
@@ -49,7 +47,6 @@ export function SectionBand({
     <div
       className={cn(
         "bg-band text-band-foreground py-8 [&_:focus-visible]:outline-band-foreground",
-        center && "text-center",
         className
       )}
     >
