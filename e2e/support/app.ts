@@ -13,7 +13,7 @@ export const CART_STORAGE_KEY = "utg-cart-v2";
 
 export const HOME_PATH = "/uk";
 
-export const EN_HOME_PATH = "/en";
+const EN_HOME_PATH = "/en";
 
 const PRODUCT_CATEGORY_SLUG = "patches";
 
@@ -23,7 +23,9 @@ export const CATEGORY_PATH = `${HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}`;
 
 export const PRODUCT_PATH = `${CATEGORY_PATH}/${PRODUCT_SLUG}`;
 
-export const EN_PRODUCT_PATH = `${EN_HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}/${PRODUCT_SLUG}`;
+export const EN_CATEGORY_PATH = `${EN_HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}`;
+
+export const EN_PRODUCT_PATH = `${EN_CATEGORY_PATH}/${PRODUCT_SLUG}`;
 
 export const CHECKOUT_PATH = `${HOME_PATH}/checkout`;
 

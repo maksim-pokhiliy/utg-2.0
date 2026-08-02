@@ -1,0 +1,18 @@
+Ukrainian Tactical Gear — notice on what the license does and does not cover.
+
+The source code in this repository is licensed under the MIT License, in LICENSE.
+
+The following are NOT covered by that license and are not granted for reuse:
+
+- Product artwork and product photographs under public/images/products/.
+- Photo reports under public/images/reports/.
+- The logo (public/logo.png), the favicon, and the "Ukrainian Tactical Gear"
+  and "UTG" names and marks.
+
+Those belong to the unit the project supports and are included here only so the
+application can be built and run as it is deployed.
+
+Recovered third-party sources under initiatives/production-polish/extracted/ are
+kept verbatim as documentary evidence of the previous version of the site. They
+are not authored by this project, are not licensed under the MIT License, and
+are not intended for reuse.

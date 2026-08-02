@@ -17,14 +17,14 @@ working shop behind it.
 | ![Category](./screenshots/category.jpg)                 | ![Product](./screenshots/product.jpg)   |
 | ![Reports lightbox](./screenshots/reports-lightbox.jpg) | ![Checkout](./screenshots/checkout.jpg) |
 
-The same home page on the `en` locale:
+The same category on the `en` locale, priced in hryvnia:
 
-![Home, English](./screenshots/home-en.jpg)
+![Category, English](./screenshots/category-en.jpg)
 
 These are captured by a script, not by hand — `yarn screenshots` builds the app with no environment variables and drives a
 headless browser through the six screens above ([`screenshots/capture.spec.ts`](./screenshots/capture.spec.ts)). That is also
-why the English shot prices in hryvnia: with no exchange-rate key in the environment, both locales fall back to the real UAH
-amount rather than printing a dollar sign over a hryvnia number.
+why the English shot shows ₴ rather than $: with no exchange-rate key in the environment both locales fall back to the real
+UAH amount, because a dollar sign over a hryvnia magnitude would be worse than leaving it unconverted.
 
 ## What it is
 
@@ -39,7 +39,7 @@ operator already ran before this site existed. Two locales — `uk` (default) an
 
 |            |                                         | Pinned in                                  |
 | ---------- | --------------------------------------- | ------------------------------------------ |
-| Next.js    | 16, App Router, Turbopack               | `package.json`                             |
+| Next.js    | 16.2.10, App Router                     | `package.json`                             |
 | React      | 19                                      | `package.json`                             |
 | TypeScript | 5, `strict`                             | `tsconfig.json`                            |
 | Tailwind   | 4, CSS-first theme                      | `src/design-system/styles/theme.css`       |
@@ -52,6 +52,9 @@ operator already ran before this site existed. Two locales — `uk` (default) an
 That last row is the only Node pin in the repo, on purpose: Vercel reads `engines.node` and it overrides the dashboard
 setting, yarn enforces it on every install, and CI consumes the same value through `node-version-file: package.json`. One
 number, three consumers, nothing to drift.
+
+Turbopack is not pinned or configured anywhere here — it is simply the default bundler in Next 16, so it is what `next dev`
+and `next build` run.
 
 ## Architecture
 
@@ -71,6 +74,7 @@ src/
   components/     app-land composition (pages/, cart/, checkout/, layout/)
   data/           the typed catalog and its accessors
   design-system/  the only styling authority, one public barrel
+  hooks/          the one shared hook, for closing overlays on navigation
   i18n/           dictionary / money / locale context
   store/          two Zustand stores: cart and sidebar
   utils/          locale, money formatting, SEO helpers
@@ -105,14 +109,21 @@ UAH magnitude — a wrong currency symbol on a donation-adjacent price is worse 
 respect:
 
 - Tailwind's default palette and text scale are **wiped** from the theme, so `bg-zinc-900` or `text-sm` produce no CSS at all.
-- ESLint errors outside the design system on raw colour values, raw text-size utilities, deep imports past the barrel, and raw
-  `<button>` / `<a>` JSX.
+- ESLint errors on raw colour values, raw text-size utilities, deep imports past the barrel, and raw `<button>` / `<a>` JSX.
+  The rule block is scoped to `src/**` and skips the design system itself; `tests/`, `e2e/` and `screenshots/` sit outside
+  `src/` deliberately, so the seal never has to argue with a test fixture.
 - TypeScript unions on `Typography` variants and `Container` widths make an invalid size a compile error.
-- The repo bans code comments outright, which closes the escape hatch — an `eslint-disable` is a comment, and therefore itself
-  a violation visible in the diff.
 
-App code composes design-system components and semantic token utilities. Composite patterns (`Dialog`, `ProductCard`,
-`Lightbox`, `CartLine` and friends) are exported as closed intent APIs; their building blocks stay internal.
+There is one more layer, and it is a convention rather than a tool: the repo does not use code comments. Since an
+`eslint-disable` is a comment, reaching for the escape hatch reads as an obvious anomaly in review instead of passing
+unnoticed. Nothing enforces that automatically — it holds because every diff is read. Today `src/` contains no comments and no
+`eslint-disable` directives at all.
+
+App code composes design-system components and semantic token utilities. The composite patterns — `Dialog`, `ConfirmDialog`,
+`CategoryTile`, `ProductCard`, `SectionBand`, `CartLine`, `MediaFigure`, `Lightbox` — are exported as closed intent APIs that
+take content and state rather than slots, so a call site cannot quietly recompose their internals. The barrel also exports
+ordinary primitives to build with: `Typography`, `Container`, `Button`, `IconButton`, `Input`, `Select`, `Skeleton`, the
+`Sheet` compound and the rest.
 
 ### Orders
 
@@ -124,18 +135,20 @@ recovered bot source.
 
 ### SEO
 
-Every page builds its metadata through one helper: canonical URL, `hreflang` for both locales plus `x-default`, and per-page
-Open Graph. The layout owns the invariants, because a child's `openGraph` replaces the parent's rather than merging with it.
-Product pages carry Product JSON-LD whose offers are always in UAH — the operator charges hryvnia, and the display currency is
-informational. `sitemap.ts` and `robots.ts` are generated from the same catalog accessors the pages use; the sitemap is pinned
-at 38 URLs by both a unit test and an e2e test, so dropping a locale or a product from the routing surface fails CI.
+The indexable pages — home, catalog, category, product, reports, about — build their metadata through one helper: canonical
+URL, `hreflang` for both locales plus `x-default`, and per-page Open Graph. Checkout and the 404 skip that helper and declare
+`robots: { index: false }` inline instead. The layout owns the invariants, because a child's `openGraph` replaces the
+parent's rather than merging with it. Product pages carry Product JSON-LD whose offers are always in UAH — the operator
+charges hryvnia, and the display currency is informational. `sitemap.ts` is generated from the same catalog accessors the
+pages use, so a route that exists is a route that gets listed; `robots.ts` is a static rule set. The sitemap is pinned at 38
+URLs by both a unit test and an e2e test, so dropping a locale or a product from the routing surface fails CI.
 
 ### Data
 
 The catalog is business data recovered from the previous version of the site, not sample content: titles, UAH prices,
 availability, sizes and both descriptions per product. Declared image dimensions are drift-guarded byte-for-byte against the
-real PNG and JPEG headers under `public/images/`, so a swapped asset cannot silently start shipping the wrong
-`width`/`height`.
+real headers of the JPEGs under `public/images/` and of the PNG logo at `public/logo.png`, so a swapped asset cannot silently
+start shipping the wrong `width`/`height`.
 
 ## How this repo was built
 
@@ -219,4 +232,6 @@ reach the live relay or flake on live exchange rates.
 The code in this repository is MIT-licensed — see [LICENSE](./LICENSE).
 
 This does **not** cover the content. Product artwork, photographs, the photo reports, the logo and the Ukrainian Tactical Gear
-name belong to the unit and are included here only so the site can run. Reuse the code, not the brand.
+name belong to the unit and are included here only so the site can run. The recovered sources kept under
+`initiatives/production-polish/extracted/` are documentary and are not licensed either. [NOTICE](./NOTICE) spells all of that
+out. Reuse the code, not the brand.

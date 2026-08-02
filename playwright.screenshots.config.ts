@@ -16,8 +16,6 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: BASE_URL,
-    viewport: VIEWPORT,
-    deviceScaleFactor: 1,
   },
   projects: [
     {
