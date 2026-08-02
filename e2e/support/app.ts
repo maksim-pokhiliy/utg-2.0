@@ -13,7 +13,7 @@ export const CART_STORAGE_KEY = "utg-cart-v2";
 
 export const HOME_PATH = "/uk";
 
-const EN_HOME_PATH = "/en";
+export const EN_HOME_PATH = "/en";
 
 const PRODUCT_CATEGORY_SLUG = "patches";
 
@@ -85,6 +85,12 @@ export const productPrice = (page: Page): Locator =>
 
 export const reportThumbnail = (page: Page): Locator =>
   page.locator("figure img");
+
+export const reportFigureButton = (page: Page): Locator =>
+  page.locator("figure button");
+
+export const viewerImage = (page: Page): Locator =>
+  page.getByRole("dialog").locator("img");
 
 export const addToCartButton = (page: Page): Locator =>
   page.getByRole("button", { name: UK_DICTIONARY.product.add, exact: true });
