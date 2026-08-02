@@ -16,7 +16,7 @@
 - Unit + e2e suites exist and run green in GitHub Actions on every PR.
 - README presents the project: description, stack, architecture sketch, screenshots, run instructions, badges.
 
-**Scope.** The 10 steps in `plan.md`: quick wins → RSC migration → state migration → framework upgrade → visual redesign (system, screens, checkout) → SEO → tests+CI → README.
+**Scope.** The steps in `plan.md` (the board in `state.md` is the live count): quick wins → RSC migration → state migration → framework upgrade → visual redesign (system, screens, checkout) → SEO → tests+CI → README.
 
 **Non-goals.**
 

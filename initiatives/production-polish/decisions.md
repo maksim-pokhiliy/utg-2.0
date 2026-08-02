@@ -8,20 +8,21 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 
 ## Index
 
-| ID   | Topic                                                                                                                                      | Status   |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| D-1  | Foundation-before-visual step sequence                                                                                                     | RATIFIED |
-| D-2  | Planner/executor execution model                                                                                                           | RATIFIED |
-| D-3  | Track `initiatives/` + `CLAUDE.md` in git, or keep untracked                                                                               | RATIFIED |
-| D-4  | Visual direction for steps 4a–4c                                                                                                           | RATIFIED |
-| D-5  | Deploy target, live-shop status, env values                                                                                                | RATIFIED |
-| D-6  | Stack moves: Recoil→Zustand, Next 14→16 + React 19                                                                                         | RATIFIED |
-| D-7  | Drop Firebase entirely; catalog as static in-repo config, images in `public/`                                                              | RATIFIED |
-| D-8  | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1                                                     | RATIFIED |
-| D-9  | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper)                                                    | RATIFIED |
-| D-10 | The design system is a sealed module: single-barrel API, colors/font-sizes exist only inside, Typography + Container for the outside world | RATIFIED |
-| D-11 | Kit screens are DS demos, not page designs; pages get a per-page design→ratify→implement loop; DS frozen                                   | RATIFIED |
-| D-12 | Order payload gains an additive `currency` field (DEF-13 terminal fix); bot-side read is a separate follow-up in the bot repo              | RATIFIED |
+| ID   | Topic                                                                                                                                       | Status   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| D-1  | Foundation-before-visual step sequence                                                                                                      | RATIFIED |
+| D-2  | Planner/executor execution model                                                                                                            | RATIFIED |
+| D-3  | Track `initiatives/` + `CLAUDE.md` in git, or keep untracked                                                                                | RATIFIED |
+| D-4  | Visual direction for steps 4a–4c                                                                                                            | RATIFIED |
+| D-5  | Deploy target, live-shop status, env values                                                                                                 | RATIFIED |
+| D-6  | Stack moves: Recoil→Zustand, Next 14→16 + React 19                                                                                          | RATIFIED |
+| D-7  | Drop Firebase entirely; catalog as static in-repo config, images in `public/`                                                               | RATIFIED |
+| D-8  | Step-0 money fallback: coefficient→1 (option X); terminal currency fix lands in step 1                                                      | RATIFIED |
+| D-9  | Component layer: shadcn/ui on Tailwind (drop Flowbite, notyf, body-scroll-lock, swiper)                                                     | RATIFIED |
+| D-10 | The design system is a sealed module: single-barrel API, colors/font-sizes exist only inside, Typography + Container for the outside world  | RATIFIED |
+| D-11 | Kit screens are DS demos, not page designs; pages get a per-page design→ratify→implement loop; DS frozen                                    | RATIFIED |
+| D-12 | Order payload gains an additive `currency` field (DEF-13 terminal fix); bot-side read is a separate follow-up in the bot repo               | RATIFIED |
+| D-13 | One Node major (24.x) pinned via `engines.node` — the single pin read by Vercel, yarn and CI; no second pin file; `--ignore-engines` banned | RATIFIED |
 
 ---
 
