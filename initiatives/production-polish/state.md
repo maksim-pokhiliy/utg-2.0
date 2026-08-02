@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-08-02 (step 7 MERGED — the BOARD IS COMPLETE; close-out pending: Lighthouse perf/a11y check, the /step retro, the unparked bot phase)
+**Updated:** 2026-08-02 (CHARTER SATISFIED — Lighthouse perf/a11y accepted; initiative COMPLETE; retro in progress; bot phase unparked)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -27,13 +27,11 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. INITIATIVE CLOSE-OUT: (a) the one charter criterion never explicitly
-   measured — USER: Lighthouse mobile performance/accessibility (devtools) on
-   home, a category and a product page; ≥ 90 closes the charter (SEO 100 was
-   verified in step 5); (b) the /step pilot RETRO — user-parked discussion,
-   material in the journal entry of 2026-08-02 (headless review-layer
-   degradation, the tree-state protocol line, costs); (c) leftover
-   housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
+1. INITIATIVE CLOSE-OUT: (a) DONE — the user accepted the Lighthouse mobile
+   performance/accessibility run (2026-08-02); with SEO 100 from step 5, every
+   charter acceptance criterion is met — the CHARTER IS SATISFIED; (b) the
+   /step pilot RETRO — in progress in-session; outcomes promoted on decision;
+   (c) leftover housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
    belt-and-braces, still showing 20.x), Rich Results on a live product URL
    (optional).
 2. UNPARKED (its condition — app steps 5–7 complete — is met): the bot-polish
