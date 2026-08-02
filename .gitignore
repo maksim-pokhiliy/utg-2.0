@@ -45,5 +45,8 @@ next-env.d.ts
 # planner artifacts: binary assets already live in public/
 initiatives/production-polish/extracted/assets/
 
+# initiatives: this worktree's last-picked slug — never shared/committed
+initiatives/CURRENT
+
 # upgrade skill scratch
 /.upgrade/

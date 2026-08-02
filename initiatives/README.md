@@ -1,48 +1,115 @@
 # Initiatives — how big work is run here
 
-A big piece of work spans many sessions and many executor runs. Without a durable home,
-each new session re-derives context and drifts. An **initiative** is that home: a fixed
-set of files per epic + a resume protocol + a promotion discipline, so work — and the
-_reasoning behind it_ — survives context resets.
+A big piece of work spans many sessions. Without a durable home, each new session
+re-derives context and drifts. An **initiative** is that home: a fixed set of files per
+epic + a resume protocol + a **promotion discipline**, so work — and the _reasoning
+behind it_ — survives across sessions and context resets.
 
-## Roles
-
-This repo is driven by a **planner/executor split**:
-
-- The **planner session** owns this directory: writes charters and plans, ratifies
-  decisions, issues step prompts, reviews executor plans and PRs, updates the board.
-- **Executor sessions** (separate tabs) run one scoped step each via `/feature`,
-  `/feature small`, or `/upgrade`, from a `step-*-prompt.md` file in the initiative dir.
-  Executors read initiative files for context but **do not edit them** unless their
-  prompt says otherwise.
+> **Canon note.** Everything above the "Project addenda" section is the canonical
+> initiatives contract, distributed from the shared AI environment
+> (`ai-shared/skills/initiative-new/`) — improve it there, not here. Everything
+> project-specific (planning-stack links, how steps are executed, extra resume/close
+> steps) belongs in the addenda at the bottom.
 
 ## An initiative
 
-`initiatives/<slug>/` holds a fixed set of files (copy `_template/`):
+`initiatives/<slug>/` holds a fixed set of files (created by `/initiative-new`):
 
-- `charter.md` — goal · scope · non-goals · acceptance criteria · sacred constraints. Set once, refined rarely.
-- `plan.md` — the phased steps with status. The "what & sequence."
-- `state.md` — **the board**: scannable status table + the ONE concrete next action + pointers to open decisions/deferred. The resume entry point. Updated every planner session.
-- `decisions.md` — D-numbered decisions: one-liner + rationale + status (`RATIFIED`/`OPEN`/`SUPERSEDED`). The SSOT for "why."
-- `deferred.md` — carry-forwards: finding + disposition + status (`OPEN`/`SCHEDULED`/`CLOSED`/`DROPPED`). Where findings and follow-ups live so they don't get lost.
+- `charter.md` — goal · scope · non-goals · acceptance criteria · sacred constraints · driving decision(s). Set once, refined rarely.
+- `plan.md` — the phased steps with status. The "what & sequence." Each step names its **mechanism** — e.g. a `/feature` run (code), a deterministic pipeline run (data/engine), a design pass (UI).
+- `state.md` — **the board**: a scannable status table + the ONE concrete next-action + pointers to open decisions/deferred. The resume entry point. **Updated every session** (the SessionStart hook force-loads it).
+- `decisions.md` — D-numbered ratified decisions: one-liner + rationale + status (`RATIFIED`/`OPEN`/`SUPERSEDED`). Step-level calls that don't merit a full ADR. **The SSOT for "why."**
+- `deferred.md` — carry-forwards: finding + disposition + status (`OPEN`/`SCHEDULED`/`CLOSED`/`DROPPED`). Where WARNINGs and follow-ups live so they don't get lost.
 - `journal.md` — append-only narrative: per session, what happened.
-- plus step prompt files (`step-N-*-prompt.md`) and any design/spec docs the initiative needs.
+- plus step prompt files and any design/spec docs the initiative needs.
+
+How steps are **executed** (planner/executor split, `/step` pipeline, single-session) is
+a per-project choice — documented in the Project addenda, not in the canon. The durable
+distillate is promoted into the initiative regardless of where the work ran.
 
 ## Resume protocol (anti-context-loss)
 
-The active initiative is named in `initiatives/ACTIVE` (one slug per line). To resume,
-read in order: `charter.md` (what & why) → `state.md` (board + next action) →
-`decisions.md` **open** entries + `deferred.md` **open** entries → `plan.md`. Trust the
-promoted distillate over re-deriving from chat history.
+Active initiatives are pinned in `initiatives/ACTIVE` — **one slug per line**. Usually
+one; more only when genuinely-parallel tracks run concurrently (e.g. in separate
+worktrees/sessions). A **global SessionStart hook** (part of the shared AI environment,
+not a project file) resolves which one is active for _this_ session and loads only that
+board (worktree is deliberately NOT the mapping key — any initiative can be worked from
+any worktree):
+
+- **no `initiatives/`** → the hook is silent (it no-ops outside initiative projects).
+- **one active** → loads it directly.
+- **≥2 active, fresh start** (`startup`/`clear`) → loads no board; the hook asks the
+  model to confirm via `AskUserQuestion` which initiative is active, records the pick in
+  `initiatives/CURRENT` (gitignored, per-worktree), then loads that board. A hook is a
+  shell script, not the model, so it cannot open the prompt itself — it delegates to the
+  first turn.
+- **≥2 active, mid-session** (`compact`/`resume`) → silently restores the remembered
+  pick from `CURRENT` — never re-interrogates while work is in flight.
+
+`/initiative-resume` runs this read. In order: `charter.md` (what & why) → `state.md`
+(board + next action) → `decisions.md` **open** entries + `deferred.md` **open** entries
+→ `plan.md` → the relevant design docs → the Project addenda below. Trust the promoted
+distillate over re-deriving from data, code, or chat history.
+
+## Close-out protocol (run `/initiative-close`)
+
+At the end of any session that touched the initiative:
+
+1. **Promote** (the load-bearing fix): every decision ratified this session →
+   `decisions.md` (with rationale); every new carry-forward → `deferred.md` (with
+   disposition); anything that lived only in scratch or an external chat → promoted to
+   durable initiative docs. **Nothing load-bearing stays only in scratch or an external
+   tool.**
+2. **Update the board** — `state.md` status table + the next-action handoff.
+3. **Append** `journal.md`. 4. **Update** `plan.md`. 5. One docs commit, following the
+   project's delivery rules.
 
 ## The promotion rule (why this system exists)
 
-Chat context is ephemeral; this directory is the SSOT. At the end of any planner session
-that touched the initiative: every decision ratified → `decisions.md` (with rationale);
-every carry-forward → `deferred.md` (with disposition); board + next action →
-`state.md`; a `journal.md` entry. **Nothing load-bearing stays only in chat.**
+Scratch (e.g. gitignored `.feature-dev/`) and chat context are ephemeral; the initiative
+dir is the SSOT — checked in, loaded every session. The single discipline that makes the
+system reliable: **at every gate (a `/feature` gate, a workflow phase, a planning pass),
+promote the durable decisions + their rationale into
+`decisions.md`/`deferred.md`/`journal.md`.** This is enforced by the close-out protocol,
+the SessionStart hook, and the project rules — it does not depend on the model
+remembering.
 
-## Starting a new initiative
+## Decisions vs working state — doc-map
 
-Copy `_template/` to `initiatives/<slug>/`, fill `charter.md`, seed `plan.md`, add the
-slug to `initiatives/ACTIVE`.
+| Home                                                               | Holds                                                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| the project's ADR home (e.g. `docs/adr/`), if it keeps one         | durable cross-initiative architecture decisions (the big WHY)                             |
+| `initiatives/<slug>/decisions.md`                                  | step-level ratified decisions (the initiative's WHY)                                      |
+| `initiatives/<slug>/deferred.md`                                   | carry-forwards / WARNINGs with disposition                                                |
+| `initiatives/<slug>/{charter,plan,state,journal}.md` + design docs | WHERE WE ARE                                                                              |
+| `initiatives/ACTIVE`                                               | the active slug(s), one per line — the committed set the SessionStart hook chooses from   |
+| `initiatives/CURRENT`                                              | this worktree's last-picked slug (gitignored) — menu default + silent mid-session restore |
+| scratch (e.g. `.feature-dev/<ts>/`)                                | gitignored, ephemeral — promote out of here at every gate                                 |
+| memory                                                             | cross-session pointers (active initiative, durable feedback)                              |
+
+## Starting a new initiative (run `/initiative-new`)
+
+The skill creates `initiatives/<slug>/` from the canonical template, fills the charter
+with you, seeds the plan, registers the slug in `initiatives/ACTIVE` (one per line; keep
+the list to tracks genuinely being driven in parallel), and — on a project's first
+initiative — bootstraps `initiatives/` itself (this README, a gitignored `CURRENT`).
+
+## Project addenda
+
+_Project-specific extensions live below this line and are never touched by canon
+updates: planning-stack links (roadmap/ADRs/process docs), the execution model for
+steps, extra resume/close-out steps, extra doc-map rows. The global initiative skills
+and the SessionStart hook read and honor this section._
+
+**Execution model.** This repo is driven by a **planner/executor split**: the planner
+session owns this directory — writes charters and plans, ratifies decisions, issues step
+prompts (`step-N-*-prompt.md` in the initiative dir), reviews executor plans and PRs,
+updates the board. Executor sessions (separate tabs) run one scoped step each via
+`/feature`, `/feature small`, or `/upgrade`, from their step prompt file. Executors read
+initiative files for context but **do not edit them**, and never stage untracked planner
+artifacts (`CLAUDE.md`, `initiatives/`) into PRs.
+
+**Sacred sources here.** `initiatives/production-polish/extracted/` holds the recovered
+1.0 sources of truth (catalog data, bot contract) — documentary, stays verbatim
+(Prettier excludes it); the design spec `initiatives/production-polish/design-export/`
+is read-only.
