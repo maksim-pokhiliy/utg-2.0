@@ -23,7 +23,9 @@ export const CATEGORY_PATH = `${HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}`;
 
 export const PRODUCT_PATH = `${CATEGORY_PATH}/${PRODUCT_SLUG}`;
 
-export const EN_PRODUCT_PATH = `${EN_HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}/${PRODUCT_SLUG}`;
+export const EN_CATEGORY_PATH = `${EN_HOME_PATH}/category/${PRODUCT_CATEGORY_SLUG}`;
+
+export const EN_PRODUCT_PATH = `${EN_CATEGORY_PATH}/${PRODUCT_SLUG}`;
 
 export const CHECKOUT_PATH = `${HOME_PATH}/checkout`;
 
@@ -85,6 +87,12 @@ export const productPrice = (page: Page): Locator =>
 
 export const reportThumbnail = (page: Page): Locator =>
   page.locator("figure img");
+
+export const reportFigureButton = (page: Page): Locator =>
+  page.locator("figure button");
+
+export const viewerImage = (page: Page): Locator =>
+  page.getByRole("dialog").locator("img");
 
 export const addToCartButton = (page: Page): Locator =>
   page.getByRole("button", { name: UK_DICTIONARY.product.add, exact: true });

@@ -8,7 +8,9 @@ import {
   SITE_URL,
   UK_DICTIONARY,
   productPrice,
+  reportFigureButton,
   reportThumbnail,
+  viewerImage,
 } from "./support/app";
 
 const OK_STATUS = 200;
@@ -20,6 +22,10 @@ const HRYVNIA_SIGN = "₴";
 const DOLLAR_SIGN = "$";
 
 const SITEMAP_URL_COUNT = 38;
+
+const SETTLE_FADE_MS = 600;
+
+const PULSE_SAMPLE_GAPS_MS = [700, 800];
 
 const CHECKOUT_SEGMENT = "/checkout";
 
@@ -116,6 +122,40 @@ test.describe("the reports gallery", () => {
           )
         )
         .toBeGreaterThan(UNLOADED_IMAGE_WIDTH);
+    }
+  });
+});
+
+test.describe("the reports lightbox", () => {
+  test("holds the settled photo perfectly still instead of pulsing it behind the skeleton", async ({
+    page,
+  }) => {
+    await visit(page, REPORTS_PATH);
+
+    await reportFigureButton(page).first().click();
+
+    const viewer = page.getByRole("dialog");
+
+    await expect(viewer).toBeVisible();
+
+    await expect
+      .poll(() =>
+        viewerImage(page).evaluate((node) =>
+          node instanceof HTMLImageElement
+            ? node.naturalWidth
+            : UNLOADED_IMAGE_WIDTH
+        )
+      )
+      .toBeGreaterThan(UNLOADED_IMAGE_WIDTH);
+
+    await page.waitForTimeout(SETTLE_FADE_MS);
+
+    const settled = await viewer.screenshot();
+
+    for (const gap of PULSE_SAMPLE_GAPS_MS) {
+      await page.waitForTimeout(gap);
+
+      expect((await viewer.screenshot()).equals(settled)).toBe(true);
     }
   });
 });

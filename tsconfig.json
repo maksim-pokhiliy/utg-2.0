@@ -34,7 +34,9 @@
     "node_modules",
     "tests",
     "e2e",
+    "screenshots",
     "vitest.config.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.screenshots.config.ts"
   ]
 }
