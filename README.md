@@ -1,38 +1,222 @@
-# Ukrainian Tactical Gear — merch storefront
+# Ukrainian Tactical Gear
 
-A small bilingual (Ukrainian / English) storefront for Ukrainian Tactical Gear, built as a volunteer project. It grew out of repeated requests from the community for branded merch and doubles as a way to raise funds: proceeds go toward equipment, consumables, and repairs for a Ukrainian military unit.
+[![CI](https://github.com/maksim-pokhiliy/utg-2.0/actions/workflows/ci.yml/badge.svg)](https://github.com/maksim-pokhiliy/utg-2.0/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/maksim-pokhiliy/utg-2.0)](./LICENSE)
+[![Live site](https://img.shields.io/badge/live-ua--tactical--gear.com-181512)](https://www.ua-tactical-gear.com)
 
-The catalog is a small typed module baked into the repo (`src/data`), with all product images served locally from `public/`. Prices are stored in UAH and shown as UAH (₴) on the `uk` locale, or converted to USD on `en` when live exchange rates are available. Checkout relays each order to an external service.
+A bilingual merch storefront that funds a Ukrainian military unit. It is live at
+**[www.ua-tactical-gear.com](https://www.ua-tactical-gear.com)** and takes real orders, so every commit here has to leave a
+working shop behind it.
+
+## Screenshots
+
+![Home](./screenshots/home-uk.jpg)
+
+|                                                         |                                         |
+| ------------------------------------------------------- | --------------------------------------- |
+| ![Category](./screenshots/category.jpg)                 | ![Product](./screenshots/product.jpg)   |
+| ![Reports lightbox](./screenshots/reports-lightbox.jpg) | ![Checkout](./screenshots/checkout.jpg) |
+
+The same home page on the `en` locale:
+
+![Home, English](./screenshots/home-en.jpg)
+
+These are captured by a script, not by hand — `yarn screenshots` builds the app with no environment variables and drives a
+headless browser through the six screens above ([`screenshots/capture.spec.ts`](./screenshots/capture.spec.ts)). That is also
+why the English shot prices in hryvnia: with no exchange-rate key in the environment, both locales fall back to the real UAH
+amount rather than printing a dollar sign over a hryvnia number.
+
+## What it is
+
+A volunteer project. It grew out of repeated requests from the community for branded merch and doubles as a way to raise
+funds: proceeds go toward equipment, consumables, and repairs for a Ukrainian military unit.
+
+The shop is deliberately small. There is no database, no CMS and no payment provider. The catalog is a typed module compiled
+into the app, prices are stored as UAH integers, and checkout hands the finished order to an external relay service the
+operator already ran before this site existed. Two locales — `uk` (default) and `en`.
 
 ## Stack
 
-- Next.js 14 (App Router) + React 18, TypeScript (strict)
-- Server-rendered catalog pages (RSC) from a static typed catalog module (`src/data`)
-- Tailwind CSS + Flowbite React
-- Recoil for client state (cart, sidebar)
-- i18n via per-locale JSON dictionaries (`uk` default, `en`)
+|            |                                         | Pinned in                                  |
+| ---------- | --------------------------------------- | ------------------------------------------ |
+| Next.js    | 16, App Router, Turbopack               | `package.json`                             |
+| React      | 19                                      | `package.json`                             |
+| TypeScript | 5, `strict`                             | `tsconfig.json`                            |
+| Tailwind   | 4, CSS-first theme                      | `src/design-system/styles/theme.css`       |
+| State      | Zustand plus React context              | `src/store/`, `src/i18n/`                  |
+| UI         | in-repo sealed design system on Radix   | `src/design-system/`                       |
+| Tests      | Vitest with Testing Library, Playwright | `vitest.config.ts`, `playwright.config.ts` |
+| CI         | GitHub Actions, one battery per PR      | `.github/workflows/ci.yml`                 |
+| Node       | 24.x                                    | `engines.node` in `package.json`           |
+
+That last row is the only Node pin in the repo, on purpose: Vercel reads `engines.node` and it overrides the dashboard
+setting, yarn enforces it on every install, and CI consumes the same value through `node-version-file: package.json`. One
+number, three consumers, nothing to drift.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Request for a locale-less path"] --> B["src/proxy.ts — Accept-Language negotiation, redirect to /uk or /en"]
+    B --> C["Root layout inside the locale segment — dictionary, exchange rates, I18nProvider"]
+    C --> D["Server component page — reads the static catalog, resolves localized view objects"]
+    D --> E["Screen client component — useDictionary, useMoney, useLocale"]
+    E --> F["Zustand cart — persisted to localStorage"]
+    F --> G["POST /api/place_order — rate limiter, then the external order relay"]
+```
+
+```
+src/
+  app/            routes; the root layout lives inside the [lang] segment
+  components/     app-land composition (pages/, cart/, checkout/, layout/)
+  data/           the typed catalog and its accessors
+  design-system/  the only styling authority, one public barrel
+  i18n/           dictionary / money / locale context
+  store/          two Zustand stores: cart and sidebar
+  utils/          locale, money formatting, SEO helpers
+tests/            Vitest units
+e2e/              Playwright specs
+screenshots/      the capture script and its output
+initiatives/      the planning trail (see below)
+```
+
+### Routing and i18n
+
+There is no `src/app/layout.tsx`. The root layout lives at `src/app/[lang]/layout.tsx`, so every URL is locale-prefixed and
+`dynamicParams = false` turns an unknown locale into a 404. `src/proxy.ts` (Next 16's name for middleware) negotiates the
+locale for bare paths. Dictionaries are per-locale JSON, loaded server-side and constrained by a `satisfies` guard against the
+English shape, so a key missing from the Ukrainian file is a compile error rather than a blank string in production.
+
+### Pages and screens
+
+Catalog routes are server components: they read the catalog synchronously, resolve the locale, and pass flat view objects into
+presentational `*Screen` components. The screens are client components and pull locale, dictionary and money from context.
+Nothing about the catalog reaches the browser as a fetch waterfall — the product pages are statically generated.
+
+### Money
+
+Prices live in the catalog as UAH integers. The layout resolves `{ coefficient, currency }` per request: with live rates the
+`en` locale converts to USD, and without them **both** locales show the real hryvnia amount. The app never prints `$` over a
+UAH magnitude — a wrong currency symbol on a donation-adjacent price is worse than an unconverted one.
+
+### The sealed design system
+
+`src/design-system/` is the sole styling authority, and the seal is mechanical rather than a convention people agree to
+respect:
+
+- Tailwind's default palette and text scale are **wiped** from the theme, so `bg-zinc-900` or `text-sm` produce no CSS at all.
+- ESLint errors outside the design system on raw colour values, raw text-size utilities, deep imports past the barrel, and raw
+  `<button>` / `<a>` JSX.
+- TypeScript unions on `Typography` variants and `Container` widths make an invalid size a compile error.
+- The repo bans code comments outright, which closes the escape hatch — an `eslint-disable` is a comment, and therefore itself
+  a violation visible in the diff.
+
+App code composes design-system components and semantic token utilities. Composite patterns (`Dialog`, `ProductCard`,
+`Lightbox`, `CartLine` and friends) are exported as closed intent APIs; their building blocks stay internal.
+
+### Orders
+
+`POST /api/place_order` is the only API route. It forwards the checkout payload to an external relay and passes the upstream
+status through; its 500 body carries nothing internal. A per-IP in-memory limiter (5 requests per 60 seconds) runs before the
+body is even parsed, and it fails **open** when no client identity is available — a false 429 costs a real volunteer order,
+which is the worse outcome. The payload field names are a fixed contract with the receiving bot, pinned by a test against the
+recovered bot source.
+
+### SEO
+
+Every page builds its metadata through one helper: canonical URL, `hreflang` for both locales plus `x-default`, and per-page
+Open Graph. The layout owns the invariants, because a child's `openGraph` replaces the parent's rather than merging with it.
+Product pages carry Product JSON-LD whose offers are always in UAH — the operator charges hryvnia, and the display currency is
+informational. `sitemap.ts` and `robots.ts` are generated from the same catalog accessors the pages use; the sitemap is pinned
+at 38 URLs by both a unit test and an e2e test, so dropping a locale or a product from the routing surface fails CI.
+
+### Data
+
+The catalog is business data recovered from the previous version of the site, not sample content: titles, UAH prices,
+availability, sizes and both descriptions per product. Declared image dimensions are drift-guarded byte-for-byte against the
+real PNG and JPEG headers under `public/images/`, so a swapped asset cannot silently start shipping the wrong
+`width`/`height`.
+
+## How this repo was built
+
+The most unusual artifact in this repository might not be the storefront. It is
+[`initiatives/`](./initiatives/README.md) — the complete, unedited planning trail of the work, kept in git on purpose.
+
+The project runs on a **planner/executor split**. A planner session owns the initiative directory: it writes the charter,
+ratifies decisions, issues one scoped prompt per step, reviews the executor's plan before any code is written, and reviews the
+resulting pull request. Executor sessions each take a single `step-*-prompt.md` file, run it end to end, and open one PR
+against `master`. Executors read the initiative files freely and never edit them.
+
+Each initiative keeps a fixed set of files:
+
+- [`charter.md`](./initiatives/production-polish/charter.md) — goal, scope, non-goals, acceptance criteria, and the
+  constraints that are not up for negotiation (the shop takes real orders; the order payload and the catalog data are sacred).
+- [`plan.md`](./initiatives/production-polish/plan.md) — the phased steps.
+- [`state.md`](./initiatives/production-polish/state.md) — the board: status per step, plus the single concrete next action.
+  This is the resume entry point.
+- [`decisions.md`](./initiatives/production-polish/decisions.md) — numbered decisions, each with its rationale and status.
+  Why the design system is sealed, why Node is pinned exactly once, why this trail is public at all — all written when the
+  call was made rather than reconstructed afterwards.
+- [`deferred.md`](./initiatives/production-polish/deferred.md) — a numbered ledger of findings and follow-ups, each with a
+  disposition and a status. Things that were spotted and consciously not done yet live here instead of evaporating.
+- [`journal.md`](./initiatives/production-polish/journal.md) — append-only narrative, one entry per session, including the
+  rounds that went wrong and the planner's own corrections.
+
+The rule that holds it together is that nothing load-bearing is allowed to stay only in a chat window: every ratified
+decision, every carry-forward and every board change is promoted into these files at the end of the session that produced it.
+The step prompts are committed too, so any claim in this README can be read against the instruction that produced the code and
+the review that accepted it.
 
 ## Getting started
 
-Prerequisites: Node.js 18+ and Yarn.
+Node 24.x and Yarn. The Node major is enforced at install time, so a mismatched local version fails loudly instead of
+producing a build that only breaks in production.
 
 ```bash
 yarn install
-cp .env.example .env.local   # then fill in the values
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you are redirected to `/uk` or `/en` based on your browser language.
+Open [http://localhost:3000](http://localhost:3000) — you will be redirected to `/uk` or `/en` based on your browser language.
 
-The app boots and builds with no environment variables at all — the catalog is static and prices fall back to UAH (₴). The variables only enable live currency conversion and checkout: `EXCHANGE_RATE_API_URL` + `EXCHANGE_RATE_API_KEY` convert UAH prices to USD on the `en` locale, and `PLACE_ORDER_URL` is the external order-relay service the checkout posts to. See `.env.example`.
+**No environment variables are required.** The app boots, builds and passes its whole test suite with an empty environment:
+the catalog is static, and the exchange-rate fetch is guarded so prices fall back to hryvnia. The three optional keys in
+`.env.example` only add capability on top:
 
-## Scripts
+| Variable                | Without it                                     |
+| ----------------------- | ---------------------------------------------- |
+| `EXCHANGE_RATE_API_URL` | `en` prices stay in UAH                        |
+| `EXCHANGE_RATE_API_KEY` | `en` prices stay in UAH                        |
+| `PLACE_ORDER_URL`       | checkout answers 503 and the cart is preserved |
 
-| Command         | What it does                                  |
-| --------------- | --------------------------------------------- |
-| `yarn dev`      | Start the dev server on http://localhost:3000 |
-| `yarn build`    | Production build                              |
-| `yarn start`    | Serve the production build                    |
-| `yarn lint`     | Run ESLint                                    |
-| `yarn lint:fix` | Run ESLint with autofix                       |
-| `yarn format`   | Format the repo with Prettier                 |
+### Scripts
+
+| Command                         | What it does                                                 |
+| ------------------------------- | ------------------------------------------------------------ |
+| `yarn dev`                      | Dev server on http://localhost:3000                          |
+| `yarn build`                    | Production build                                             |
+| `yarn start`                    | Serve the production build                                   |
+| `yarn lint` / `yarn lint:fix`   | ESLint, including the design-system seal rules               |
+| `yarn format`                   | Prettier over the repo                                       |
+| `yarn typecheck`                | Both TypeScript programs — the app, and tests plus tooling   |
+| `yarn test` / `yarn test:watch` | Vitest units                                                 |
+| `yarn e2e`                      | Zero-environment build, then Playwright against `next start` |
+| `yarn screenshots`              | Regenerate the README screenshots                            |
+
+## Tests and CI
+
+One job runs on every pull request and every push to `master`: install, lint, `prettier --check`, typecheck of both TS
+programs, Vitest, a build with the three environment keys explicitly blanked, and the Playwright suite. It needs no secrets,
+which means a fork's pull request gets exactly the same signal as a branch.
+
+The suite is shaped around contracts rather than a coverage percentage. The order payload is pinned against the receiving
+bot's own source. Declared image dimensions are checked against real file headers. The sitemap count is pinned. The e2e run
+builds with a blank environment on purpose, so checkout's real 503 becomes a deterministic fixture and the suite can never
+reach the live relay or flake on live exchange rates.
+
+## License
+
+The code in this repository is MIT-licensed — see [LICENSE](./LICENSE).
+
+This does **not** cover the content. Product artwork, photographs, the photo reports, the logo and the Ukrainian Tactical Gear
+name belong to the unit and are included here only so the site can run. Reuse the code, not the brand.
