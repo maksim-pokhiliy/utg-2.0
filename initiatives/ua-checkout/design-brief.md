@@ -17,8 +17,11 @@ exported (DesignSync) to `initiatives/ua-checkout/design-export/`. Behavioral SS
   pattern precedent: `SizeSelector` (controlled single-select chips on product
   pages).
 - The checkout page layout (form column + sticky summary aside, success screen)
-  stays; this brief redesigns the FORM COLUMN's content and adds two form primitives
-  to the DS.
+  stays; this brief redesigns the FORM COLUMN's content, makes the SUMMARY editable,
+  and adds two form primitives to the DS.
+- The cart drawer already has the editable-line pattern: DS `CartLine` (media,
+  title, `QuantityStepper`, line total, remove) + a destructive `ConfirmDialog` on
+  remove — the checkout summary adopts it, not reinvents it.
 
 ## The task
 
@@ -48,6 +51,15 @@ shared blocks change).
 5. **Submit** — accent button + consent one-liner: «Надсилаючи замовлення, ви
    погоджуєтесь на обробку персональних даних для його виконання.»
 
+### Editable order summary (requirements §9)
+
+Today the summary is a read-only list — editing the cart from checkout forces a hop
+through the header icon into the drawer. Redesign the aside with the drawer's
+`CartLine` anatomy at summary scale: quantity stepper + remove (with the existing
+confirm dialog) per line, live totals. States: editing, remove-confirm,
+empty-after-last-remove (hands off to the existing empty-cart screen), and
+locked-while-submit-pending. Same in all three modes; desktop + mobile.
+
 ### New DS primitives to spec (anatomy + all states, DS-grade)
 
 - **Combobox** — async single-select: idle / typing / loading / results /
@@ -66,7 +78,9 @@ shared blocks change).
 - uk-fallback: same layout, city/warehouse as plain inputs + hint «Довідник Нової
   Пошти зараз недоступний — впишіть місто та відділення вручну.»;
 - validation errors (existing per-field error pattern, focus-first-invalid);
-- submit pending; success screen (exists — check copy still fits);
+- summary editing: stepper interaction, remove-confirm, empty-after-edit handoff;
+- submit pending (form controls AND summary editing locked); success screen
+  (exists — check copy still fits);
 - en-generic: current fields + the new shared blocks (channel chips, expectations,
   consent) — no patronymic, no НП elements.
 

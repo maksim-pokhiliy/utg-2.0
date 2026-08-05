@@ -34,6 +34,9 @@ and exported to `design-export/` in this directory.
    payment after the order, delivery at carrier tariffs on receipt; a personal-data
    consent one-liner is present; uk + en.
 7. Prod live-verified by a user browser gate on ua-tactical-gear.com.
+8. Cart lines are editable directly on the checkout page (quantity stepper +
+   remove-with-confirm, the drawer's pattern); emptying the cart there lands on the
+   existing empty state; the header-drawer hop is no longer required for edits.
 
 **Scope.**
 
@@ -45,6 +48,9 @@ and exported to `design-export/` in this directory.
 - Contact block: +380 normalization/validation, contact-channel choice
   (дзвінок / Telegram / Viber), optional patronymic, consent line.
 - Pre-submit payment-expectations copy; dictionary strings uk + en.
+- Editable order summary on checkout: reuse the DS `CartLine`
+  (stepper + remove + confirm) in place of the read-only rows; live totals;
+  pending submit locks editing.
 - Bot contract update as a paired shop+bot step; contract tests on both sides.
 - DS window: the form primitives the ratified design needs (async combobox,
   choice-chips/radio group — exact set ratified in U2) + the DEF-41 fold-in.

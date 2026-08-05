@@ -43,3 +43,14 @@ Append-only. One entry per session/step.
 - `design-brief.md` written for the U2 Claude Design session: form flow, two new DS
   primitives to spec (async Combobox, ChoiceChips), full state matrix incl.
   uk-fallback and mobile. **Next: user drives the brief through Claude Design.**
+
+## 2026-08-05 — scope add before U2: editable summary on checkout
+
+- User finding: the checkout summary is read-only — cart edits force the
+  header-icon → drawer hop. Verified: `CheckoutSummary` renders static rows while
+  the drawer already composes DS `CartLine` (stepper + remove + ConfirmDialog), so
+  the fix is pattern reuse, zero new DS primitives.
+- Folded before the design session consumed the brief: charter (scope bullet +
+  acceptance #8), requirements new §9 (in-place editing, live totals, empty-out
+  transition, locked-while-pending, e2e list), brief (context + task section +
+  states). Lands in U5 with the checkout rework; U2 designs the aside states.

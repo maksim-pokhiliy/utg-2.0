@@ -195,7 +195,26 @@ live before this step.
   (`getDocumentPrice`) — out per charter non-goals.
 - en UA-flow (diaspora ordering to UA addresses) — only if real demand shows up.
 
-## 9. Environment
+## 9. Order summary on checkout — editable in place
+
+Finding (user, 2026-08-05): the checkout summary is read-only — any cart edit forces
+the hop through the header icon into the drawer. Requirement: edit where you decide.
+
+- The summary column adopts the drawer's line anatomy — DS `CartLine` (media, title,
+  `QuantityStepper`, line total, remove) + the existing remove `ConfirmDialog` and
+  its `cart.remove_*` strings. No new DS primitives; sizing tuned for the aside.
+- Edits mutate the store directly; the summary totals and the submitted payload
+  `total` stay live (payload is composed at submit time from the store, as today).
+- Removing the last line lands on the checkout screen's existing empty-cart state —
+  already implemented, must be e2e-covered as a transition.
+- While submit is pending, summary editing is locked (steppers + remove disabled) —
+  the order must not mutate mid-flight.
+- Applies to all three modes identically (the summary is mode-agnostic and
+  locale-shared).
+- Tests: e2e — quantity edit reflected in totals, remove-with-confirm, empty-out
+  transition, locked-while-pending; units — none beyond `CartLine`'s existing ones.
+
+## 10. Environment
 
 One new optional key: `NOVA_POSHTA_API_KEY` (server-only; documented in
 `.env.example`; blanked in `yarn e2e`/CI). No key → uk-fallback mode, by design.
