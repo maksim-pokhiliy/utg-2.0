@@ -1,15 +1,22 @@
 import { createDirectoryCache } from "../cache";
-import { callNpDirectory, isRecord, readString } from "../client";
+import {
+  callNpDirectory,
+  capIdentifier,
+  capLabel,
+  isRecord,
+  readString,
+} from "../client";
 
 const SETTLEMENT_CACHE_TTL_MS = 300_000;
-const SETTLEMENT_CACHE_MAX_ENTRIES = 200;
+const SETTLEMENT_NEGATIVE_CACHE_TTL_MS = 30_000;
+const SETTLEMENT_CACHE_MAX_ENTRIES = 2000;
 const SETTLEMENT_ROW_LIMIT = 10;
 const MIN_QUERY_LENGTH = 2;
 const MAX_QUERY_LENGTH = 64;
-const MAX_LABEL_LENGTH = 256;
 const PRESENT_SEPARATOR = ", ";
 const SETTLEMENTS_METHOD = "searchSettlements";
 const FIRST_PAGE = "1";
+const INVISIBLE_PATTERN = /[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g;
 const WHITESPACE_PATTERN = /\s+/g;
 const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
@@ -27,17 +34,17 @@ interface SettlementLabel {
 
 const cache = createDirectoryCache<readonly SettlementItem[]>({
   ttlMs: SETTLEMENT_CACHE_TTL_MS,
+  negativeTtlMs: SETTLEMENT_NEGATIVE_CACHE_TTL_MS,
   maxEntries: SETTLEMENT_CACHE_MAX_ENTRIES,
 });
 
 const normalizeQuery = (rawQuery: string | null): string =>
   (rawQuery ?? EMPTY_TEXT)
+    .replace(INVISIBLE_PATTERN, EMPTY_TEXT)
     .trim()
     .toLowerCase()
     .replace(WHITESPACE_PATTERN, SINGLE_SPACE)
     .slice(0, MAX_QUERY_LENGTH);
-
-const capLabel = (text: string): string => text.slice(0, MAX_LABEL_LENGTH);
 
 const splitPresent = (present: string): SettlementLabel => {
   const separatorIndex = present.indexOf(PRESENT_SEPARATOR);
@@ -57,7 +64,7 @@ const toSettlement = (row: unknown): SettlementItem | null => {
     return null;
   }
 
-  const ref = readString(row.DeliveryCity);
+  const ref = capIdentifier(readString(row.DeliveryCity));
 
   if (ref === EMPTY_TEXT) {
     return null;
@@ -90,6 +97,14 @@ const readAddresses = (rows: readonly unknown[]): readonly unknown[] => {
   return container.Addresses;
 };
 
+const decodeSettlements = (
+  addresses: readonly unknown[]
+): readonly SettlementItem[] =>
+  addresses
+    .map(toSettlement)
+    .filter((settlement): settlement is SettlementItem => settlement !== null)
+    .slice(0, SETTLEMENT_ROW_LIMIT);
+
 const loadSettlements = async (
   query: string
 ): Promise<readonly SettlementItem[] | null> => {
@@ -103,10 +118,10 @@ const loadSettlements = async (
     return null;
   }
 
-  return readAddresses(result.rows)
-    .map(toSettlement)
-    .filter((settlement): settlement is SettlementItem => settlement !== null)
-    .slice(0, SETTLEMENT_ROW_LIMIT);
+  const addresses = readAddresses(result.rows);
+  const settlements = decodeSettlements(addresses);
+
+  return addresses.length > 0 && settlements.length === 0 ? null : settlements;
 };
 
 export const searchSettlements = async (

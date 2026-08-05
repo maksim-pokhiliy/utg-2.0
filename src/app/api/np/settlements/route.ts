@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
+  buildRateLimitedResponse,
   consumeDirectoryRateLimit,
   resolveClientKey,
 } from "@root/app/api/rate-limit";
 
 import { searchSettlements } from "./directory";
-
-const TOO_MANY_REQUESTS_BODY = { error: "Too many requests" };
 
 const UNAVAILABLE_BODY = { error: "Directory service is unavailable" };
 
@@ -17,10 +16,7 @@ export async function GET(request: NextRequest) {
   const verdict = consumeDirectoryRateLimit(resolveClientKey(request));
 
   if (!verdict.isAllowed) {
-    return NextResponse.json(TOO_MANY_REQUESTS_BODY, {
-      status: 429,
-      headers: { "Retry-After": String(verdict.retryAfterSeconds) },
-    });
+    return buildRateLimitedResponse(verdict);
   }
 
   try {

@@ -135,14 +135,16 @@ source.
 
 ### Delivery directory
 
-`GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory for the Ukrainian checkout.
-The API key stays server-side and the rows are minimized on the way out — a settlement is `{ref, label, region?}`, a
-warehouse is `{number, label}` — and capped, so a big city's full branch list never crosses the wire. Answers are cached in
-process: five minutes per settlement query, twenty-four hours per city's warehouse list, which is the refresh cadence Нова
-Пошта's own documentation asks for. Filtering by branch or поштомат and by warehouse number happens here, over that cache,
-rather than at the carrier. These routes get their own limiter bucket (60 requests per 60 seconds) because autocomplete
-fires far more often than an order does. Every failure — missing key, timeout, carrier error — collapses to a single 503,
-and that one status is what flips the checkout to free-text city and warehouse fields.
+`GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory. **Nothing consumes them
+yet** — the Ukrainian checkout still uses free-text delivery fields; these routes exist so the contract can be pinned
+before a screen depends on it. The API key stays server-side and the rows are minimized on the way out — a settlement is
+`{ref, label, region?}`, a warehouse is `{number, label}` — and capped, so a big city's full branch list never crosses the
+wire. Answers are cached in process: five minutes per settlement query, twenty-four hours per city's warehouse list, the
+daily cadence our verified notes on the carrier's contract call for. Filtering by branch or поштомат and by warehouse
+number happens here, over that cache, rather than at the carrier. These routes get their own limiter bucket (60 requests
+per 60 seconds per server instance) because autocomplete fires far more often than an order does. Every failure — missing
+key, timeout, carrier error, a response we cannot decode — collapses to a single 503, which is the signal the checkout
+will key its free-text fallback on once it adopts these routes.
 
 ### SEO
 

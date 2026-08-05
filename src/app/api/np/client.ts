@@ -1,6 +1,8 @@
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_MODEL_NAME = "Address";
 const NP_REQUEST_TIMEOUT_MS = 2500;
+const MAX_LABEL_LENGTH = 256;
+const MAX_IDENTIFIER_LENGTH = 64;
 
 type NpMethod = "searchSettlements" | "getWarehouses";
 
@@ -15,6 +17,12 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const readString = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
+
+export const capLabel = (text: string): string =>
+  text.slice(0, MAX_LABEL_LENGTH);
+
+export const capIdentifier = (text: string): string =>
+  text.slice(0, MAX_IDENTIFIER_LENGTH);
 
 export const callNpDirectory = async (
   calledMethod: NpMethod,

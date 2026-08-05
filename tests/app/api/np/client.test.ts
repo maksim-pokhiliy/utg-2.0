@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
+import type { FetchStub } from "../../../support/apiTest";
+import {
+  expectUpstreamOnly,
+  jsonResponse,
+  stubUpstream,
+} from "../../../support/apiTest";
+
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_MODEL_NAME = "Address";
 const NP_REQUEST_TIMEOUT_MS = 2500;
@@ -41,32 +48,10 @@ const TRIMMED_TEXT = "м. Київ";
 const SAMPLE_NUMBER = 42;
 const EMPTY_TEXT = "";
 
-type FetchStub = (
-  input: string | URL | Request,
-  init?: RequestInit
-) => Promise<Response>;
-
 const loadClient = () => import("@root/app/api/np/client");
-
-const jsonResponse = (payload: unknown, status: number): Response =>
-  new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
 
 const successResponse = (): Response =>
   jsonResponse({ success: true, data: NP_ROWS }, OK_STATUS);
-
-const stubUpstream = (respond: () => Promise<Response>): Mock<FetchStub> => {
-  const fetchStub = vi.fn<FetchStub>(respond);
-
-  vi.stubGlobal("fetch", fetchStub);
-
-  return fetchStub;
-};
-
-const expectUpstreamOnly = (calls: readonly Parameters<FetchStub>[]): void => {
-  for (const [input] of calls) {
-    expect(input).toBe(NP_API_URL);
-  }
-};
 
 const readSentInit = (fetchStub: Mock<FetchStub>): RequestInit | undefined => {
   const [, init] = fetchStub.mock.calls[0];
@@ -129,7 +114,7 @@ describe("callNpDirectory", () => {
     await callNpDirectory(SETTLEMENTS_METHOD, SETTLEMENT_PROPERTIES);
 
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
 
     const init = readSentInit(fetchStub);
 
@@ -168,7 +153,7 @@ describe("callNpDirectory", () => {
     );
 
     expect(result).toEqual({ isSuccess: true, rows: NP_ROWS });
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("fails when the upstream status is not ok", async () => {
@@ -294,7 +279,7 @@ describe("callNpDirectory", () => {
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(errorLog).toHaveBeenCalledWith(LOG_MESSAGE, timeoutError);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("forwards a caller supplied signal verbatim", async () => {

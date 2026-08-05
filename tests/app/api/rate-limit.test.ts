@@ -23,6 +23,7 @@ const ATTEMPT_CEILING = RATE_LIMIT_MAX_REQUESTS + 1;
 
 const DIRECTORY_MAX_REQUESTS = 60;
 const DIRECTORY_ATTEMPT_CEILING = DIRECTORY_MAX_REQUESTS + 1;
+const DIRECTORY_WINDOW_MS = 60_000;
 
 const CLIENT_KEY = "203.0.113.5";
 const PAIRED_CLIENT_KEY = "203.0.113.11";
@@ -355,6 +356,28 @@ describe("consumeDirectoryRateLimit", () => {
     }
 
     expect(verdicts).toEqual(Array(DIRECTORY_ATTEMPT_CEILING).fill(true));
+  });
+
+  it("holds a spent directory budget shut for a full minute and reopens it on the tick", async () => {
+    const { consumeDirectoryRateLimit } = await loadRateLimit();
+
+    for (let attempt = 0; attempt < DIRECTORY_MAX_REQUESTS; attempt += 1) {
+      consumeDirectoryRateLimit(CLIENT_KEY);
+    }
+
+    const blocked = consumeDirectoryRateLimit(CLIENT_KEY);
+
+    vi.setSystemTime(BASE_TIME + DIRECTORY_WINDOW_MS - 1);
+
+    const stillBlocked = consumeDirectoryRateLimit(CLIENT_KEY);
+
+    vi.setSystemTime(BASE_TIME + DIRECTORY_WINDOW_MS);
+
+    const reopened = consumeDirectoryRateLimit(CLIENT_KEY);
+
+    expect(blocked.isAllowed).toBe(false);
+    expect(stillBlocked.isAllowed).toBe(false);
+    expect(reopened.isAllowed).toBe(true);
   });
 
   it("spends a budget that is independent of the order budget for the same client key", async () => {

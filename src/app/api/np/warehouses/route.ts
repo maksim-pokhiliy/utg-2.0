@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
+  buildRateLimitedResponse,
   consumeDirectoryRateLimit,
   resolveClientKey,
 } from "@root/app/api/rate-limit";
@@ -9,7 +10,6 @@ import { isDeliveryMethod, listWarehouses } from "./directory";
 
 const MAX_CITY_REF_LENGTH = 64;
 
-const TOO_MANY_REQUESTS_BODY = { error: "Too many requests" };
 const INVALID_REQUEST_BODY = { error: "Invalid request" };
 const UNAVAILABLE_BODY = { error: "Directory service is unavailable" };
 
@@ -19,10 +19,7 @@ export async function GET(request: NextRequest) {
   const verdict = consumeDirectoryRateLimit(resolveClientKey(request));
 
   if (!verdict.isAllowed) {
-    return NextResponse.json(TOO_MANY_REQUESTS_BODY, {
-      status: 429,
-      headers: { "Retry-After": String(verdict.retryAfterSeconds) },
-    });
+    return buildRateLimitedResponse(verdict);
   }
 
   const { searchParams } = request.nextUrl;

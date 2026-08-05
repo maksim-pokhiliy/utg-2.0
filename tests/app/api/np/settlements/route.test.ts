@@ -3,6 +3,16 @@ import type { Mock } from "vitest";
 
 import { NextRequest } from "next/server";
 
+import type { FetchStub } from "../../../../support/apiTest";
+import {
+  expectUpstreamOnly,
+  isRecord,
+  jsonResponse,
+  stubUpstream,
+} from "../../../../support/apiTest";
+
+const BASE_TIME = new Date("2026-01-01T00:00:00.000Z").getTime();
+
 const ROUTE_URL = "https://example.test/api/np/settlements";
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_HOST = "novaposhta";
@@ -34,6 +44,15 @@ const MIN_RETRY_AFTER_SECONDS = 1;
 const MAX_RETRY_AFTER_SECONDS = 60;
 const REPEATED_REQUEST_COUNT = 3;
 
+const SETTLEMENT_CACHE_TTL_MS = 300_000;
+const SETTLEMENT_TTL_RELOAD_COUNT = 2;
+const CACHE_MAX_ENTRIES = 2000;
+const CACHED_QUERY_COUNT = CACHE_MAX_ENTRIES + 1;
+const EVICTION_RELOAD_COUNT = CACHED_QUERY_COUNT + 1;
+const EVICTED_QUERY_INDEX = 0;
+const RETAINED_QUERY_INDEX = 1;
+const INDEXED_QUERY_PREFIX = "q";
+
 const SETTLEMENT_ROW_LIMIT = 10;
 const OVERSIZED_ROW_COUNT = 15;
 const FIRST_PAGE = "1";
@@ -49,6 +68,20 @@ const LABEL_CAP = 256;
 const OVERLONG_LABEL_LENGTH = 900;
 const OVERLONG_LABEL = "п".repeat(OVERLONG_LABEL_LENGTH);
 const CAPPED_LABEL = "п".repeat(LABEL_CAP);
+
+const IDENTIFIER_CAP = 64;
+const OVERLONG_REF_LENGTH = 300;
+const OVERLONG_REF = "d".repeat(OVERLONG_REF_LENGTH);
+const CAPPED_REF = "d".repeat(IDENTIFIER_CAP);
+
+const ZERO_WIDTH_SPACE_CODE = 8203;
+const SOFT_HYPHEN_CODE = 173;
+const BYTE_ORDER_MARK_CODE = 65_279;
+const ZERO_WIDTH_SPACE = String.fromCharCode(ZERO_WIDTH_SPACE_CODE);
+const SOFT_HYPHEN = String.fromCharCode(SOFT_HYPHEN_CODE);
+const BYTE_ORDER_MARK = String.fromCharCode(BYTE_ORDER_MARK_CODE);
+const INVISIBLE_QUERY = `${ZERO_WIDTH_SPACE}${SOFT_HYPHEN}${BYTE_ORDER_MARK}${ZERO_WIDTH_SPACE}`;
+const SPLIT_KYIV_QUERY = `ки${ZERO_WIDTH_SPACE}їв`;
 
 const DYNAMIC_MODE = "force-dynamic";
 
@@ -67,6 +100,8 @@ const DROPPED_QUERY = "смі";
 const FALLBACK_QUERY = "дуб";
 const EMPTY_DATA_QUERY = "пор";
 const OVERLONG_LABEL_QUERY = "дов";
+const OVERLONG_REF_QUERY = "реф";
+const UNDECODABLE_QUERY = "нез";
 
 const MALFORMED_BODY = "np gateway error page";
 const BROKEN_ADDRESSES = "Addresses came back as text";
@@ -205,6 +240,18 @@ const OVERLONG_ADDRESS = {
   DeliveryCity: OVERLONG_DELIVERY_CITY,
 };
 
+const OVERLONG_REF_ADDRESS = {
+  Present: CHERNIHIV_PRESENT,
+  MainDescription: "Чернігів",
+  Area: "Чернігівська",
+  DeliveryCity: OVERLONG_REF,
+};
+
+const UNDECODABLE_ADDRESSES: readonly unknown[] = [
+  { ...NO_SEPARATOR_ADDRESS, DeliveryCity: 6231 },
+  { ...FALLBACK_ADDRESS, DeliveryCity: 6232 },
+];
+
 interface NestingCase {
   query: string;
   data: readonly unknown[];
@@ -229,23 +276,23 @@ const FORBIDDEN_BODY_FRAGMENTS: readonly string[] = [
   KYIVETS_SETTLEMENT_REF,
 ];
 
-type FetchStub = (
-  input: string | URL | Request,
-  init?: RequestInit
-) => Promise<Response>;
-
 const loadRoute = () => import("@root/app/api/np/settlements/route");
 
-const buildRequest = (query: string | null): NextRequest =>
-  new NextRequest(
-    query === null
-      ? ROUTE_URL
-      : `${ROUTE_URL}?${QUERY_PARAM}=${encodeURIComponent(query)}`,
-    { headers: { [FORWARDED_FOR_HEADER]: CLIENT_IP } }
-  );
+const buildRequestUrl = (query: string | null): string =>
+  query === null
+    ? ROUTE_URL
+    : `${ROUTE_URL}?${QUERY_PARAM}=${encodeURIComponent(query)}`;
 
-const jsonResponse = (payload: unknown, status: number): Response =>
-  new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
+const buildRequest = (query: string | null): NextRequest =>
+  new NextRequest(buildRequestUrl(query), {
+    headers: { [FORWARDED_FOR_HEADER]: CLIENT_IP },
+  });
+
+const buildAnonymousRequest = (query: string): NextRequest =>
+  new NextRequest(buildRequestUrl(query));
+
+const buildIndexedQuery = (index: number): string =>
+  `${INDEXED_QUERY_PREFIX}${index}`;
 
 const settlementsResponse = (addresses: readonly unknown[]): Response =>
   jsonResponse(
@@ -264,22 +311,8 @@ const buildAddresses = (count: number): readonly unknown[] =>
     DeliveryCity: `db5c88a${index}-391c-11dd-90d9-001a92567626`,
   }));
 
-const stubUpstream = (respond: () => Promise<Response>): Mock<FetchStub> => {
-  const fetchStub = vi.fn<FetchStub>(respond);
-
-  vi.stubGlobal("fetch", fetchStub);
-
-  return fetchStub;
-};
-
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
-};
-
-const expectUpstreamOnly = (calls: readonly Parameters<FetchStub>[]): void => {
-  for (const [input] of calls) {
-    expect(input).toBe(NP_API_URL);
-  }
 };
 
 const expectNoUpstreamLeak = (body: string): void => {
@@ -287,9 +320,6 @@ const expectNoUpstreamLeak = (body: string): void => {
     expect(body).not.toContain(fragment);
   }
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
 
 const readItems = async (response: Response): Promise<readonly unknown[]> => {
   const payload: unknown = await response.json();
@@ -340,6 +370,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
@@ -386,7 +417,7 @@ describe("GET /api/np/settlements", () => {
     expect(response.status).toBe(UNAVAILABLE_STATUS);
     expect(body).toBe(UNAVAILABLE_BODY);
     expectNoUpstreamLeak(body);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("answers 503 when np reports success false at http 200", async () => {
@@ -404,7 +435,7 @@ describe("GET /api/np/settlements", () => {
 
     expect(response.status).toBe(UNAVAILABLE_STATUS);
     expect(await response.text()).toBe(UNAVAILABLE_BODY);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("answers 503 when the upstream body is malformed json", async () => {
@@ -424,7 +455,7 @@ describe("GET /api/np/settlements", () => {
 
     expect(response.status).toBe(UNAVAILABLE_STATUS);
     expect(await response.text()).toBe(UNAVAILABLE_BODY);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("answers 503 when the upstream request times out", async () => {
@@ -455,7 +486,7 @@ describe("GET /api/np/settlements", () => {
     await GET(buildRequest(PADDED_KYIV_QUERY));
 
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
     expect(readSentEnvelope(fetchStub)).toEqual({
       apiKey: FAKE_API_KEY,
       modelName: NP_MODEL_NAME,
@@ -495,7 +526,7 @@ describe("GET /api/np/settlements", () => {
     expectNoUpstreamLeak(body);
     expect(body).toContain(KYIV_DELIVERY_CITY);
     expect(body).toContain(KYIVETS_DELIVERY_CITY);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("splits the np present string into a label and a region losslessly", async () => {
@@ -625,6 +656,44 @@ describe("GET /api/np/settlements", () => {
     expect(fetchStub).not.toHaveBeenCalled();
   });
 
+  it("answers an empty list without touching the network for invisible characters", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(INVISIBLE_QUERY));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).not.toHaveBeenCalled();
+  });
+
+  it("strips an invisible character out of a real query before it reaches np", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(SPLIT_KYIV_QUERY));
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readSentCityName(fetchStub)).toBe(NORMALIZED_KYIV_QUERY);
+  });
+
+  it("caps an overlong np delivery city ref to sixty-four characters", async () => {
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse([OVERLONG_REF_ADDRESS]))
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(OVERLONG_REF_QUERY)));
+
+    expect(items).toStrictEqual([
+      { ref: CAPPED_REF, label: CHERNIHIV_PRESENT },
+    ]);
+  });
+
   it("answers an empty list when the np envelope nests nothing usable", async () => {
     let caseIndex = 0;
 
@@ -654,7 +723,7 @@ describe("GET /api/np/settlements", () => {
     expect(fetchStub).toHaveBeenCalledTimes(NESTING_CASES.length);
   });
 
-  it("answers 503 and caches nothing when np returns an empty data envelope", async () => {
+  it("answers 503 and remembers the failure briefly when np returns an empty data envelope", async () => {
     const fetchStub = stubUpstream(() =>
       Promise.resolve(jsonResponse({ success: true, data: [] }, OK_STATUS))
     );
@@ -668,8 +737,23 @@ describe("GET /api/np/settlements", () => {
     expect(firstBody).toBe(UNAVAILABLE_BODY);
     expect(second.status).toBe(UNAVAILABLE_STATUS);
     expect(await second.text()).toBe(UNAVAILABLE_BODY);
-    expect(fetchStub).toHaveBeenCalledTimes(2);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("answers 503 when the np container carries rows it can decode none of", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(UNDECODABLE_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(UNDECODABLE_QUERY));
+    const body = await response.text();
+
+    expect(response.status).toBe(UNAVAILABLE_STATUS);
+    expect(body).toBe(UNAVAILABLE_BODY);
+    expectNoUpstreamLeak(body);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
   it("serves repeated identical queries from the cache with a single upstream call", async () => {
@@ -689,7 +773,7 @@ describe("GET /api/np/settlements", () => {
     expect(bodies[0]).toBe(bodies[1]);
     expect(bodies[1]).toBe(bodies[2]);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("caches an empty result so a repeated miss never reaches np again", async () => {
@@ -719,6 +803,58 @@ describe("GET /api/np/settlements", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a settlement answer for five minutes and reloads the moment they elapse", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE_TIME);
+
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(KYIV_QUERY));
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(BASE_TIME + SETTLEMENT_CACHE_TTL_MS - 1);
+
+    const warm = await GET(buildRequest(KYIV_QUERY));
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(BASE_TIME + SETTLEMENT_CACHE_TTL_MS);
+
+    const stale = await GET(buildRequest(KYIV_QUERY));
+
+    expect(await readItems(warm)).toStrictEqual(CAPTURED_ITEMS);
+    expect(await readItems(stale)).toStrictEqual(CAPTURED_ITEMS);
+    expect(fetchStub).toHaveBeenCalledTimes(SETTLEMENT_TTL_RELOAD_COUNT);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("remembers two thousand queries and drops the least recent when the next arrives", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    for (let index = 0; index < CACHED_QUERY_COUNT; index += 1) {
+      const filled = await GET(buildAnonymousRequest(buildIndexedQuery(index)));
+
+      expect(filled.status).toBe(OK_STATUS);
+    }
+
+    expect(fetchStub).toHaveBeenCalledTimes(CACHED_QUERY_COUNT);
+
+    await GET(buildAnonymousRequest(buildIndexedQuery(RETAINED_QUERY_INDEX)));
+
+    expect(fetchStub).toHaveBeenCalledTimes(CACHED_QUERY_COUNT);
+
+    await GET(buildAnonymousRequest(buildIndexedQuery(EVICTED_QUERY_INDEX)));
+
+    expect(fetchStub).toHaveBeenCalledTimes(EVICTION_RELOAD_COUNT);
+  });
+
   it("issues one upstream call per distinct query", async () => {
     const fetchStub = stubUpstream(() =>
       Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
@@ -729,7 +865,7 @@ describe("GET /api/np/settlements", () => {
     await GET(buildRequest(LVIV_QUERY));
 
     expect(fetchStub).toHaveBeenCalledTimes(2);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
   it("answers 429 with a Retry-After header once the directory budget is spent", async () => {
@@ -760,6 +896,6 @@ describe("GET /api/np/settlements", () => {
     expect(retryAfter).toBeLessThanOrEqual(MAX_RETRY_AFTER_SECONDS);
 
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 });

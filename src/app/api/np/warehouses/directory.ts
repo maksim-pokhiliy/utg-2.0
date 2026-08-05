@@ -1,17 +1,24 @@
 import { createDirectoryCache } from "../cache";
-import { callNpDirectory, isRecord, readString } from "../client";
+import {
+  callNpDirectory,
+  capIdentifier,
+  capLabel,
+  isRecord,
+  readString,
+} from "../client";
 
 const WAREHOUSE_CACHE_TTL_MS = 86_400_000;
+const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
 const WAREHOUSE_CACHE_MAX_CITIES = 150;
 const WAREHOUSE_ROW_LIMIT = 30;
 const WAREHOUSE_PAGE_SIZE = 500;
 const WAREHOUSE_MAX_PAGES = 10;
 const WAREHOUSE_MERGE_TIMEOUT_MS = 7000;
+const WAREHOUSE_MAX_CONCURRENT_MERGES = 4;
 const WORKING_STATUS = "Working";
 const DENIED_FLAG = "1";
 const DENIED_CODE = 1;
 const MAX_QUERY_LENGTH = 64;
-const MAX_LABEL_LENGTH = 256;
 const NUMBER_PREFIX = "№";
 
 export type DeliveryMethod = "branch" | "postomat";
@@ -34,6 +41,8 @@ const METHOD_CATEGORIES = {
   postomat: "Postomat",
 } as const satisfies Record<DeliveryMethod, WarehouseCategory>;
 
+let activeMerges = 0;
+
 export const isDeliveryMethod = (
   value: string | null
 ): value is DeliveryMethod => value === "branch" || value === "postomat";
@@ -42,9 +51,7 @@ const isWarehouseCategory = (value: string): value is WarehouseCategory =>
   value === "Branch" || value === "Postomat";
 
 const isDeniedValue = (value: unknown): boolean =>
-  value === DENIED_FLAG || value === DENIED_CODE || value === true;
-
-const capLabel = (text: string): string => text.slice(0, MAX_LABEL_LENGTH);
+  readString(value) === DENIED_FLAG || value === DENIED_CODE || value === true;
 
 const toWarehouse = (row: unknown): CachedWarehouse | null => {
   if (!isRecord(row)) {
@@ -52,7 +59,7 @@ const toWarehouse = (row: unknown): CachedWarehouse | null => {
   }
 
   const label = capLabel(readString(row.Description));
-  const number = readString(row.Number);
+  const number = capIdentifier(readString(row.Number));
 
   if (label === "" || number === "") {
     return null;
@@ -75,15 +82,21 @@ const toWarehouse = (row: unknown): CachedWarehouse | null => {
   return { number, label, category };
 };
 
-const decodeWarehouses = (rows: readonly unknown[]): CachedWarehouse[] => {
+const decodeWarehouses = (
+  rows: readonly unknown[],
+  seenNumbers: Set<string>
+): CachedWarehouse[] => {
   const decoded: CachedWarehouse[] = [];
 
   for (const row of rows) {
     const warehouse = toWarehouse(row);
 
-    if (warehouse !== null) {
-      decoded.push(warehouse);
+    if (warehouse === null || seenNumbers.has(warehouse.number)) {
+      continue;
     }
+
+    seenNumbers.add(warehouse.number);
+    decoded.push(warehouse);
   }
 
   return decoded;
@@ -107,11 +120,13 @@ const loadPage = async (
   return result.isSuccess ? result.rows : null;
 };
 
-const loadCityWarehouses = async (
+const mergeCityPages = async (
   cityRef: string
 ): Promise<readonly CachedWarehouse[] | null> => {
   const signal = AbortSignal.timeout(WAREHOUSE_MERGE_TIMEOUT_MS);
+  const seenNumbers = new Set<string>();
   const merged: CachedWarehouse[] = [];
+  let upstreamRowCount = 0;
 
   for (let page = 1; page <= WAREHOUSE_MAX_PAGES; page += 1) {
     const rows = await loadPage(cityRef, page, signal);
@@ -120,18 +135,32 @@ const loadCityWarehouses = async (
       return null;
     }
 
-    merged.push(...decodeWarehouses(rows));
+    upstreamRowCount += rows.length;
+    merged.push(...decodeWarehouses(rows, seenNumbers));
 
     if (rows.length < WAREHOUSE_PAGE_SIZE) {
-      return merged;
+      return upstreamRowCount > 0 && merged.length === 0 ? null : merged;
     }
   }
 
-  return merged;
+  return null;
+};
+
+const loadCityWarehouses = async (
+  cityRef: string
+): Promise<readonly CachedWarehouse[] | null> => {
+  activeMerges += 1;
+
+  try {
+    return await mergeCityPages(cityRef);
+  } finally {
+    activeMerges -= 1;
+  }
 };
 
 const cache = createDirectoryCache<readonly CachedWarehouse[]>({
   ttlMs: WAREHOUSE_CACHE_TTL_MS,
+  negativeTtlMs: WAREHOUSE_NEGATIVE_CACHE_TTL_MS,
   maxEntries: WAREHOUSE_CACHE_MAX_CITIES,
   isCacheable: (warehouses) => warehouses.length > 0,
 });
@@ -188,8 +217,17 @@ export const listWarehouses = async (
   method: DeliveryMethod,
   rawQuery: string | null
 ): Promise<readonly WarehouseItem[] | null> => {
-  const warehouses = await cache.resolve(cityRef.toLowerCase(), () =>
-    loadCityWarehouses(cityRef)
+  const cityKey = cityRef.toLowerCase();
+
+  if (
+    !cache.isLoaded(cityKey) &&
+    activeMerges >= WAREHOUSE_MAX_CONCURRENT_MERGES
+  ) {
+    return null;
+  }
+
+  const warehouses = await cache.resolve(cityKey, () =>
+    loadCityWarehouses(cityKey)
   );
 
   if (warehouses === null) {

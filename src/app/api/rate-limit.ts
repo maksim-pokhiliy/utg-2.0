@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 const ORDER_WINDOW_MS = 60_000;
 
 const ORDER_MAX_REQUESTS = 5;
@@ -22,9 +24,17 @@ const MS_PER_SECOND = 1000;
 
 const MIN_RETRY_AFTER_SECONDS = 1;
 
+const TOO_MANY_REQUESTS_STATUS = 429;
+
+const TOO_MANY_REQUESTS_BODY = { error: "Too many requests" };
+
+const RETRY_AFTER_HEADER = "Retry-After";
+
 export type RateLimitVerdict =
   | { isAllowed: true }
   | { isAllowed: false; retryAfterSeconds: number };
+
+export type BlockedVerdict = Extract<RateLimitVerdict, { isAllowed: false }>;
 
 interface RateLimiterConfig {
   windowMs: number;
@@ -169,3 +179,11 @@ export const consumeRateLimit = (key: string | null): RateLimitVerdict =>
 export const consumeDirectoryRateLimit = (
   key: string | null
 ): RateLimitVerdict => directoryLimiter.consume(key);
+
+export const buildRateLimitedResponse = (
+  verdict: BlockedVerdict
+): NextResponse =>
+  NextResponse.json(TOO_MANY_REQUESTS_BODY, {
+    status: TOO_MANY_REQUESTS_STATUS,
+    headers: { [RETRY_AFTER_HEADER]: String(verdict.retryAfterSeconds) },
+  });
