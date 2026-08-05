@@ -22,10 +22,17 @@ interface ChipsOverrides {
   onChange?: (id: string) => void;
   required?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 const renderChips = (overrides: ChipsOverrides = {}): HTMLElement[] => {
-  const { value = MIDDLE, onChange = vi.fn(), required, disabled } = overrides;
+  const {
+    value = MIDDLE,
+    onChange = vi.fn(),
+    required,
+    disabled,
+    className,
+  } = overrides;
 
   render(
     <ChoiceChips
@@ -35,11 +42,14 @@ const renderChips = (overrides: ChipsOverrides = {}): HTMLElement[] => {
       options={OPTIONS}
       required={required}
       disabled={disabled}
+      className={className}
     />
   );
 
   return screen.getAllByRole("radio");
 };
+
+const group = (): HTMLElement => screen.getByRole("radiogroup");
 
 const press = (key: string, from: number, value = MIDDLE): string[][] => {
   const onChange = vi.fn();
@@ -153,7 +163,12 @@ describe("the keystrokes the component deliberately declines", () => {
     const chips = renderChips({ onChange });
 
     for (const modifier of MODIFIERS) {
-      fireEvent.keyDown(chips[1], { key: "ArrowRight", ...modifier });
+      const isDefaultAllowed = fireEvent.keyDown(chips[1], {
+        key: "ArrowRight",
+        ...modifier,
+      });
+
+      expect(isDefaultAllowed).toBe(true);
     }
 
     expect(onChange).not.toHaveBeenCalled();
@@ -163,9 +178,30 @@ describe("the keystrokes the component deliberately declines", () => {
     const onChange = vi.fn();
     const chips = renderChips({ onChange });
 
-    fireEvent.keyDown(chips[0], { key: " " });
+    const isDefaultAllowed = fireEvent.keyDown(chips[0], { key: " " });
 
     expect(onChange).not.toHaveBeenCalled();
+    expect(isDefaultAllowed).toBe(true);
+  });
+
+  it("ignores a printable key, so typing at a focused chip never moves the selection", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({ onChange });
+
+    const isDefaultAllowed = fireEvent.keyDown(chips[1], { key: "a" });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(isDefaultAllowed).toBe(true);
+  });
+
+  it("leaves Tab to the browser, or focus could never walk out of the group", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({ onChange });
+
+    const isDefaultAllowed = fireEvent.keyDown(chips[1], { key: "Tab" });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(isDefaultAllowed).toBe(true);
   });
 });
 
@@ -202,6 +238,18 @@ describe("the disabled group", () => {
 
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it("says so on the group too, because natively disabled chips read as an empty group", () => {
+    renderChips({ disabled: true });
+
+    expect(group().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("leaves the group enabled while the chips are live", () => {
+    renderChips();
+
+    expect(group().getAttribute("aria-disabled")).toBe("false");
+  });
 });
 
 describe("the caption above the chips", () => {
@@ -226,6 +274,18 @@ describe("the caption above the chips", () => {
       true
     );
   });
+
+  it("also marks the group required, since the aria-label shadows the asterisk out of the accessible name", () => {
+    renderChips({ required: true });
+
+    expect(group().getAttribute("aria-required")).toBe("true");
+  });
+
+  it("leaves the group optional when no asterisk is asked for", () => {
+    renderChips();
+
+    expect(group().getAttribute("aria-required")).toBe("false");
+  });
 });
 
 describe("the ink inversion that says which chip is chosen", () => {
@@ -242,5 +302,17 @@ describe("the ink inversion that says which chip is chosen", () => {
     expect(chips[0].classList.contains("bg-paper")).toBe(true);
     expect(chips[0].classList.contains("text-ink")).toBe(true);
     expect(chips[0].classList.contains("bg-ink")).toBe(false);
+  });
+});
+
+describe("the consumer className on the group", () => {
+  it("merges alongside the preset's column layout rather than replacing it", () => {
+    renderChips({ className: "mt-6" });
+
+    const root = group();
+
+    expect(root.classList.contains("mt-6")).toBe(true);
+    expect(root.classList.contains("flex-col")).toBe(true);
+    expect(root.classList.contains("gap-1.5")).toBe(true);
   });
 });

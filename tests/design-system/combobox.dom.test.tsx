@@ -8,6 +8,7 @@ import {
   it,
   vi,
   type Mock,
+  type MockInstance,
 } from "vitest";
 
 import { Combobox, type ComboboxOption } from "@root/design-system";
@@ -16,13 +17,30 @@ const ID = "np-city";
 const LISTBOX_ID = `${ID}-listbox`;
 const ERROR_ID = `${ID}-error`;
 const LABEL = "Місто";
+const LISTBOX_LABEL = "Міста Нової пошти";
+const PLACEHOLDER = "Почніть вводити назву";
+const FIELD_CLASS = "np-city-field";
 const EMPTY_LABEL = "Нічого не знайдено";
 const ERROR_TEXT = "Оберіть місто";
 const META_LABEL = "Львівська обл.";
+const ASTERISK = "*";
 const DEBOUNCE_MS = 250;
 const BLUR_GRACE_MS = 140;
 const MID_GRACE_MS = 100;
 const LOADING_BAR_COUNT = 3;
+const LOADING_BAR_WIDTHS = ["w-[60%]", "w-[45%]", "w-[70%]"];
+const WIDTH_UTILITY = /^w-\[/;
+const PULSE_CLASS = "animate-[utg-pulse_1.4s_var(--ease)_infinite]";
+const BAR_CLASSES = ["bg-muted", "h-3.5", PULSE_CLASS];
+const ACTIVE_ROW_CLASSES = ["bg-ink", "text-paper"];
+const INACTIVE_ROW_CLASS = "text-ink";
+const ACTIVE_META_CLASS = "text-band-muted";
+const INACTIVE_META_CLASS = "text-ink-faint";
+const PANEL_CLASSES = ["max-h-[220px]", "overflow-y-auto"];
+const INVALID_BORDER_CLASS = "border-destructive";
+const VALID_BORDER_CLASS = "border-input";
+const CHEVRON_SIZE = "18";
+const NEAREST_BLOCK: ScrollIntoViewOptions = { block: "nearest" };
 const HIDDEN_SELECTOR = '[aria-hidden="true"]';
 
 const OPTIONS: readonly ComboboxOption[] = [
@@ -35,8 +53,12 @@ interface Props {
   value?: string;
   options?: readonly ComboboxOption[];
   loading?: boolean;
+  listboxLabel?: string;
+  placeholder?: string;
+  required?: boolean;
   disabled?: boolean;
   error?: string;
+  className?: string;
 }
 
 interface Scene {
@@ -63,9 +85,13 @@ const renderCombobox = (props: Props = {}): Scene => {
       onSelect={onSelect}
       options={current.options ?? []}
       emptyLabel={EMPTY_LABEL}
-      loading={current.loading}
+      loading={current.loading ?? false}
+      listboxLabel={current.listboxLabel}
+      placeholder={current.placeholder}
+      required={current.required}
       disabled={current.disabled}
       error={current.error}
+      className={current.className}
     />
   );
 
@@ -96,15 +122,59 @@ const typeInto = (input: HTMLInputElement, next: string): void => {
   fireEvent.change(input, { target: { value: next } });
 };
 
+const hover = (row: HTMLElement): void => {
+  fireEvent.mouseOver(row);
+};
+
 const optionId = (index: number): string => `${ID}-option-${index}`;
 
 const panel = (): HTMLElement => screen.getByRole("listbox");
 
-const loadingBars = (): NodeListOf<Element> =>
-  panel().querySelectorAll(HIDDEN_SELECTOR);
+const rows = (): HTMLElement[] => screen.getAllByRole("option");
 
-const openWithResults = (): Scene => {
-  const scene = renderCombobox({ options: OPTIONS });
+const loadingBars = (): Element[] =>
+  Array.from(panel().querySelectorAll(HIDDEN_SELECTOR));
+
+const missing = (element: Element, utilities: readonly string[]): string[] =>
+  utilities.filter((utility) => !element.classList.contains(utility));
+
+const widthsOf = (element: Element): string[] =>
+  Array.from(element.classList).filter((utility) =>
+    WIDTH_UTILITY.test(utility)
+  );
+
+const metaOf = (row: HTMLElement): Element => {
+  const meta = row.children.item(1);
+
+  if (meta === null) {
+    throw new Error("The option row carries no meta span");
+  }
+
+  return meta;
+};
+
+const chevron = (): Element => {
+  const glyph = document.querySelector("svg");
+
+  if (glyph === null) {
+    throw new Error("The combobox rendered no chevron");
+  }
+
+  return glyph;
+};
+
+const fieldRoot = (): Element => {
+  const root = document.querySelector(`.${FIELD_CLASS}`);
+
+  if (root === null) {
+    throw new Error("The field root carries no consumer class");
+  }
+
+  return root;
+};
+
+const openWithResults = (props: Props = {}): Scene => {
+  const scene = renderCombobox({ options: OPTIONS, ...props });
 
   fireEvent.focus(scene.input);
   tick(DEBOUNCE_MS);
@@ -112,8 +182,17 @@ const openWithResults = (): Scene => {
   return scene;
 };
 
+Element.prototype.scrollIntoView = function scrollIntoView(): void {};
+
+let scrollIntoViewSpy: MockInstance<
+  (arg?: boolean | ScrollIntoViewOptions) => void
+>;
+
 beforeEach(() => {
   vi.useFakeTimers();
+  scrollIntoViewSpy = vi
+    .spyOn(Element.prototype, "scrollIntoView")
+    .mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -213,7 +292,39 @@ describe("the pending window that keeps the panel from flashing empty", () => {
     tick(DEBOUNCE_MS);
 
     expect(screen.getByText(EMPTY_LABEL).textContent).toBe(EMPTY_LABEL);
-    expect(panel().querySelectorAll(HIDDEN_SELECTOR).length).toBe(0);
+    expect(loadingBars().length).toBe(0);
+  });
+});
+
+describe("the rows of the query the user has already moved on from", () => {
+  it("pulls the previous results the instant a new keystroke opens a window", () => {
+    const { input } = openWithResults({ value: "Льв" });
+
+    expect(rows().length).toBe(OPTIONS.length);
+
+    typeInto(input, "Киї");
+
+    expect(screen.queryAllByRole("option").length).toBe(0);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+
+    tick(DEBOUNCE_MS - 1);
+
+    expect(screen.queryAllByRole("option").length).toBe(0);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+  });
+
+  it("keeps them back for the whole round trip once the consumer raises loading", () => {
+    const scene = openWithResults({ value: "Льв" });
+
+    typeInto(scene.input, "Киї");
+    tick(DEBOUNCE_MS);
+
+    expect(scene.onSearch).toHaveBeenLastCalledWith("Киї");
+
+    scene.update({ value: "Киї", options: OPTIONS, loading: true });
+
+    expect(screen.queryAllByRole("option").length).toBe(0);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
   });
 });
 
@@ -236,6 +347,29 @@ describe("the loading prop the consumer owns", () => {
 
     expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
     expect(screen.queryByText(EMPTY_LABEL)).toBeNull();
+  });
+});
+
+describe("the loading bars themselves", () => {
+  it("are design-system skeletons, muted fill and utg pulse included", () => {
+    const { input } = renderCombobox();
+
+    typeInto(input, "Льв");
+
+    const bars = loadingBars();
+
+    expect(bars.length).toBe(LOADING_BAR_COUNT);
+    expect(bars.map((bar) => missing(bar, BAR_CLASSES))).toEqual([[], [], []]);
+  });
+
+  it("carry the three ratified widths in order, so the block reads as a list and not a slab", () => {
+    const { input } = renderCombobox();
+
+    typeInto(input, "Льв");
+
+    expect(loadingBars().map(widthsOf)).toEqual(
+      LOADING_BAR_WIDTHS.map((width) => [width])
+    );
   });
 });
 
@@ -282,17 +416,26 @@ describe("the listbox a screen reader reads", () => {
     ).toBe(LISTBOX_ID);
   });
 
+  it("takes the listbox label over the field label when the consumer names the list", () => {
+    openWithResults({ listboxLabel: LISTBOX_LABEL });
+
+    expect(panel().getAttribute("aria-label")).toBe(LISTBOX_LABEL);
+    expect(
+      screen.getByRole("listbox", { name: LISTBOX_LABEL }).getAttribute("id")
+    ).toBe(LISTBOX_ID);
+  });
+
   it("renders one row per option and marks exactly one of them selected", () => {
     openWithResults();
 
-    const rows = screen.getAllByRole("option");
-    const selected = rows.filter(
+    const list = rows();
+    const selected = list.filter(
       (row) => row.getAttribute("aria-selected") === "true"
     );
 
-    expect(rows.length).toBe(OPTIONS.length);
+    expect(list.length).toBe(OPTIONS.length);
     expect(selected.length).toBe(1);
-    expect(rows[0].getAttribute("aria-selected")).toBe("true");
+    expect(list[0].getAttribute("aria-selected")).toBe("true");
   });
 
   it("points aria-activedescendant at the first row and moves it with the active row", () => {
@@ -304,11 +447,61 @@ describe("the listbox a screen reader reads", () => {
 
     expect(input.getAttribute("aria-activedescendant")).toBe(optionId(1));
 
-    const rows = screen.getAllByRole("option");
+    const list = rows();
 
-    expect(rows[0].getAttribute("aria-selected")).toBe("false");
-    expect(rows[1].getAttribute("aria-selected")).toBe("true");
-    expect(rows[1].getAttribute("id")).toBe(optionId(1));
+    expect(list[0].getAttribute("aria-selected")).toBe("false");
+    expect(list[1].getAttribute("aria-selected")).toBe("true");
+    expect(list[1].getAttribute("id")).toBe(optionId(1));
+  });
+});
+
+describe("the panel box the rows live in", () => {
+  it("scrolls inside the ratified 220px window instead of running down the page", () => {
+    openWithResults();
+
+    expect(missing(panel(), PANEL_CLASSES)).toEqual([]);
+  });
+
+  it("renders the chevron at the ratified 18px", () => {
+    renderCombobox();
+
+    expect(chevron().getAttribute("width")).toBe(CHEVRON_SIZE);
+    expect(chevron().getAttribute("height")).toBe(CHEVRON_SIZE);
+  });
+});
+
+describe("the ink inversion that says where Enter will land", () => {
+  it("fills the active row with ink and leaves the rest on paper", () => {
+    openWithResults();
+
+    const list = rows();
+
+    expect(missing(list[0], ACTIVE_ROW_CLASSES)).toEqual([]);
+    expect(list[1].classList.contains(INACTIVE_ROW_CLASS)).toBe(true);
+    expect(missing(list[1], ACTIVE_ROW_CLASSES)).toEqual(ACTIVE_ROW_CLASSES);
+  });
+
+  it("moves the inversion with the arrow key, one row inverted at a time", () => {
+    const { input } = openWithResults();
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    const list = rows();
+
+    expect(missing(list[1], ACTIVE_ROW_CLASSES)).toEqual([]);
+    expect(list[0].classList.contains(INACTIVE_ROW_CLASS)).toBe(true);
+    expect(missing(list[0], ACTIVE_ROW_CLASSES)).toEqual(ACTIVE_ROW_CLASSES);
+  });
+
+  it("mutes the meta on the inverted row and fades it on the rest", () => {
+    openWithResults();
+
+    const list = rows();
+
+    expect(metaOf(list[0]).classList.contains(ACTIVE_META_CLASS)).toBe(true);
+    expect(metaOf(list[0]).classList.contains(INACTIVE_META_CLASS)).toBe(false);
+    expect(metaOf(list[1]).classList.contains(INACTIVE_META_CLASS)).toBe(true);
+    expect(metaOf(list[1]).classList.contains(ACTIVE_META_CLASS)).toBe(false);
   });
 });
 
@@ -353,6 +546,54 @@ describe("walking the list from the keyboard", () => {
   });
 });
 
+describe("walking the list with the pointer", () => {
+  it("hands the active row to the option the pointer entered", () => {
+    const { input } = openWithResults();
+
+    hover(rows()[2]);
+
+    expect(input.getAttribute("aria-activedescendant")).toBe(optionId(2));
+    expect(rows()[2].getAttribute("aria-selected")).toBe("true");
+    expect(missing(rows()[2], ACTIVE_ROW_CLASSES)).toEqual([]);
+    expect(rows()[0].getAttribute("aria-selected")).toBe("false");
+  });
+});
+
+describe("the scroll the list does only for the keyboard", () => {
+  it("brings the newly active row into view when an arrow moves it", () => {
+    const { input } = openWithResults();
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith(NEAREST_BLOCK);
+  });
+
+  it("holds the list still when the pointer is the one moving the active row", () => {
+    openWithResults();
+
+    hover(rows()[2]);
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+  });
+
+  it("stays still on a later options change, because an arrow that hit the boundary armed nothing", () => {
+    const scene = openWithResults();
+
+    fireEvent.keyDown(scene.input, { key: "ArrowDown" });
+    fireEvent.keyDown(scene.input, { key: "ArrowDown" });
+    fireEvent.keyDown(scene.input, { key: "ArrowDown" });
+    scrollIntoViewSpy.mockClear();
+
+    scene.update({ options: [OPTIONS[0]] });
+
+    expect(scene.input.getAttribute("aria-activedescendant")).toBe(optionId(0));
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+  });
+});
+
 describe("picking an option", () => {
   it("hands the whole option object over on Enter and closes the panel", () => {
     const { input, onSelect } = openWithResults();
@@ -368,7 +609,7 @@ describe("picking an option", () => {
 
   it("picks on mousedown and cancels it, so the input never blurs out from under the pick", () => {
     const { input, onSelect } = openWithResults();
-    const row = screen.getAllByRole("option")[1];
+    const row = rows()[1];
 
     expect(fireEvent.mouseDown(row)).toBe(false);
     expect(onSelect).toHaveBeenCalledTimes(1);
@@ -400,6 +641,28 @@ describe("closing and reopening the panel", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
+  it("drops the armed search too, so a dismissed query costs no request", () => {
+    const { input, onSearch } = renderCombobox();
+
+    typeInto(input, "Льв");
+    fireEvent.keyDown(input, { key: "Escape" });
+    tick(DEBOUNCE_MS * 2);
+
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("reopens on the rows it already has, not on the bars of the query it dropped", () => {
+    const { input } = renderCombobox({ options: OPTIONS });
+
+    typeInto(input, "Льв");
+    fireEvent.keyDown(input, { key: "Escape" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(loadingBars().length).toBe(0);
+    expect(rows().length).toBe(OPTIONS.length);
+  });
+
   it("reopens on ArrowDown at the first row without asking the consumer to search again", () => {
     const { input, onSearch } = openWithResults();
 
@@ -410,7 +673,7 @@ describe("closing and reopening the panel", () => {
     fireEvent.keyDown(input, { key: "ArrowDown" });
 
     expect(input.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getAllByRole("option").length).toBe(OPTIONS.length);
+    expect(rows().length).toBe(OPTIONS.length);
     expect(input.getAttribute("aria-activedescendant")).toBe(optionId(0));
 
     tick(DEBOUNCE_MS);
@@ -430,7 +693,7 @@ describe("the grace period after focus leaves", () => {
     tick(BLUR_GRACE_MS - 1);
 
     expect(input.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getAllByRole("option").length).toBe(OPTIONS.length);
+    expect(rows().length).toBe(OPTIONS.length);
   });
 
   it("closes the panel when the grace expires", () => {
@@ -517,6 +780,22 @@ describe("the disabled combobox", () => {
 
     expect(screen.queryByRole("listbox")).toBeNull();
   });
+
+  it("closes an open panel for good, so re-enabling never brings stale rows back on its own", () => {
+    const scene = openWithResults();
+
+    expect(rows().length).toBe(OPTIONS.length);
+
+    scene.update({ options: OPTIONS, disabled: true });
+
+    expect(scene.input.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("listbox")).toBeNull();
+
+    scene.update({ options: OPTIONS, disabled: false });
+
+    expect(scene.input.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
 });
 
 describe("the error the field publishes", () => {
@@ -525,7 +804,7 @@ describe("the error the field publishes", () => {
 
     expect(input.getAttribute("aria-invalid")).toBe("true");
     expect(input.getAttribute("aria-describedby")).toBe(ERROR_ID);
-    expect(input.classList.contains("border-destructive")).toBe(true);
+    expect(input.classList.contains(INVALID_BORDER_CLASS)).toBe(true);
   });
 
   it("renders the message as an alert carrying the id the input names", () => {
@@ -544,13 +823,53 @@ describe("the error the field publishes", () => {
     expect(input.hasAttribute("aria-describedby")).toBe(false);
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("treats an empty error string as clean, not as a red border pointing at nothing", () => {
+    const { input } = renderCombobox({ error: "" });
+
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(input.hasAttribute("aria-describedby")).toBe(false);
+    expect(input.classList.contains(INVALID_BORDER_CLASS)).toBe(false);
+    expect(input.classList.contains(VALID_BORDER_CLASS)).toBe(true);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("the plain input contract the field forwards", () => {
+  it("hands the placeholder straight to the input", () => {
+    const { input } = renderCombobox({ placeholder: PLACEHOLDER });
+
+    expect(input.getAttribute("placeholder")).toBe(PLACEHOLDER);
+  });
+
+  it("marks the input required and the label with the asterisk", () => {
+    const { input } = renderCombobox({ required: true });
+
+    expect(input.required).toBe(true);
+    expect(screen.getByText(ASTERISK).textContent).toBe(` ${ASTERISK}`);
+  });
+
+  it("leaves the input optional and the label bare by default", () => {
+    const { input } = renderCombobox();
+
+    expect(input.required).toBe(false);
+    expect(screen.queryByText(ASTERISK)).toBeNull();
+  });
+
+  it("hands the consumer className to the field root rather than to the input", () => {
+    const { input } = renderCombobox({ className: FIELD_CLASS });
+
+    expect(document.querySelectorAll(`.${FIELD_CLASS}`).length).toBe(1);
+    expect(fieldRoot().contains(input)).toBe(true);
+    expect(input.classList.contains(FIELD_CLASS)).toBe(false);
+  });
 });
 
 describe("the meta line an option may carry", () => {
   it("renders the meta beside the label when the option has one", () => {
     openWithResults();
 
-    const row = screen.getAllByRole("option")[0];
+    const row = rows()[0];
 
     expect(row.childElementCount).toBe(2);
     expect(row.textContent).toBe(`${OPTIONS[0].label}${META_LABEL}`);
@@ -559,7 +878,7 @@ describe("the meta line an option may carry", () => {
   it("renders nothing beside the label when the option has none", () => {
     openWithResults();
 
-    const row = screen.getAllByRole("option")[2];
+    const row = rows()[2];
 
     expect(row.childElementCount).toBe(1);
     expect(row.textContent).toBe(OPTIONS[2].label);
@@ -581,9 +900,11 @@ describe("timers that would outlive the component", () => {
     const { input, unmount } = openWithResults();
 
     fireEvent.blur(input);
-    unmount();
-    tick(BLUR_GRACE_MS * 2);
 
-    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(vi.getTimerCount()).toBe(1);
+
+    unmount();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
