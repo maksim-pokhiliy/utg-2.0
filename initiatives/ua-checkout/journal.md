@@ -22,3 +22,24 @@ Append-only. One entry per session/step.
   its board already points at the bot repo for the bot phase) to `ua-checkout` — one
   genuinely-driven track in this repo. The B2 prereq (x-relay-secret) is carried here
   as U0 so the pointer survives the switch.
+
+## 2026-08-05 — U1 done: requirements + design brief; D-3 ratified (payload v2)
+
+- НП API contract verified against two independent SDK mirrors
+  (`maddsua/NovaPoshtaREST` typings, `daaner/NovaPoshta` docs) — the official portal
+  403s behind Cloudflare (UAC-2 opened for the U4 re-check). Confirmed:
+  `searchSettlements` (online city search, `{CityName, Limit, Page}`) and
+  `getWarehouses` (`{CityRef, …}`, `CategoryOfWarehouse`, `DenyToSelect`,
+  daily-refresh guidance straight from НП's own docs — our 24h server cache follows
+  it).
+- `requirements.md` written: three modes (uk-live / uk-fallback / en-generic),
+  operator-driven field model (patronymic uk-only, contact channel chips, no email,
+  no НП refs), +380 normalization rules, fail-open budgets, copy drafts (pre-submit
+  expectations block + consent line), test matrix with the DEF folds.
+- **D-3 RATIFIED** (planner engineering call, veto open): payload v2 — one
+  discriminated envelope (`version: 2`, `customer`/`delivery.mode`/`source`),
+  rollout bot-dual-accept → shop-flip → v1 drop. `cart/total/currency/locale`
+  byte-compatible.
+- `design-brief.md` written for the U2 Claude Design session: form flow, two new DS
+  primitives to spec (async Combobox, ChoiceChips), full state matrix incl.
+  uk-fallback and mobile. **Next: user drives the brief through Claude Design.**

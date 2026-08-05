@@ -7,7 +7,7 @@ sessions.
 | #   | Step                                                                                                                            | Mechanism                                    | Gate (how it's accepted)                                                                       | Status  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
 | U0  | PREREQ (external, bot-polish B2): `x-relay-secret` sender ships in this repo                                                    | `/feature small` per the bot-polish plan     | DEF-13 closed; relay authenticated                                                              | pending |
-| U1  | Requirements spec + contract draft: order-information model, NP API methods verified against official docs, env key names, D-3 | planner doc session                          | `requirements.md` ratified; D-3 (payload shape) RATIFIED                                        | pending |
+| U1  | Requirements spec + contract draft: order-information model, NP API methods verified against official docs, env key names, D-3 | planner doc session                          | `requirements.md` ratified; D-3 (payload shape) RATIFIED                                        | ✅ done (2026-08-05) |
 | U2  | Design pass: `design-brief.md` → Claude Design (user drives) → ratify → DesignSync export                                       | design pass                                  | exported screens (uk-live, uk-fallback, en-check) + new-DS-component specs ratified             | pending |
 | U3  | DS window: new form primitives per ratified design + DEF-41 fold-in                                                             | `/step`                                      | primitives inside the sealed DS with units; seal lint green                                     | pending |
 | U4  | NP directory proxy route(s) + caching + env plumbing (`.env.example`, e2e blanking)                                             | `/step`                                      | route units incl. fail-open paths; blank-env build + e2e green                                  | pending |
@@ -17,11 +17,16 @@ sessions.
 
 Open design details deferred to their step (not silently decided early):
 
-- exact NP endpoints/methods + response fields — verified against official docs in U1;
-- payload shape: clean v2 vs additive extension of the current field set — D-3, U1;
+- ~~exact NP endpoints/methods~~ — verified in U1 via two SDK mirrors
+  (requirements §4); U4 executor re-checks response fields against the official
+  portal (UAC-2);
+- ~~payload shape~~ — D-3 RATIFIED: v2 discriminated envelope (requirements §5);
 - combobox interaction pattern (async search, loading/empty/error, keyboard nav) — U2/U3;
-- whether patronymic and courier-address fields show per delivery method or always — U2;
+- ~~patronymic/courier field visibility~~ — fixed in requirements §2 (per-method
+  conditionals; patronymic uk-only), U2 designs the states;
 - NP proxy cache strategy + TTLs (route revalidate vs in-memory) and its rate-limit
-  posture — U4;
-- consent-line wording uk/en — U1 draft, U2 placement;
-- e2e strategy for the mocked-live NP mode (route mock vs fixture server) — U5.
+  posture — U4 (requirements §4 sets the budgets: ~24h warehouses, minutes for
+  settlement search, 2–3s timeout, fail-open);
+- consent-line wording uk/en — drafted in requirements §6, U2 ratifies placement;
+- e2e strategy for the mocked-live NP mode — requirements §7 mandates Playwright
+  interception of OUR proxy (never live NP); exact fixtures — U5.

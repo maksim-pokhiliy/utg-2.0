@@ -10,8 +10,8 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | #   | Step                                                   | Status     | Pointer                                  |
 | --- | ------------------------------------------------------ | ---------- | ---------------------------------------- |
 | U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending | `../utg-tg-order-bot/initiatives/bot-polish/` |
-| U1  | Requirements spec + contract draft (resolve D-3)       | 🔵 active  | `requirements.md` (being written)        |
-| U2  | Design pass (brief → Claude Design → export)           | ⬜ pending | `design-brief.md` → `design-export/`     |
+| U1  | Requirements spec + contract draft (resolve D-3)       | ✅ done    | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
+| U2  | Design pass (brief → Claude Design → export)           | 🔵 active — **user drives the session** | `design-brief.md` → `design-export/`     |
 | U3  | DS window: form primitives + DEF-41                    | ⬜ pending | plan.md                                  |
 | U4  | NP proxy route + caching + env plumbing                | ⬜ pending | plan.md                                  |
 | U5  | Checkout rework (uk both modes, contacts, copy)        | ⬜ pending | plan.md                                  |
@@ -20,14 +20,13 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-Finish U1: write `requirements.md` (order-information model + payload draft, NP API
-methods verified against official docs) and `design-brief.md`; ratify D-3. Then the
-user drives the brief through Claude Design (U2). U0 (B2) can run in parallel any time
-— it must land before U6.
+U2: the user drives `design-brief.md` through the Claude Design project → ratify →
+DesignSync export into `design-export/`. U0 (B2) can run in parallel any time — it
+must land before U6. After U2: U3 (DS window) via `/step`.
 
 ## Open decisions awaiting ratification
 
-- **D-3** — payload shape: clean v2 vs additive extension (resolve in U1).
+(none — D-1…D-3 ratified; D-3 is a planner call with the user veto explicitly open)
 
 ## Live carry-forwards
 
@@ -35,6 +34,8 @@ user drives the brief through Claude Design (U2). U0 (B2) can run in parallel an
   decoder, → U5), DEF-41 (DS Skeleton, → U3).
 - **UAC-1** (OPEN) — real NP API key from the operator into Vercel env; needed live
   only by U7, fallback covers until then.
+- **UAC-2** (OPEN) — U4 executor re-verifies NP response fields against the official
+  portal (it's Cloudflare-gated; U1 verified via two SDK mirrors).
 
 ## Gotchas a resuming session must know
 

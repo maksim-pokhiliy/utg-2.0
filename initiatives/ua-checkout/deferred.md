@@ -18,6 +18,7 @@ when they close here).
 | DEF-39 | cart decoder field validation + honest typing                         | fold into U5 (checkout rework touches the same decoder) | SCHEDULED |
 | DEF-41 | DS Skeleton hidden-state coupling                                     | fold into U3 (the DS window)                            | SCHEDULED |
 | UAC-1  | NP business-cabinet API key: obtain from the operator, set in Vercel  | external dependency; needed live by U7 (fallback covers until then) | OPEN      |
+| UAC-2  | NP response fields re-verified against the official portal            | U1 verified via two SDK mirrors (requirements §4); the U4 executor re-checks on the Cloudflare-gated portal | OPEN      |
 
 ## Detail on the live ones
 

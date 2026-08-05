@@ -14,7 +14,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | --- | ---------------------------------------------------- | -------- |
 | D-1 | MVP scope: the four ratified axes                    | RATIFIED |
 | D-2 | Requirements-first: form + bot contract are movable  | RATIFIED |
-| D-3 | Payload shape: clean v2 vs additive extension        | OPEN     |
+| D-3 | Payload v2: one discriminated envelope, bot dual-accept rollout | RATIFIED |
 
 ---
 
@@ -52,12 +52,23 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   packing "НП №23" into `address` would freeze a hack into a sacred contract.
 - **Links.** journal 2026-08-05; production-polish D-12 (currency field precedent).
 
-### D-3 — Payload shape: clean v2 vs additive extension
+### D-3 — Payload v2: one discriminated envelope for all modes, bot dual-accept rollout
 
-- **Status:** OPEN — resolve in U1 with the field model on the table.
-- **Question.** Redesign the payload cleanly around the new order-information model
-  (v2: nested delivery/contact objects, drop dead fields like `state`), or extend the
-  current flat shape additively (new optional keys, old keys kept for en)?
-- **Constraints for the call.** en generic form keeps sending its field set either
-  way; the bot renders one message template per shape; DEF-13 `currency` read must
-  keep working; contract tests pin whatever is chosen on both sides.
+- **Status:** RATIFIED (planner engineering call, 2026-08-05; user veto open — flag
+  raised in the session summary).
+- **Decision.** The order payload becomes a v2 envelope (`version: 2`) with
+  `customer{first_name,last_name,patronymic?,phone,contact_channel}` and a
+  discriminated `delivery.mode`: `np_branch`/`np_postomat` (city, warehouse,
+  warehouse_number), `np_courier` (city, street, building, apartment?), `generic`
+  (en: country, state?, city, address) — plus `delivery.source:
+  "np_directory"|"manual"`. `cart`/`total`/`currency`/`locale` stay byte-compatible
+  (D-12, DEF-3 size-in-title). No НП refs, no email (requirements §2). Rollout: bot
+  ships dual-accept (v1+v2) → shop flips all three modes to v2 → bot drops v1 in a
+  follow-up. Exact shape: `requirements.md` §5.
+- **Rationale.** Additive extension would carry dead fields (`state`, a hardcoded
+  `country` for uk) and invite packing structured data into legacy strings — the
+  exact hack D-2 forbids; a discriminated union gives the bot one trivial template
+  per mode and gives contract tests one honest shape to pin; the bot mid-rewrite
+  (B1 shipped) makes dual-accept nearly free, and `version` makes the rollout
+  window explicit instead of key-sniffing.
+- **Links.** requirements.md §5; journal 2026-08-05; production-polish D-12, DEF-3.
