@@ -13,7 +13,7 @@ import {
 import { cn } from "../../lib/cn";
 import { Field } from "../field/field";
 import { Icon } from "../icon/icon";
-import { input } from "../input/input";
+import { Input } from "../input/input";
 import { Skeleton } from "../skeleton/skeleton";
 
 const DEBOUNCE_MS = 250;
@@ -49,7 +49,7 @@ interface ComboboxProps {
   onSelect: (option: ComboboxOption) => void;
   options: readonly ComboboxOption[];
   emptyLabel: string;
-  loading?: boolean;
+  loading: boolean;
   listboxLabel?: string;
   placeholder?: string;
   required?: boolean;
@@ -67,7 +67,7 @@ export function Combobox({
   onSelect,
   options,
   emptyLabel,
-  loading = false,
+  loading,
   listboxLabel,
   placeholder,
   required = false,
@@ -83,15 +83,16 @@ export function Combobox({
   const activeOptionRef = useRef<HTMLDivElement | null>(null);
   const isKeyboardMoveRef = useRef(false);
 
-  const hasError = error !== undefined;
+  const hasError = Boolean(error);
   const isBusy = isPending || loading;
   const isPanelOpen = isOpen && !disabled;
   const safeIndex =
     options.length === 0 ? -1 : clamp(activeIndex, 0, options.length - 1);
   const isListVisible = isPanelOpen && !isBusy && options.length > 0;
   const isEmptyShown = isPanelOpen && !isBusy && options.length === 0;
-  const activeOptionId =
-    isListVisible && safeIndex >= 0 ? `${id}-option-${safeIndex}` : undefined;
+  const activeOptionId = isListVisible
+    ? `${id}-option-${safeIndex}`
+    : undefined;
 
   useEffect(() => {
     if (safeIndex >= 0 && isKeyboardMoveRef.current) {
@@ -99,6 +100,13 @@ export function Combobox({
       activeOptionRef.current?.scrollIntoView({ block: "nearest" });
     }
   }, [safeIndex]);
+
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+      setActiveIndex(0);
+    }
+  }, [disabled]);
 
   useEffect(() => {
     return () => {
@@ -116,6 +124,15 @@ export function Combobox({
       setIsPending(false);
       onSearch(query);
     }, DEBOUNCE_MS);
+  };
+
+  const moveActive = (next: number): void => {
+    if (next === safeIndex) {
+      return;
+    }
+
+    isKeyboardMoveRef.current = true;
+    setActiveIndex(next);
   };
 
   const pick = (option: ComboboxOption): void => {
@@ -151,6 +168,8 @@ export function Combobox({
 
     if (event.key === "Escape" && isPanelOpen) {
       event.preventDefault();
+      clearTimer(debounceRef);
+      setIsPending(false);
       setIsOpen(false);
       setActiveIndex(0);
     } else if (event.key === "ArrowDown" && !isPanelOpen) {
@@ -159,13 +178,11 @@ export function Combobox({
       setActiveIndex(0);
     } else if (event.key === "ArrowDown" && isListVisible) {
       event.preventDefault();
-      isKeyboardMoveRef.current = true;
-      setActiveIndex(Math.min(safeIndex + 1, options.length - 1));
+      moveActive(Math.min(safeIndex + 1, options.length - 1));
     } else if (event.key === "ArrowUp" && isListVisible) {
       event.preventDefault();
-      isKeyboardMoveRef.current = true;
-      setActiveIndex(Math.max(safeIndex - 1, 0));
-    } else if (event.key === "Enter" && isListVisible && safeIndex >= 0) {
+      moveActive(Math.max(safeIndex - 1, 0));
+    } else if (event.key === "Enter" && isListVisible) {
       event.preventDefault();
       pick(options[safeIndex]);
     }
@@ -215,9 +232,8 @@ export function Combobox({
       className={className}
     >
       <div className="relative block">
-        <input
+        <Input
           id={id}
-          type="text"
           role="combobox"
           value={value}
           placeholder={placeholder}
@@ -234,7 +250,8 @@ export function Combobox({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className={cn(input({ invalid: hasError }), "pr-10")}
+          invalid={hasError}
+          className="pr-10"
         />
         <Icon
           name="chevron-down"
