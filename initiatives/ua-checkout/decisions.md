@@ -15,6 +15,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-1 | MVP scope: the four ratified axes                    | RATIFIED |
 | D-2 | Requirements-first: form + bot contract are movable  | RATIFIED |
 | D-3 | Payload v2: one discriminated envelope, bot dual-accept rollout | RATIFIED |
+| D-4 | U2 ratified: design-export is the visual SSOT                   | RATIFIED |
 
 ---
 
@@ -72,3 +73,23 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   (B1 shipped) makes dual-accept nearly free, and `version` makes the rollout
   window explicit instead of key-sniffing.
 - **Links.** requirements.md §5; journal 2026-08-05; production-polish D-12, DEF-3.
+
+### D-4 — U2 ratified: the design export is the visual SSOT for U3/U5
+
+- **Status:** RATIFIED (user, 2026-08-05: «дизайнер отработал, мне всё нравится»;
+  export pulled the same day).
+- **Decision.** `design-export/` in this directory is the visual SSOT for the DS
+  window (U3) and the checkout rework (U5). Engineering-binding details ratified with
+  it: the Combobox is **portal-less** (in-flow panel, border-fuse `margin-top:-2px`,
+  debounce 250ms, blur-grace 140ms, focus-opens-list); ChoiceChips are radio-semantic
+  chips at 44px touch height; **one CartLine, two scale presets** (drawer 64px /
+  summary 56px), media frame stretches to full line height; the summary's pending
+  lock dims controls only (opacity .45); uk field order is Прізвище → Ім'я; the
+  success screen gains the flag-yellow check tile; submit errors surface as the
+  existing error Toast bottom-center. Copy in the prototype dict = ratified strings
+  (matches requirements §6), except the uk name placeholders (UAC-3).
+- **Rationale.** Same regime that made 4a–4h converge in production-polish: one
+  ratified visual source, implementation matches it, deviations need a new decision —
+  prevents per-PR design relitigating.
+- **Links.** design-export/README.md; component-specs-addendum.md; journal
+  2026-08-05.

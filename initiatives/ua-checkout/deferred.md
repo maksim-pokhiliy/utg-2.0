@@ -19,6 +19,7 @@ when they close here).
 | DEF-41 | DS Skeleton hidden-state coupling                                     | fold into U3 (the DS window)                            | SCHEDULED |
 | UAC-1  | NP business-cabinet API key: obtain from the operator, set in Vercel  | external dependency; needed live by U7 (fallback covers until then) | OPEN      |
 | UAC-2  | NP response fields re-verified against the official portal            | U1 verified via two SDK mirrors (requirements §4); the U4 executor re-checks on the Cloudflare-gated portal | OPEN      |
+| UAC-3  | uk name placeholders in the ratified prototype dict are still John/Wick | U5 dictionaries use real UA examples per requirements §6 (e.g. Марія / Шевченко); no design impact | SCHEDULED |
 
 ## Detail on the live ones
 

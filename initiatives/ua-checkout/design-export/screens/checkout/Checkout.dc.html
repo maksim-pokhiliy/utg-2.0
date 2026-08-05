@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/fonts.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/colors.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/typography.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/spacing.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/base.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/tokens/components.css">
+  <link rel="stylesheet" href="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/styles.css">
+  <script>(function(){var u="../../_ds/utg-design-system-62bf007e-1ea9-45bc-a40a-f64544314e8c/_ds_bundle.js";function go(){var s=document.createElement("script");s.src=u;document.head.appendChild(s);}if(window.React){go();}else{var n=0,t=setInterval(function(){if(window.React||++n>500){clearInterval(t);go();}},20);}})();</script>
+  <script src="../data/catalog.js"></script>
+  <script src="../data/np-directory.js"></script>
+  <style>header a img{height:38px !important}@keyframes utgToastIn{from{transform:translate(-50%,12px);opacity:0}to{transform:translate(-50%,0);opacity:1}}@media (min-width:900px){#co-aside{position:sticky;top:76px}}</style>
+</helmet>
+<div id="checkout" style="min-height:100vh;display:flex;flex-direction:column;background:var(--paper)">
+  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Header" locale="{{ locale }}" on-locale-change="{{ setLocale }}" logo-src="../../assets/logo-640.png" sticky="{{ true }}" nav="{{ navLinks }}" on-cart-click="{{ openCart }}" cart-count="{{ cartCount }}" hint-size="100%,64px"></x-import>
+  <main style="flex:1 1 auto">
+    <section class="utg-band" data-screen-label="Checkout band">
+      <div style="max-width:var(--container);margin:0 auto;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2) var(--space-4)">
+        <h1>{{ bandTitle }}</h1>
+        <sc-if value="{{ formVisible }}" hint-placeholder-val="{{ false }}"><span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--band-muted)">{{ metaCaption }}</span></sc-if>
+      </div>
+    </section>
+    <sc-if value="{{ success }}" hint-placeholder-val="{{ false }}">
+      <section data-screen-label="Order received" style="padding:var(--space-7) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:column;gap:var(--space-5)">
+          <div style="width:48px;height:48px;background:var(--flag-yellow);color:var(--ink);display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div>
+          <p style="margin:0;font:var(--type-body);color:var(--ink);max-width:55ch;text-wrap:pretty">{{ successBody }}</p>
+          <p style="margin:0;font:var(--type-small);color:var(--ink-faint);max-width:55ch;text-wrap:pretty">{{ successNote }}</p>
+        </div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ emptyVisible }}" hint-placeholder-val="{{ false }}">
+      <section data-screen-label="Empty cart" style="padding:var(--space-8) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--space-2)">
+          <p style="margin:0;font:var(--type-h3);font-family:var(--font-display);text-transform:uppercase;letter-spacing:var(--display-tracking)">{{ emptyTitle }}</p>
+          <p class="utg-help" style="margin:0">{{ emptyHint }} <a href="{{ drawerCatalogHref }}" style="color:var(--secondary)">{{ hereLabel }}</a></p>
+        </div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ formVisible }}" hint-placeholder-val="{{ true }}">
+      <section data-screen-label="Order form" style="padding:var(--space-6) var(--gutter) var(--space-9)">
+        <div style="max-width:var(--container);margin:0 auto;display:flex;flex-direction:row-reverse;flex-wrap:wrap;gap:var(--space-6) var(--space-7);align-items:flex-start">
+          <aside id="co-aside" style="flex:1 1 320px;min-width:0">
+            <div style="border:var(--rule) solid var(--ink);background:var(--paper)">
+              <div style="background:var(--band);color:var(--band-foreground);display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);padding:10px 16px;font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase">
+                <span>{{ summaryLabel }}</span>
+                <span style="color:var(--band-muted)">[{{ summaryCount }}]</span>
+              </div>
+              <div style="padding:4px 16px 16px">
+                <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:stretch;gap:var(--space-3);padding:10px 0;border-bottom:var(--rule-hair) solid var(--line)">
+                    <img src="{{ l.image }}" alt="" loading="lazy" style="width:56px;align-self:stretch;min-height:56px;height:auto;object-fit:cover;border:1px solid var(--ink);flex:none">
+                    <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-height:56px">
+                      <span style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-2)">
+                        <span style="font:var(--type-small);color:var(--ink);text-wrap:pretty">{{ l.title }}</span>
+                        <span style="{{ editCtlStyle }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.IconButton" icon="trash" size="16" label="{{ removeLabel }}" on-click="{{ l.askRemove }}" style="width:28px;height:28px;margin:-2px -4px 0 0;flex:none" hint-size="28px,28px"></x-import></span>
+                      </span>
+                      <span style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)">
+                        <span style="{{ editCtlStyle }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.QuantityStepper" size="sm" value="{{ l.qty }}" on-change="{{ l.setQty }}" label="{{ qtyLabel }}" hint-size="110px,32px"></x-import></span>
+                        <x-import component-from-global-scope="UTGDesignSystem_62bf00.Price" uah="{{ l.total }}" locale="{{ locale }}" hint-size="56px,21px"></x-import>
+                      </span>
+                    </span>
+                  </div>
+                </sc-for>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);padding-top:14px">
+                  <span class="utg-label">{{ totalLabel }}</span>
+                  <x-import component-from-global-scope="UTGDesignSystem_62bf00.Price" uah="{{ totalUah }}" locale="{{ locale }}" big="{{ true }}" hint-size="90px,29px"></x-import>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <form style="flex:2 1 360px;min-width:0" onSubmit="{{ submit }}">
+            <h2 style="margin:0 0 var(--space-4);font:500 var(--text-h3)/1 var(--font-display);letter-spacing:var(--display-tracking);text-transform:uppercase">{{ customerLabel }}</h2>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--space-4)">
+                <div class="utg-field">
+                  <label class="utg-label" for="f_last_name">{{ f.last_name.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.last_name.errCls }}" id="f_last_name" name="last_name" type="text" value="{{ f.last_name.v }}" placeholder="{{ f.last_name.ph }}" disabled="{{ pending }}" onChange="{{ f.last_name.on }}">
+                  <sc-if value="{{ f.last_name.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+                <div class="utg-field">
+                  <label class="utg-label" for="f_first_name">{{ f.first_name.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.first_name.errCls }}" id="f_first_name" name="first_name" type="text" value="{{ f.first_name.v }}" placeholder="{{ f.first_name.ph }}" disabled="{{ pending }}" onChange="{{ f.first_name.on }}">
+                  <sc-if value="{{ f.first_name.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+              </div>
+              <sc-if value="{{ isUk }}" hint-placeholder-val="{{ true }}">
+                <div class="utg-field">
+                  <label class="utg-label" for="f_patronymic">{{ patronymicLabel }}</label>
+                  <input class="utg-input" id="f_patronymic" name="patronymic" type="text" value="{{ f.patronymic.v }}" disabled="{{ pending }}" onChange="{{ f.patronymic.on }}">
+                </div>
+              </sc-if>
+              <div class="utg-field">
+                <label class="utg-label" for="f_telephone">{{ f.telephone.label }}<span class="req"> *</span></label>
+                <input class="utg-input {{ f.telephone.errCls }}" id="f_telephone" name="telephone" type="tel" inputMode="tel" value="{{ f.telephone.v }}" placeholder="{{ f.telephone.ph }}" disabled="{{ pending }}" onChange="{{ f.telephone.on }}">
+                <sc-if value="{{ f.telephone.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+              </div>
+              <div class="utg-field" role="radiogroup" aria-label="{{ channelLabel }}">
+                <span class="utg-label">{{ channelLabel }}<span class="req"> *</span></span>
+                <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+                  <sc-for list="{{ channelChips }}" as="c" hint-placeholder-count="3">
+                    <button type="button" role="radio" aria-checked="{{ c.checked }}" disabled="{{ pending }}" style="{{ c.style }}" style-hover="background:var(--ink);color:var(--paper)" style-focus="outline:2px solid var(--secondary);outline-offset:2px" onClick="{{ c.pick }}">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <hr style="margin:var(--space-6) 0;border:0;border-top:var(--rule-hair) solid var(--line)">
+            <h2 style="margin:0 0 var(--space-4);font:500 var(--text-h3)/1 var(--font-display);letter-spacing:var(--display-tracking);text-transform:uppercase">{{ deliveryLabel }}</h2>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <sc-if value="{{ isUk }}" hint-placeholder-val="{{ true }}">
+                <div class="utg-field" role="radiogroup" aria-label="{{ methodLabel }}">
+                  <span class="utg-label">{{ methodLabel }}<span class="req"> *</span></span>
+                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+                    <sc-for list="{{ methodChips }}" as="c" hint-placeholder-count="3">
+                      <button type="button" role="radio" aria-checked="{{ c.checked }}" disabled="{{ pending }}" style="{{ c.style }}" style-hover="background:var(--ink);color:var(--paper)" style-focus="outline:2px solid var(--secondary);outline-offset:2px" onClick="{{ c.pick }}">{{ c.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <sc-if value="{{ npFallback }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;font:var(--type-small);color:var(--ink-soft);max-width:55ch;text-wrap:pretty">{{ npFallbackHint }}</p>
+                  <div class="utg-field">
+                    <label class="utg-label" for="f_np_city_fb">{{ cityLabel }}<span class="req"> *</span></label>
+                    <input class="utg-input {{ f.np_city.errCls }}" id="f_np_city_fb" name="np_city" type="text" value="{{ f.np_city.v }}" disabled="{{ pending }}" onChange="{{ f.np_city.on }}">
+                    <sc-if value="{{ f.np_city.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                  </div>
+                  <sc-if value="{{ isWarehouseMethod }}" hint-placeholder-val="{{ true }}">
+                    <div class="utg-field">
+                      <label class="utg-label" for="f_np_wh_fb">{{ warehouseLabel }}<span class="req"> *</span></label>
+                      <input class="utg-input {{ f.np_warehouse.errCls }}" id="f_np_wh_fb" name="np_warehouse" type="text" value="{{ f.np_warehouse.v }}" disabled="{{ pending }}" onChange="{{ f.np_warehouse.on }}">
+                      <sc-if value="{{ f.np_warehouse.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                    </div>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ npLive }}" hint-placeholder-val="{{ true }}">
+                  <div class="utg-field" style="position:relative">
+                    <label class="utg-label" for="cb_city">{{ cityLabel }}<span class="req"> *</span></label>
+                    <div style="position:relative">
+                      <input class="utg-input {{ cbCity.errCls }}" id="cb_city" role="combobox" aria-expanded="{{ cbCity.open }}" aria-controls="cb_city_list" aria-autocomplete="list" autoComplete="off" value="{{ cbCity.q }}" disabled="{{ pending }}" onChange="{{ cbCity.onType }}" onFocus="{{ cbCity.onFocus }}" onBlur="{{ cbCity.onBlur }}" onKeyDown="{{ cbCity.onKey }}" style="padding-right:40px">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-faint)"><path d="m6 9 6 6 6-6"></path></svg>
+                    </div>
+                    <sc-if value="{{ cbCity.open }}" hint-placeholder-val="{{ false }}">
+                      <div id="cb_city_list" role="listbox" style="position:absolute;top:100%;left:0;right:0;z-index:30;margin-top:-2px;border:var(--rule) solid var(--ink);background:var(--paper);max-height:220px;overflow-y:auto">
+                        <sc-if value="{{ cbCity.loading }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px"><span style="display:block;height:14px;width:60%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span><span style="display:block;height:14px;width:45%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span><span style="display:block;height:14px;width:70%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span></div>
+                        </sc-if>
+                        <sc-if value="{{ cbCity.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px;font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">{{ npEmptyLabel }}</div></sc-if>
+                        <sc-for list="{{ cbCity.items }}" as="o" hint-placeholder-count="0">
+                          <div role="option" id="{{ o.id }}" aria-selected="{{ o.active }}" style="{{ o.style }}" onMouseDown="{{ o.pick }}" onMouseEnter="{{ o.hover }}">
+                            <span style="flex:1 1 auto;min-width:0">{{ o.label }}</span>
+                            <span style="font:var(--type-caption);letter-spacing:var(--caps-tracking);color:{{ o.metaColor }};text-transform:uppercase;flex:none">{{ o.meta }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cbCity.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                  </div>
+                  <sc-if value="{{ isWarehouseMethod }}" hint-placeholder-val="{{ true }}">
+                    <div class="utg-field" style="position:relative">
+                      <label class="utg-label" for="cb_wh">{{ warehouseLabel }}<span class="req"> *</span></label>
+                      <div style="position:relative">
+                        <input class="utg-input {{ cbWh.errCls }}" id="cb_wh" role="combobox" aria-expanded="{{ cbWh.open }}" aria-controls="cb_wh_list" aria-autocomplete="list" autoComplete="off" value="{{ cbWh.q }}" disabled="{{ cbWh.disabled }}" onChange="{{ cbWh.onType }}" onFocus="{{ cbWh.onFocus }}" onBlur="{{ cbWh.onBlur }}" onKeyDown="{{ cbWh.onKey }}" style="padding-right:40px">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-faint)"><path d="m6 9 6 6 6-6"></path></svg>
+                      </div>
+                      <sc-if value="{{ cbWh.open }}" hint-placeholder-val="{{ false }}">
+                        <div id="cb_wh_list" role="listbox" style="position:absolute;top:100%;left:0;right:0;z-index:30;margin-top:-2px;border:var(--rule) solid var(--ink);background:var(--paper);max-height:220px;overflow-y:auto">
+                          <sc-if value="{{ cbWh.loading }}" hint-placeholder-val="{{ false }}">
+                            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:10px"><span style="display:block;height:14px;width:70%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span><span style="display:block;height:14px;width:55%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span><span style="display:block;height:14px;width:65%;background:var(--paper-dim);animation:utg-pulse 1.2s ease-in-out infinite"></span></div>
+                          </sc-if>
+                          <sc-if value="{{ cbWh.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px;font:var(--type-caption);letter-spacing:var(--caps-tracking);text-transform:uppercase;color:var(--ink-faint)">{{ npEmptyLabel }}</div></sc-if>
+                          <sc-for list="{{ cbWh.items }}" as="o" hint-placeholder-count="0">
+                            <div role="option" id="{{ o.id }}" aria-selected="{{ o.active }}" style="{{ o.style }}" onMouseDown="{{ o.pick }}" onMouseEnter="{{ o.hover }}"><span style="flex:1 1 auto;min-width:0">{{ o.label }}</span></div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ cbWh.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                    </div>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ isCourier }}" hint-placeholder-val="{{ false }}">
+                  <div class="utg-field">
+                    <label class="utg-label" for="f_street">{{ streetLabel }}<span class="req"> *</span></label>
+                    <input class="utg-input {{ f.street.errCls }}" id="f_street" name="street" type="text" value="{{ f.street.v }}" disabled="{{ pending }}" onChange="{{ f.street.on }}">
+                    <sc-if value="{{ f.street.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--space-4)">
+                    <div class="utg-field">
+                      <label class="utg-label" for="f_building">{{ buildingLabel }}<span class="req"> *</span></label>
+                      <input class="utg-input {{ f.building.errCls }}" id="f_building" name="building" type="text" value="{{ f.building.v }}" disabled="{{ pending }}" onChange="{{ f.building.on }}">
+                      <sc-if value="{{ f.building.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                    </div>
+                    <div class="utg-field">
+                      <label class="utg-label" for="f_apartment">{{ apartmentLabel }}</label>
+                      <input class="utg-input" id="f_apartment" name="apartment" type="text" value="{{ f.apartment.v }}" disabled="{{ pending }}" onChange="{{ f.apartment.on }}">
+                    </div>
+                  </div>
+                </sc-if>
+              </sc-if>
+              <sc-if value="{{ isEn }}" hint-placeholder-val="{{ false }}">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--space-4)">
+                  <div class="utg-field">
+                    <label class="utg-label" for="f_country">{{ f.country.label }}<span class="req"> *</span></label>
+                    <input class="utg-input {{ f.country.errCls }}" id="f_country" name="country" type="text" value="{{ f.country.v }}" placeholder="{{ f.country.ph }}" disabled="{{ pending }}" onChange="{{ f.country.on }}">
+                    <sc-if value="{{ f.country.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                  </div>
+                  <div class="utg-field">
+                    <label class="utg-label" for="f_state">{{ f.state.label }}</label>
+                    <input class="utg-input" id="f_state" name="state" type="text" value="{{ f.state.v }}" placeholder="{{ f.state.ph }}" disabled="{{ pending }}" onChange="{{ f.state.on }}">
+                  </div>
+                </div>
+                <div class="utg-field">
+                  <label class="utg-label" for="f_city">{{ f.city.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.city.errCls }}" id="f_city" name="city" type="text" value="{{ f.city.v }}" placeholder="{{ f.city.ph }}" disabled="{{ pending }}" onChange="{{ f.city.on }}">
+                  <sc-if value="{{ f.city.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+                <div class="utg-field">
+                  <label class="utg-label" for="f_address">{{ f.address.label }}<span class="req"> *</span></label>
+                  <input class="utg-input {{ f.address.errCls }}" id="f_address" name="address" type="text" value="{{ f.address.v }}" placeholder="{{ f.address.ph }}" disabled="{{ pending }}" onChange="{{ f.address.on }}">
+                  <sc-if value="{{ f.address.err }}" hint-placeholder-val="{{ false }}"><span class="utg-errtext" role="alert">{{ requiredLabel }}</span></sc-if>
+                </div>
+              </sc-if>
+              <div class="utg-field">
+                <label class="utg-label" for="f_additional">{{ additionalLabel }}</label>
+                <textarea class="utg-input" id="f_additional" name="additional" rows="4" value="{{ f.additional.v }}" disabled="{{ pending }}" onChange="{{ f.additional.on }}"></textarea>
+              </div>
+            </div>
+            <div style="margin:var(--space-6) 0 0;border:var(--rule) solid var(--ink);padding:var(--space-4) var(--space-5)">
+              <p style="margin:0;font:var(--type-small);color:var(--ink);max-width:60ch;text-wrap:pretty">{{ expectations }}</p>
+            </div>
+            <p style="margin:var(--space-4) 0 var(--space-3);font:var(--type-caption);letter-spacing:.02em;color:var(--ink-faint);max-width:60ch;text-wrap:pretty">{{ consent }}</p>
+            <x-import component-from-global-scope="UTGDesignSystem_62bf00.Button" variant="accent" block="{{ true }}" type="submit" loading="{{ pending }}" hint-size="100%,48px">{{ placeOrderLabel }}</x-import>
+          </form>
+        </div>
+      </section>
+    </sc-if>
+  </main>
+  <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="UTGDesignSystem_62bf00.Footer" locale="{{ locale }}" nav="{{ navLinks }}" hint-size="100%,280px"></x-import></sc-if>
+  <x-import component-from-global-scope="UTGCart.Drawer" from="../cart/cart-drawer.js" locale="{{ locale }}" open="{{ cartOpen }}" on-close="{{ closeCart }}" catalog-href="{{ drawerCatalogHref }}" checkout-href="{{ drawerCheckoutHref }}" hint-size="0px,0px"></x-import>
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="UTGDesignSystem_62bf00.Dialog" open="{{ true }}" title="{{ removeTitle }}" on-close="{{ confirmCancel }}" actions="{{ confirmActions }}" hint-size="0px,0px">{{ confirmBody }}</x-import>
+  </sc-if>
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;width:min(400px,calc(100vw - 32px));animation:utgToastIn .2s var(--ease)">
+      <x-import component-from-global-scope="UTGDesignSystem_62bf00.Toast" variant="error" on-close="{{ closeToast }}" hint-size="100%,52px">{{ toastMsg }}</x-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;locale&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;uk&quot;, &quot;en&quot;], &quot;default&quot;: &quot;uk&quot;, &quot;tsType&quot;: &quot;\&quot;uk\&quot; | \&quot;en\&quot;&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;npDirectory&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;live&quot;, &quot;fallback&quot;], &quot;default&quot;: &quot;live&quot;, &quot;tsType&quot;: &quot;\&quot;live\&quot; | \&quot;fallback\&quot;&quot;, &quot;section&quot;: &quot;Design review&quot;},
+  &quot;submitOutcome&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;success&quot;, &quot;error&quot;], &quot;default&quot;: &quot;success&quot;, &quot;tsType&quot;: &quot;\&quot;success\&quot; | \&quot;error\&quot;&quot;, &quot;section&quot;: &quot;Design review&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    locale: null, cartOpen: false, form: {}, errors: [], pending: false, success: false, toast: null,
+    channel: "call", method: "branch", confirmLine: null,
+    city: { q: "", chosen: null, open: false, active: -1, loading: false, items: [] },
+    wh: { q: "", chosen: null, open: false, active: -1, loading: false, items: [] },
+  };
+  componentDidMount() {
+    const sub = () => { this._unsub = window.UTG_CATALOG.cart.subscribe(() => this.forceUpdate()); };
+    if (window.UTG_CATALOG) sub();
+    else this._t = setInterval(() => { if (window.UTG_CATALOG) { clearInterval(this._t); sub(); this.forceUpdate(); } }, 25);
+  }
+  componentWillUnmount() {
+    clearInterval(this._t); this._unsub && this._unsub();
+    clearTimeout(this._submitT); clearTimeout(this._cityT); clearTimeout(this._whT);
+    clearTimeout(this._cityBlurT); clearTimeout(this._whBlurT);
+  }
+  maskPhone(raw) {
+    let d = String(raw).replace(/\D/g, "");
+    if (d.startsWith("380")) d = d.slice(3);
+    else if (d.startsWith("0")) d = d.slice(1);
+    d = d.slice(0, 9);
+    if (!d) return "";
+    let out = "+380";
+    if (d.length > 0) out += " " + d.slice(0, 2);
+    if (d.length > 2) out += " " + d.slice(2, 5);
+    if (d.length > 5) out += " " + d.slice(5, 7);
+    if (d.length > 7) out += " " + d.slice(7, 9);
+    return out;
+  }
+  cbSearch(key) {
+    const st = this.state[key];
+    const timer = key === "city" ? "_cityT" : "_whT";
+    clearTimeout(this[timer]);
+    this.setState({ [key]: { ...this.state[key], loading: true, open: true, items: [] } });
+    this[timer] = setTimeout(() => {
+      const NP = window.UTG_NP;
+      if (!NP) return;
+      const done = (res) => this.setState({ [key]: { ...this.state[key], loading: false, items: res, active: res.length ? 0 : -1 } });
+      if (key === "city") NP.searchCities(this.state.city.q, done);
+      else {
+        const cityId = this.state.city.chosen && this.state.city.chosen.id;
+        const kind = this.state.method === "locker" ? "locker" : "branch";
+        NP.searchWarehouses(cityId, kind, this.state.wh.q, done);
+      }
+    }, 250);
+  }
+  cbPick(key, item) {
+    const label = key === "city" ? item.name : item.label;
+    const patch = { [key]: { ...this.state[key], q: label, chosen: item, open: false, active: -1 } };
+    if (key === "city") patch.wh = { q: "", chosen: null, open: false, active: -1, loading: false, items: [] };
+    this.setState(patch);
+    this.clearErr(key === "city" ? "np_city" : "np_warehouse");
+  }
+  clearErr(n) { this.setState((s) => ({ errors: s.errors.filter((x) => x !== n) })); }
+  cbVals(key, d, disabled, errName) {
+    const st = this.state[key];
+    const errs = this.state.errors;
+    const isErr = errs.includes(errName);
+    const optBase = {
+      display: "flex", alignItems: "center", gap: "10px", minHeight: "44px", padding: "6px 14px",
+      font: "var(--type-small)", color: "var(--ink)", cursor: "pointer",
+    };
+    return {
+      q: st.q,
+      open: st.open && !disabled,
+      loading: st.loading,
+      empty: !st.loading && st.open && st.items.length === 0,
+      disabled: disabled || this.state.pending,
+      err: isErr, errCls: isErr ? "utg-input--error" : "",
+      onType: (e) => {
+        const q = e.target.value;
+        this.setState({ [key]: { ...this.state[key], q: q, chosen: null } }, () => this.cbSearch(key));
+        this.clearErr(errName);
+      },
+      onFocus: () => { if (!disabled) this.cbSearch(key); },
+      onBlur: () => {
+        const timer = key === "city" ? "_cityBlurT" : "_whBlurT";
+        this[timer] = setTimeout(() => this.setState({ [key]: { ...this.state[key], open: false } }), 140);
+      },
+      onKey: (e) => {
+        const s = this.state[key];
+        if (e.key === "Escape") { this.setState({ [key]: { ...s, open: false } }); return; }
+        if (!s.open || !s.items.length) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); this.setState({ [key]: { ...s, active: Math.min(s.items.length - 1, s.active + 1) } }); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); this.setState({ [key]: { ...s, active: Math.max(0, s.active - 1) } }); }
+        else if (e.key === "Enter") { e.preventDefault(); if (s.active >= 0) this.cbPick(key, s.items[s.active]); }
+      },
+      items: st.items.map((it, i) => ({
+        id: "cb_" + key + "_opt_" + i,
+        label: key === "city" ? it.name : it.label,
+        meta: key === "city" ? it.region : "",
+        metaColor: st.active === i ? "var(--band-muted)" : "var(--ink-faint)",
+        active: st.active === i,
+        style: st.active === i ? { ...optBase, background: "var(--ink)", color: "var(--paper)" } : optBase,
+        pick: (e) => { e.preventDefault(); this.cbPick(key, it); },
+        hover: () => this.setState({ [key]: { ...this.state[key], active: i } }),
+      })),
+    };
+  }
+  renderVals() {
+    const C = window.UTG_CATALOG;
+    this._hash = this._hash || Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const hashLang = this._hash.lang === "en" || this._hash.lang === "uk" ? this._hash.lang : null;
+    const locale = this.state.locale ?? hashLang ?? this.props.locale ?? "uk";
+    const d = C ? C.dict[locale] : {};
+    const isUk = locale === "uk";
+    const npLive = isUk && (this.props.npDirectory ?? "live") === "live";
+    const npFallback = isUk && !npLive;
+    const method = this.state.method;
+    const isWarehouseMethod = method === "branch" || method === "locker";
+    const rawLines = C ? C.cart.lines(locale) : [];
+    const count = rawLines.reduce((s, l) => s + l.qty, 0);
+    const total = rawLines.reduce((s, l) => s + l.uah * l.qty, 0);
+    const errs = this.state.errors;
+    const FIELDS = {
+      first_name: [d.firstName, d.firstPh], last_name: [d.lastName, d.lastPh],
+      patronymic: [d.patronymic, ""],
+      telephone: [isUk ? d.phoneShort : d.phoneShort, isUk ? d.phoneMaskPh : d.phonePh],
+      country: [d.country, d.countryPh], state: [d.region, d.regionPh],
+      city: [d.city, d.cityPh], address: [d.address, d.addressPh],
+      np_city: [d.npCity, ""], np_warehouse: [method === "locker" ? d.npLocker : d.npBranch, ""],
+      street: [d.street, ""], building: [d.building, ""], apartment: [d.apartment, ""],
+      additional: [d.additional, ""],
+    };
+    const f = {};
+    Object.keys(FIELDS).forEach((n) => {
+      const isErr = errs.includes(n);
+      f[n] = {
+        label: FIELDS[n][0] ?? "", ph: FIELDS[n][1] ?? "",
+        v: this.state.form[n] ?? "",
+        err: isErr, errCls: isErr ? "utg-input--error" : "",
+        on: (e) => {
+          let val = e.target.value;
+          if (n === "telephone" && isUk) val = this.maskPhone(val);
+          this.setState((s) => ({ form: { ...s.form, [n]: val }, errors: s.errors.filter((x) => x !== n) }));
+        },
+      };
+    });
+    const chip = (checked) => ({
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      minHeight: "44px", padding: "0 16px", border: "2px solid var(--ink)", cursor: "pointer",
+      font: "500 0.8125rem var(--font-mono)", letterSpacing: "var(--caps-tracking)", textTransform: "uppercase",
+      background: checked ? "var(--ink)" : "var(--paper)", color: checked ? "var(--paper)" : "var(--ink)",
+      transition: "background var(--dur) var(--ease), color var(--dur) var(--ease)",
+      opacity: this.state.pending ? ".55" : "1",
+    });
+    const mkChips = (list, cur, set) => list.map(([id, label]) => ({
+      label, checked: cur === id, style: chip(cur === id),
+      pick: () => this.setState(set(id)),
+    }));
+    const pendingLock = this.state.pending;
+    const REQ_UK = ["last_name", "first_name", "telephone"].concat(
+      npLive
+        ? (isWarehouseMethod ? [] : ["street", "building"])
+        : (isWarehouseMethod ? ["np_city", "np_warehouse"] : ["np_city", "street", "building"])
+    );
+    const REQ_EN = ["first_name", "last_name", "telephone", "country", "city", "address"];
+    return {
+      locale, isUk, isEn: !isUk,
+      setLocale: (l) => { if (C) C.setHash({ lang: l }); this.setState({ locale: l }); },
+      navLinks: C ? C.navLinks(locale) : null,
+      ready: !!C,
+      cartCount: C ? C.cart.count() : 0,
+      cartOpen: !!this.state.cartOpen,
+      openCart: () => this.setState({ cartOpen: true }),
+      closeCart: () => this.setState({ cartOpen: false }),
+      drawerCatalogHref: C ? C.catalogHref(locale) : "#",
+      drawerCheckoutHref: C ? C.checkoutHref(locale) : "#",
+      bandTitle: this.state.success ? (d.orderReceived ?? "") : (d.checkout ?? ""),
+      metaCaption: C ? C.countItems(count, locale) : "",
+      success: this.state.success,
+      formVisible: !!C && !this.state.success && rawLines.length > 0,
+      emptyVisible: !!C && !this.state.success && rawLines.length === 0,
+      emptyTitle: d.emptyTitle ?? "", emptyHint: d.emptyHint ?? "", hereLabel: d.here ?? "",
+      successBody: d.successBody ?? "", successNote: d.successNote ?? "",
+      customerLabel: d.customer ?? "", deliveryLabel: d.delivery ?? "",
+      summaryLabel: d.summary ?? "", summaryCount: count, totalLabel: d.total ?? "", totalUah: total,
+      requiredLabel: d.required ?? "", placeOrderLabel: d.placeOrder ?? "",
+      patronymicLabel: d.patronymic ?? "", channelLabel: d.channelLabel ?? "", methodLabel: d.methodLabel ?? "",
+      cityLabel: d.npCity ?? "", warehouseLabel: method === "locker" ? (d.npLocker ?? "") : (d.npBranch ?? ""),
+      streetLabel: d.street ?? "", buildingLabel: d.building ?? "", apartmentLabel: d.apartment ?? "",
+      additionalLabel: d.additional ?? "", npEmptyLabel: d.npEmpty ?? "", npFallbackHint: d.npFallbackHint ?? "",
+      expectations: d.expectations ?? "", consent: d.consent ?? "",
+      npLive, npFallback, isWarehouseMethod, isCourier: method === "courier",
+      channelChips: mkChips([["call", d.chCall], ["telegram", d.chTelegram], ["viber", d.chViber]], this.state.channel, (id) => ({ channel: id })),
+      methodChips: mkChips([["branch", d.mBranch], ["locker", d.mLocker], ["courier", d.mCourier]], method, (id) => ({ method: id, wh: { q: "", chosen: null, open: false, active: -1, loading: false, items: [] }, errors: this.state.errors.filter((x) => x !== "np_warehouse" && x !== "street" && x !== "building") })),
+      cbCity: this.cbVals("city", d, false, "np_city"),
+      cbWh: this.cbVals("wh", d, !this.state.city.chosen, "np_warehouse"),
+      f,
+      pending: pendingLock,
+      editCtlStyle: pendingLock ? { opacity: ".45", pointerEvents: "none" } : {},
+      qtyLabel: d.quantity ?? "", removeLabel: d.removeConfirm ?? "",
+      lines: rawLines.map((l) => ({
+        title: l.title, image: l.image, qty: l.qty, total: l.uah * l.qty,
+        setQty: (v) => { if (!pendingLock && C) C.cart.setQty(l.id, v); },
+        askRemove: () => { if (!pendingLock) this.setState({ confirmLine: l }); },
+      })),
+      confirmOpen: !!this.state.confirmLine,
+      removeTitle: d.removeTitle ?? "",
+      confirmBody: this.state.confirmLine ? (d.removeBody ?? "").replace("{title}", this.state.confirmLine.title) : "",
+      confirmCancel: () => this.setState({ confirmLine: null }),
+      confirmActions: this.state.confirmLine ? React.createElement(React.Fragment, null,
+        React.createElement(window.UTGDesignSystem_62bf00.Button, { variant: "ghost", size: "sm", onClick: () => this.setState({ confirmLine: null }) }, d.cancel),
+        React.createElement(window.UTGDesignSystem_62bf00.Button, { variant: "destructive", size: "sm", onClick: () => { C.cart.remove(this.state.confirmLine.id); this.setState({ confirmLine: null }); } }, d.removeConfirm)
+      ) : null,
+      submit: (e) => {
+        e.preventDefault();
+        if (this.state.pending || this.state.success || !C) return;
+        const req = isUk ? REQ_UK : REQ_EN;
+        const missing = req.filter((n) => {
+          if (n === "telephone" && isUk) return String(this.state.form.telephone ?? "").replace(/\D/g, "").length < 12;
+          return !String(this.state.form[n] ?? "").trim();
+        });
+        if (isUk && npLive) {
+          if (!this.state.city.chosen) missing.push("np_city");
+          if (isWarehouseMethod && !this.state.wh.chosen) missing.push("np_warehouse");
+        }
+        if (missing.length) {
+          this.setState({ errors: missing });
+          setTimeout(() => { const el = document.querySelector(".utg-input--error"); el && el.focus(); }, 60);
+          return;
+        }
+        this.setState({ pending: true, toast: null });
+        this._submitT = setTimeout(() => {
+          if ((this.props.submitOutcome ?? "success") === "error") {
+            this.setState({ pending: false, toast: d.orderError ?? "" });
+            this._toastN = (this._toastN || 0) + 1; const n = this._toastN;
+            setTimeout(() => { if (this._toastN === n && this.state.toast) this.setState({ toast: null }); }, 6000);
+          } else {
+            C.cart.clear();
+            this.setState({ pending: false, success: true, form: {}, errors: [] });
+            window.scrollTo(0, 0);
+          }
+        }, 1400);
+      },
+      toastVisible: !!this.state.toast, toastMsg: this.state.toast ?? "",
+      closeToast: () => this.setState({ toast: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

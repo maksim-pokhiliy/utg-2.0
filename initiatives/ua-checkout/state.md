@@ -11,7 +11,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | --- | ------------------------------------------------------ | ---------- | ---------------------------------------- |
 | U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending | `../utg-tg-order-bot/initiatives/bot-polish/` |
 | U1  | Requirements spec + contract draft (resolve D-3)       | ✅ done    | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
-| U2  | Design pass (brief → Claude Design → export)           | 🔵 active — **user drives the session** | `design-brief.md` → `design-export/`     |
+| U2  | Design pass (brief → Claude Design → export)           | ✅ done    | `design-export/` · D-4 · journal 2026-08-05 |
 | U3  | DS window: form primitives + DEF-41                    | ⬜ pending | plan.md                                  |
 | U4  | NP proxy route + caching + env plumbing                | ⬜ pending | plan.md                                  |
 | U5  | Checkout rework (uk both modes, contacts, copy)        | ⬜ pending | plan.md                                  |
@@ -20,13 +20,14 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U2: the user drives `design-brief.md` through the Claude Design project → ratify →
-DesignSync export into `design-export/`. U0 (B2) can run in parallel any time — it
-must land before U6. After U2: U3 (DS window) via `/step`.
+U3 (DS window) via `/step`: Combobox + ChoiceChips per
+`design-export/screens/checkout/component-specs-addendum.md`, the CartLine media
+amendment, and the DEF-41 Skeleton fold-in. U0 (B2, x-relay-secret) still pending —
+can run any time, must land before U6.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-3 ratified; D-3 is a planner call with the user veto explicitly open)
+(none — D-1…D-4 ratified; D-3 is a planner call with the user veto explicitly open)
 
 ## Live carry-forwards
 
@@ -36,6 +37,8 @@ must land before U6. After U2: U3 (DS window) via `/step`.
   only by U7, fallback covers until then.
 - **UAC-2** (OPEN) — U4 executor re-verifies NP response fields against the official
   portal (it's Cloudflare-gated; U1 verified via two SDK mirrors).
+- **UAC-3** (SCHEDULED → U5) — uk name placeholders in the ratified dict are still
+  John/Wick; dictionaries get real UA examples per requirements §6.
 
 ## Gotchas a resuming session must know
 

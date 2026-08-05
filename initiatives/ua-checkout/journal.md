@@ -64,3 +64,22 @@ Append-only. One entry per session/step.
   frame, drawer + summary, proportions to ratify), requirements §9 bullet, charter
   DS-window bullet. Implementation: U3 DS window. **User restarts the design
   session with the updated brief.**
+
+## 2026-08-05 — U2 done: design ratified and exported (D-4)
+
+- The design session delivered against the full brief; user ratified («мне всё
+  нравится»). Export pulled via DesignSync from project UTG
+  (`01558ea9-…`) into `design-export/`: the three-mode Checkout screen (locale ×
+  npDirectory × submitOutcome tweaks), the Combobox/ChoiceChips/CartLine-amendment
+  spec addendum, the rebuilt cart drawer, the НП directory mock, the prototype
+  catalog+dict plumbing, dc-runtime.
+- Export review: covers every brief item (UA flow, editable summary at 56px scale
+  with pending lock, CartLine full-height media at both scales, expectations box +
+  consent line, redesigned success state, error toast); copy matches requirements §6
+  verbatim; seal intact (no token changes — screens link the ratified DS's embedded
+  copy). One gap: uk name placeholders still John/Wick → UAC-3, fixes in U5
+  dictionaries.
+- **D-4 RATIFIED** — export is the visual SSOT; engineering-binding details recorded
+  (portal-less combobox with 250ms/140ms timings, 44px chips, one CartLine with
+  64/56 presets, controls-only pending dim, Прізвище→Ім'я order).
+- Next: U3 (DS window) via /step. U0/B2 still pending, needed before U6.
