@@ -12,7 +12,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending                     | `../utg-tg-order-bot/initiatives/bot-polish/`         |
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
-| U3  | DS window: form primitives + DEF-41                      | 🔵 PR #18 green — awaiting user browser gate + merge | PR #18 · D-5 · D-6                                    |
+| U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ⬜ pending                     | plan.md                                               |
 | U5  | Checkout rework (uk both modes, contacts, copy)          | ⬜ pending                     | plan.md                                               |
 | U6  | Contract flip (paired shop+bot PRs)                      | ⬜ pending                     | plan.md · D-3                                         |
@@ -20,11 +20,10 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U3: PR #18 is review-fixed (D-6 round), planner-verified (full battery + invariants
-independently green), CI + Vercel preview green. WAITING on the user browser gate
-(drawer media, /reports skeletons) → user merges (squash, as PR #2–#17). Then:
-prod verify + close-out docs, then U4 (NP proxy). U0 (B2) still pending — must
-land before U6.
+U4 (NP proxy route + caching + env plumbing): contour with the user, then /step.
+U0 (B2, x-relay-secret) still pending — must land before U6. The UAC-4 + UAC-8
+DS-hygiene/kit-backport window is unblocked now that U3 is merged and can run
+between steps.
 
 ## Open decisions awaiting ratification
 
@@ -33,7 +32,7 @@ land before U6.
 ## Live carry-forwards
 
 - Inherited, SCHEDULED into steps: DEF-36 + DEF-37 (e2e, → U4/U5/U6), DEF-39 (cart
-  decoder, → U5), DEF-41 (DS Skeleton, → U3).
+  decoder, → U5). DEF-41 — CLOSED by U3 (both ledgers).
 - **UAC-1** (OPEN) — real NP API key from the operator into Vercel env; needed live
   only by U7, fallback covers until then.
 - **UAC-2** (OPEN) — U4 executor re-verifies NP response fields against the official

@@ -16,7 +16,7 @@ when they close here).
 | DEF-36 | e2e limiter-bucket isolation (rate-limit state bleeds between specs)    | fold into the e2e work of U4/U5                                                                                                                  | SCHEDULED |
 | DEF-37 | relay-forwarding e2e (proxy route forwarding never exercised e2e)       | fold into U6 (contract flip proves forwarding)                                                                                                   | SCHEDULED |
 | DEF-39 | cart decoder field validation + honest typing                           | fold into U5 (checkout rework touches the same decoder)                                                                                          | SCHEDULED |
-| DEF-41 | DS Skeleton hidden-state coupling                                       | fold into U3 (the DS window)                                                                                                                     | SCHEDULED |
+| DEF-41 | DS Skeleton hidden-state coupling                                       | fold into U3 (the DS window)                                                                                                                     | CLOSED    |
 | UAC-1  | NP business-cabinet API key: obtain from the operator, set in Vercel    | external dependency; needed live by U7 (fallback covers until then)                                                                              | OPEN      |
 | UAC-2  | NP response fields re-verified against the official portal              | U1 verified via two SDK mirrors (requirements §4); the U4 executor re-checks on the Cloudflare-gated portal                                      | OPEN      |
 | UAC-3  | uk name placeholders in the ratified prototype dict are still John/Wick | U5 dictionaries use real UA examples per requirements §6 (e.g. Марія / Шевченко); no design impact                                               | SCHEDULED |
@@ -44,4 +44,8 @@ when they close here).
 
 ## Closed history
 
-(none yet)
+- **DEF-41** (2026-08-05, U3 / PR #18) — `Skeleton` owns its settled state
+  (`settled` prop: fade + pulse-stop internal); `ReportsScreen` dropped the
+  `animate-none` knowledge of DS internals; `grep animate-none src/components/`
+  is empty and unit+e2e guarded. Closed in the production-polish canonical
+  ledger the same day.

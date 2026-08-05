@@ -83,3 +83,39 @@ Append-only. One entry per session/step.
   (portal-less combobox with 250ms/140ms timings, 44px chips, one CartLine with
   64/56 presets, controls-only pending dim, Прізвище→Ім'я order).
 - Next: U3 (DS window) via /step. U0/B2 still pending, needed before U6.
+
+## 2026-08-05 — U3 shipped: PR #18 squash-merged (`ac1b73a`), prod-verified; DEF-41 closed
+
+- Full /step pipeline. Executor (opus) ran /feature from
+  `step-u3-ds-window-prompt.md`; plan gate triaged same day → D-5 (one skeleton
+  cadence 1.4s superseding the addendum's inline 1.2s; the summary preset shipped
+  COMPLETE incl. `IconSize` {16,18}; `loading` naming; a11y supersets accepted).
+- Independent deep review: request-changes — 76 pre-cap candidates → 24 reported
+  (honest empty tail), 14 CONFIRMED with runtime reproductions: stale-selectable
+  rows during the round-trip, Enter escaping to the enclosing form while busy,
+  the pointer-reopen dead end, disabled-chip hover inversion, armed-debounce
+  leaks on disable/blur. Its independent mutation stand exposed the first
+  round's thin test floor (14/18 "what the code does" mutations survived, incl.
+  deleting CartLine `media`/`total`/quantity callback on the live drawer).
+- Fix round (same executor): all 14 routed items landed under D-6 (combobox owns
+  the keyboard while open — prototype parity superseded; stale-frame kill by
+  construction via `SearchPhase idle|pending|awaiting` with explicit consumer
+  acknowledgment; chips `disabled:pointer-events-none`; ChoiceChips composes an
+  extended `Field`; exact class-set pins). Honest mutation stand rebuilt: 175
+  mutations, 147 killed; the 11 top survivors closed — four were real bugs
+  (nameless cart line, never-clicked remove, chip missing `type="button"` — a
+  submit trap for the future checkout form, unacknowledgeable `loading` arm).
+- Planner verification (phase 6, own runs): lint / typecheck / prettier,
+  485/485 units, zero-env build, 12/12 e2e — all green under memory fences;
+  invariant greps + diff fence clean (13 files, src+tests only); five key fixes
+  spot-verified at source. CI battery + Vercel preview green.
+- Infrastructure surfaced by the round: master CI had been red since Aug 2
+  (prettier vs initiatives prose — the whole battery was masked). Fixed by
+  excluding `initiatives/` from prettier (`e1343e0`); the PR run was re-triggered
+  on a fresh merge ref via close/reopen (a plain rerun reuses the stale SHA).
+- User merged (squash `ac1b73a`). Prod verified live: Vercel success on the
+  merge commit, four pages 200, the U3 CSS fingerprint (`min-h-11`) served from
+  prod. **DEF-41 CLOSED** in both ledgers.
+- Ledger deltas of the step: UAC-5/6/7 (review riders → U4/U5), UAC-8 (chip-base
+  unification + fade-duration dedup → the DS-hygiene window with UAC-4).
+- Next: U4 contour (NP proxy). U0/B2 still pending — must precede U6.
