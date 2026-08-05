@@ -2,14 +2,16 @@ import { createDirectoryCache } from "../cache";
 import { callNpDirectory, isRecord, readString } from "../client";
 
 const WAREHOUSE_CACHE_TTL_MS = 86_400_000;
-const WAREHOUSE_CACHE_MAX_CITIES = 25;
+const WAREHOUSE_CACHE_MAX_CITIES = 150;
 const WAREHOUSE_ROW_LIMIT = 30;
 const WAREHOUSE_PAGE_SIZE = 500;
 const WAREHOUSE_MAX_PAGES = 10;
 const WAREHOUSE_MERGE_TIMEOUT_MS = 7000;
 const WORKING_STATUS = "Working";
 const DENIED_FLAG = "1";
+const DENIED_CODE = 1;
 const MAX_QUERY_LENGTH = 64;
+const MAX_LABEL_LENGTH = 256;
 const NUMBER_PREFIX = "№";
 
 export type DeliveryMethod = "branch" | "postomat";
@@ -39,12 +41,17 @@ export const isDeliveryMethod = (
 const isWarehouseCategory = (value: string): value is WarehouseCategory =>
   value === "Branch" || value === "Postomat";
 
+const isDeniedValue = (value: unknown): boolean =>
+  value === DENIED_FLAG || value === DENIED_CODE || value === true;
+
+const capLabel = (text: string): string => text.slice(0, MAX_LABEL_LENGTH);
+
 const toWarehouse = (row: unknown): CachedWarehouse | null => {
   if (!isRecord(row)) {
     return null;
   }
 
-  const label = readString(row.Description);
+  const label = capLabel(readString(row.Description));
   const number = readString(row.Number);
 
   if (label === "" || number === "") {
@@ -55,7 +62,7 @@ const toWarehouse = (row: unknown): CachedWarehouse | null => {
     return null;
   }
 
-  if (readString(row.DenyToSelect) === DENIED_FLAG) {
+  if (isDeniedValue(row.DenyToSelect)) {
     return null;
   }
 
@@ -146,12 +153,19 @@ const rankWarehouses = (
     return warehouses;
   }
 
-  const numberMatches: CachedWarehouse[] = [];
+  const exactMatches: CachedWarehouse[] = [];
+  const prefixMatches: CachedWarehouse[] = [];
   const labelMatches: CachedWarehouse[] = [];
 
   for (const warehouse of warehouses) {
+    if (warehouse.number === query) {
+      exactMatches.push(warehouse);
+
+      continue;
+    }
+
     if (warehouse.number.startsWith(query)) {
-      numberMatches.push(warehouse);
+      prefixMatches.push(warehouse);
 
       continue;
     }
@@ -161,7 +175,7 @@ const rankWarehouses = (
     }
   }
 
-  return [...numberMatches, ...labelMatches];
+  return [...exactMatches, ...prefixMatches, ...labelMatches];
 };
 
 const toWarehouseItem = (warehouse: CachedWarehouse): WarehouseItem => ({
@@ -174,7 +188,7 @@ export const listWarehouses = async (
   method: DeliveryMethod,
   rawQuery: string | null
 ): Promise<readonly WarehouseItem[] | null> => {
-  const warehouses = await cache.resolve(cityRef, () =>
+  const warehouses = await cache.resolve(cityRef.toLowerCase(), () =>
     loadCityWarehouses(cityRef)
   );
 

@@ -40,6 +40,16 @@ const FIRST_PAGE = "1";
 const PRESENT_SEPARATOR = ", ";
 const EMPTY_TEXT = "";
 
+const MAX_QUERY_LENGTH = 64;
+const OVERLONG_QUERY_LENGTH = 300;
+const OVERLONG_QUERY = "к".repeat(OVERLONG_QUERY_LENGTH);
+const SLICED_QUERY = "к".repeat(MAX_QUERY_LENGTH);
+
+const LABEL_CAP = 256;
+const OVERLONG_LABEL_LENGTH = 900;
+const OVERLONG_LABEL = "п".repeat(OVERLONG_LABEL_LENGTH);
+const CAPPED_LABEL = "п".repeat(LABEL_CAP);
+
 const DYNAMIC_MODE = "force-dynamic";
 
 const KYIV_QUERY = "київ";
@@ -55,6 +65,8 @@ const OVERSIZED_QUERY = "сел";
 const MIXED_QUERY = "змі";
 const DROPPED_QUERY = "смі";
 const FALLBACK_QUERY = "дуб";
+const EMPTY_DATA_QUERY = "пор";
+const OVERLONG_LABEL_QUERY = "дов";
 
 const MALFORMED_BODY = "np gateway error page";
 const BROKEN_ADDRESSES = "Addresses came back as text";
@@ -84,6 +96,7 @@ const CHERNIHIV_PRESENT = "Чернігів";
 const DUBOVE_MAIN_DESCRIPTION = "Дубове";
 const DUBOVE_AREA = "Закарпатська";
 const TYSA_MAIN_DESCRIPTION = "Тиса";
+const OVERLONG_DELIVERY_CITY = "db5c88d0-391c-11dd-90d9-001a92567626";
 
 const REF_KEY = "ref";
 const LABEL_KEY = "label";
@@ -185,18 +198,25 @@ const FALLBACK_ADDRESSES: readonly unknown[] = [
   AREALESS_FALLBACK_ADDRESS,
 ];
 
+const OVERLONG_ADDRESS = {
+  Present: `${OVERLONG_LABEL}${PRESENT_SEPARATOR}${OVERLONG_LABEL}`,
+  MainDescription: OVERLONG_LABEL,
+  Area: OVERLONG_LABEL,
+  DeliveryCity: OVERLONG_DELIVERY_CITY,
+};
+
 interface NestingCase {
   query: string;
   data: readonly unknown[];
 }
 
 const NESTING_CASES: readonly NestingCase[] = [
-  { query: FIRST_NESTING_QUERY, data: [] },
-  { query: SECOND_NESTING_QUERY, data: [{}] },
+  { query: FIRST_NESTING_QUERY, data: [{}] },
   {
-    query: THIRD_NESTING_QUERY,
+    query: SECOND_NESTING_QUERY,
     data: [{ TotalCount: 0, Addresses: BROKEN_ADDRESSES }],
   },
+  { query: THIRD_NESTING_QUERY, data: [{ TotalCount: 0, Addresses: [] }] },
 ];
 
 const FORBIDDEN_BODY_FRAGMENTS: readonly string[] = [
@@ -283,6 +303,9 @@ const readItemKeys = (item: unknown): readonly string[] =>
 const readOptionalText = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
 
+const readLabelLength = (item: unknown): number =>
+  isRecord(item) ? (readOptionalText(item.label) ?? EMPTY_TEXT).length : 0;
+
 const composePresent = (item: unknown): string => {
   if (!isRecord(item)) {
     return EMPTY_TEXT;
@@ -299,6 +322,16 @@ const readSentEnvelope = (fetchStub: Mock<FetchStub>): unknown => {
   const body = init?.body;
 
   return typeof body === "string" ? JSON.parse(body) : null;
+};
+
+const readSentCityName = (fetchStub: Mock<FetchStub>): string => {
+  const envelope = readSentEnvelope(fetchStub);
+
+  if (!isRecord(envelope) || !isRecord(envelope.methodProperties)) {
+    return EMPTY_TEXT;
+  }
+
+  return readOptionalText(envelope.methodProperties.CityName) ?? EMPTY_TEXT;
 };
 
 beforeEach(() => {
@@ -435,6 +468,19 @@ describe("GET /api/np/settlements", () => {
     });
   });
 
+  it("slices an overlong query to sixty-four characters before it reaches np", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(OVERLONG_QUERY));
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readSentCityName(fetchStub)).toHaveLength(MAX_QUERY_LENGTH);
+    expect(readSentCityName(fetchStub)).toBe(SLICED_QUERY);
+  });
+
   it("maps the captured np rows to the minimized settlement contract", async () => {
     const fetchStub = stubUpstream(() =>
       Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
@@ -493,6 +539,26 @@ describe("GET /api/np/settlements", () => {
       },
       { ref: TYSA_DELIVERY_CITY, label: TYSA_MAIN_DESCRIPTION },
     ]);
+  });
+
+  it("caps an overlong label and region so one bad row cannot pin the cache", async () => {
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse([OVERLONG_ADDRESS]))
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(
+      await GET(buildRequest(OVERLONG_LABEL_QUERY))
+    );
+
+    expect(items).toStrictEqual([
+      {
+        ref: OVERLONG_DELIVERY_CITY,
+        label: CAPPED_LABEL,
+        region: CAPPED_LABEL,
+      },
+    ]);
+    expect(items.map(readLabelLength)).toEqual([LABEL_CAP]);
   });
 
   it("drops rows without a delivery city ref, without a label, or not shaped as objects", async () => {
@@ -586,6 +652,24 @@ describe("GET /api/np/settlements", () => {
     expect(statuses).toEqual(Array(NESTING_CASES.length).fill(OK_STATUS));
     expect(bodies).toEqual(Array(NESTING_CASES.length).fill(EMPTY_ITEMS_BODY));
     expect(fetchStub).toHaveBeenCalledTimes(NESTING_CASES.length);
+  });
+
+  it("answers 503 and caches nothing when np returns an empty data envelope", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(jsonResponse({ success: true, data: [] }, OK_STATUS))
+    );
+    const { GET } = await loadRoute();
+
+    const first = await GET(buildRequest(EMPTY_DATA_QUERY));
+    const firstBody = await first.text();
+    const second = await GET(buildRequest(EMPTY_DATA_QUERY));
+
+    expect(first.status).toBe(UNAVAILABLE_STATUS);
+    expect(firstBody).toBe(UNAVAILABLE_BODY);
+    expect(second.status).toBe(UNAVAILABLE_STATUS);
+    expect(await second.text()).toBe(UNAVAILABLE_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(2);
+    expectUpstreamOnly(fetchStub.mock.calls);
   });
 
   it("serves repeated identical queries from the cache with a single upstream call", async () => {

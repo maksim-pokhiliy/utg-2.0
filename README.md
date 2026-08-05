@@ -137,7 +137,7 @@ source.
 
 `GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory for the Ukrainian checkout.
 The API key stays server-side and the rows are minimized on the way out — a settlement is `{ref, label, region?}`, a
-warehouse is `{number, label}` — so a big city's three thousand branches never cross the wire. Answers are cached in
+warehouse is `{number, label}` — and capped, so a big city's full branch list never crosses the wire. Answers are cached in
 process: five minutes per settlement query, twenty-four hours per city's warehouse list, which is the refresh cadence Нова
 Пошта's own documentation asks for. Filtering by branch or поштомат and by warehouse number happens here, over that cache,
 rather than at the carrier. These routes get their own limiter bucket (60 requests per 60 seconds) because autocomplete

@@ -20,6 +20,7 @@ const METHOD_PARAM = "method";
 const QUERY_PARAM = "q";
 
 const CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
+const SHOUTED_CITY_REF = CITY_REF.toUpperCase();
 const BRANCH_METHOD = "branch";
 const POSTOMAT_METHOD = "postomat";
 const UNKNOWN_METHOD = "garbage";
@@ -31,7 +32,12 @@ const PAGE_SIZE = 500;
 const MAX_PAGES = 10;
 const ROW_LIMIT = 30;
 const BULK_ROW_COUNT = 60;
+const CAP_OVERFLOW_ROW_COUNT = 119;
 const LAST_PAGE_ROW_COUNT = 3;
+const MERGE_TIMEOUT_MS = 7000;
+const MERGE_SIGNAL_COUNT = 1;
+const LABEL_CAP = 256;
+const OVERLONG_LABEL_LENGTH = 900;
 const DIRECTORY_MAX_REQUESTS = 60;
 const MIN_RETRY_AFTER_SECONDS = 1;
 const MAX_RETRY_AFTER_SECONDS = 60;
@@ -65,6 +71,8 @@ const WORKING_STATUS = "Working";
 const CLOSED_STATUS = "Closed";
 const ALLOWED_FLAG = "0";
 const DENIED_FLAG = "1";
+const DENIED_CODE = 1;
+const DENIED_DECISION = true;
 const TYPE_OF_WAREHOUSE_REF = "9a68df70-0267-42a8-bb5c-37f427e36ee4";
 
 const CAPTURED_NUMBER = "1";
@@ -74,6 +82,25 @@ const DENIED_NUMBER = "3";
 const CLOSED_NUMBER = "4";
 const CARGO_NUMBER = "5";
 const NAMELESS_NUMBER = "6";
+const NUMERIC_DENIED_NUMBER = "7";
+const BOOLEAN_DENIED_NUMBER = "8";
+const STRING_ALLOWED_NUMBER = "9";
+
+const STREET_NUMBER = "41";
+const OTHER_STREET_NUMBER = "42";
+const FAR_STREET_NUMBER = "43";
+const STREET_LABEL = "Відділення №41: вул. Хрещатик, 22";
+const OTHER_STREET_LABEL = "Відділення №42: вул. Січових Стрільців, 8";
+const FAR_STREET_LABEL = "Відділення №43: просп. Науки, 3";
+const STREET_QUERY = "хрещатик";
+const SHOUTED_STREET_QUERY = "ХРЕЩАТИК";
+
+const OVERLONG_LABEL_NUMBER = "77";
+const OVERLONG_LABEL = "в".repeat(OVERLONG_LABEL_LENGTH);
+const CAPPED_LABEL = "в".repeat(LABEL_CAP);
+
+const CAP_OVERFLOW_QUERY = "1";
+const CAP_OVERFLOW_FIRST_NUMBER = "1";
 
 const EXACT_NUMBER = "12";
 const PREFIXED_NUMBER = "120";
@@ -91,7 +118,7 @@ interface WarehouseRow {
   Number: string;
   CategoryOfWarehouse: string;
   WarehouseStatus: string;
-  DenyToSelect: string;
+  DenyToSelect: string | number | boolean;
   TypeOfWarehouse: string;
 }
 
@@ -163,6 +190,7 @@ const LAST_PAGE_ROWS = buildAscendingPage(LAST_PAGE_ROW_COUNT, PAGE_SIZE + 1, {
 });
 const LAST_PAGE_NUMBERS = LAST_PAGE_ROWS.map((row) => row.Number);
 const DESCENDING_ROWS = buildDescendingPage(BULK_ROW_COUNT);
+const CAP_OVERFLOW_ROWS = buildDescendingPage(CAP_OVERFLOW_ROW_COUNT);
 
 const MIXED_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
@@ -181,6 +209,22 @@ const RANKING_ROWS: readonly WarehouseRow[] = [
   buildRow(PREFIXED_NUMBER, { Description: PREFIXED_LABEL }),
 ];
 
+const DENY_FLAVOUR_ROWS: readonly WarehouseRow[] = [
+  buildRow(NUMERIC_DENIED_NUMBER, { DenyToSelect: DENIED_CODE }),
+  buildRow(BOOLEAN_DENIED_NUMBER, { DenyToSelect: DENIED_DECISION }),
+  buildRow(STRING_ALLOWED_NUMBER, { DenyToSelect: ALLOWED_FLAG }),
+];
+
+const ADDRESS_FILTER_ROWS: readonly WarehouseRow[] = [
+  buildRow(STREET_NUMBER, { Description: STREET_LABEL }),
+  buildRow(OTHER_STREET_NUMBER, { Description: OTHER_STREET_LABEL }),
+  buildRow(FAR_STREET_NUMBER, { Description: FAR_STREET_LABEL }),
+];
+
+const OVERLONG_LABEL_ROWS: readonly WarehouseRow[] = [
+  buildRow(OVERLONG_LABEL_NUMBER, { Description: OVERLONG_LABEL }),
+];
+
 const BRANCH_PARAMS = {
   [CITY_PARAM]: CITY_REF,
   [METHOD_PARAM]: BRANCH_METHOD,
@@ -188,6 +232,10 @@ const BRANCH_PARAMS = {
 const POSTOMAT_PARAMS = {
   [CITY_PARAM]: CITY_REF,
   [METHOD_PARAM]: POSTOMAT_METHOD,
+};
+const SHOUTED_BRANCH_PARAMS = {
+  [CITY_PARAM]: SHOUTED_CITY_REF,
+  [METHOD_PARAM]: BRANCH_METHOD,
 };
 
 const INVALID_PARAMS: readonly Record<string, string>[] = [
@@ -395,6 +443,7 @@ describe("GET /api/np/warehouses", () => {
   });
 
   it("merges the pages of one city under a single deadline and stops at the short page", async () => {
+    const timeoutSignals = vi.spyOn(AbortSignal, "timeout");
     const fetchStub = stubPages([
       okPage(FIRST_PAGE_ROWS),
       okPage(LAST_PAGE_ROWS),
@@ -411,6 +460,8 @@ describe("GET /api/np/warehouses", () => {
     expect(readEnvelope(fetchStub, 1)).toEqual(buildEnvelope(2));
     expect(readSignal(fetchStub, 0)).toBeInstanceOf(AbortSignal);
     expect(readSignal(fetchStub, 0)).toBe(readSignal(fetchStub, 1));
+    expect(timeoutSignals).toHaveBeenCalledTimes(MERGE_SIGNAL_COUNT);
+    expect(timeoutSignals).toHaveBeenCalledWith(MERGE_TIMEOUT_MS);
     expectUpstreamOnly(fetchStub.mock.calls);
   });
 
@@ -440,6 +491,43 @@ describe("GET /api/np/warehouses", () => {
     expect(readLabels(items)).toEqual([CAPTURED_LABEL]);
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expectUpstreamOnly(fetchStub.mock.calls);
+  });
+
+  it("denies a warehouse np marks unselectable as a number or a boolean, not only as a string", async () => {
+    const fetchStub = stubPages([okPage(DENY_FLAVOUR_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([STRING_ALLOWED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expectUpstreamOnly(fetchStub.mock.calls);
+  });
+
+  it("caps an overlong np description so one bad row cannot pin the cache", async () => {
+    const fetchStub = stubPages([okPage(OVERLONG_LABEL_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readLabels(items)).toEqual([CAPPED_LABEL]);
+    expect(readLabels(items)[0]).toHaveLength(LABEL_CAP);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("shares one merge across the letter case of a city ref", async () => {
+    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const lowercased = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const shouted = await readItems(
+      await GET(buildRequest(SHOUTED_BRANCH_PARAMS))
+    );
+
+    expect(readNumbers(lowercased)).toEqual([CAPTURED_NUMBER]);
+    expect(readNumbers(shouted)).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readEnvelope(fetchStub, 0)).toEqual(buildEnvelope(1));
   });
 
   it("keeps the two methods apart and answers a warm city without touching np", async () => {
@@ -475,6 +563,39 @@ describe("GET /api/np/warehouses", () => {
 
     expect(readNumbers(signed)).toEqual(RANKED_NUMBERS);
     expect(readNumbers(bare)).toEqual(RANKED_NUMBERS);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an exact number match first when the prefix matches overflow the cap", async () => {
+    const fetchStub = stubPages([okPage(CAP_OVERFLOW_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(
+        buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: CAP_OVERFLOW_QUERY })
+      )
+    );
+
+    expect(items).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(items)[0]).toBe(CAP_OVERFLOW_FIRST_NUMBER);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps only the warehouses whose address carries the query, in either case", async () => {
+    const fetchStub = stubPages([okPage(ADDRESS_FILTER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const lowercased = await readItems(
+      await GET(buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: STREET_QUERY }))
+    );
+    const shouted = await readItems(
+      await GET(
+        buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: SHOUTED_STREET_QUERY })
+      )
+    );
+
+    expect(readNumbers(lowercased)).toEqual([STREET_NUMBER]);
+    expect(readNumbers(shouted)).toEqual([STREET_NUMBER]);
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 

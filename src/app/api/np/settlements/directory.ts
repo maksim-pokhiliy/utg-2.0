@@ -6,6 +6,7 @@ const SETTLEMENT_CACHE_MAX_ENTRIES = 200;
 const SETTLEMENT_ROW_LIMIT = 10;
 const MIN_QUERY_LENGTH = 2;
 const MAX_QUERY_LENGTH = 64;
+const MAX_LABEL_LENGTH = 256;
 const PRESENT_SEPARATOR = ", ";
 const SETTLEMENTS_METHOD = "searchSettlements";
 const FIRST_PAGE = "1";
@@ -36,16 +37,18 @@ const normalizeQuery = (rawQuery: string | null): string =>
     .replace(WHITESPACE_PATTERN, SINGLE_SPACE)
     .slice(0, MAX_QUERY_LENGTH);
 
+const capLabel = (text: string): string => text.slice(0, MAX_LABEL_LENGTH);
+
 const splitPresent = (present: string): SettlementLabel => {
   const separatorIndex = present.indexOf(PRESENT_SEPARATOR);
 
   if (separatorIndex === -1) {
-    return { label: present };
+    return { label: capLabel(present) };
   }
 
   return {
-    label: present.slice(0, separatorIndex),
-    region: present.slice(separatorIndex + PRESENT_SEPARATOR.length),
+    label: capLabel(present.slice(0, separatorIndex)),
+    region: capLabel(present.slice(separatorIndex + PRESENT_SEPARATOR.length)),
   };
 };
 
@@ -66,13 +69,13 @@ const toSettlement = (row: unknown): SettlementItem | null => {
     return { ref, ...splitPresent(present) };
   }
 
-  const label = readString(row.MainDescription);
+  const label = capLabel(readString(row.MainDescription));
 
   if (label === EMPTY_TEXT) {
     return null;
   }
 
-  const region = readString(row.Area);
+  const region = capLabel(readString(row.Area));
 
   return region === EMPTY_TEXT ? { ref, label } : { ref, label, region };
 };
@@ -96,7 +99,7 @@ const loadSettlements = async (
     Page: FIRST_PAGE,
   });
 
-  if (!result.isSuccess) {
+  if (!result.isSuccess || result.rows.length === 0) {
     return null;
   }
 

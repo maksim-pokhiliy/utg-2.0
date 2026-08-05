@@ -27,9 +27,15 @@ const DIRECTORY_ATTEMPT_CEILING = DIRECTORY_MAX_REQUESTS + 1;
 const CLIENT_KEY = "203.0.113.5";
 const PAIRED_CLIENT_KEY = "203.0.113.11";
 const VICTIM_KEY = "victim";
+const VETERAN_KEY = "veteran";
 const FUTURE_HIT_OFFSET_MS = 120_000;
 const BLOCKED_ATTEMPT_OFFSET_MS = 10_000;
 const BLOCKED_ATTEMPT_COUNT = 3;
+const WINDOW_EDGE_OFFSET_MS = RATE_LIMIT_WINDOW_MS - 1;
+
+const PROMOTION_FILLER_COUNT = 998;
+const POST_PROMOTION_FILLER_COUNT = 2;
+const VETERAN_SPENT_REQUESTS = 2;
 
 const REQUEST_URL = "https://example.test/api/place_order";
 const OVERLONG_HEADER_VALUE = "b".repeat(MAX_CLIENT_KEY_LENGTH + 15);
@@ -195,6 +201,41 @@ describe("consumeRateLimit", () => {
         clientKey(FIRST_RETAINED_CLIENT_INDEX)
       )
     ).toBe(RATE_LIMIT_MAX_REQUESTS - 1);
+  });
+
+  it("promotes a returning client so the eviction takes the untouched keys instead", async () => {
+    const { consumeRateLimit } = await loadRateLimit();
+
+    expect(consumeRateLimit(VETERAN_KEY).isAllowed).toBe(true);
+
+    for (let index = 1; index <= PROMOTION_FILLER_COUNT; index += 1) {
+      consumeRateLimit(clientKey(index));
+    }
+
+    expect(consumeRateLimit(VETERAN_KEY).isAllowed).toBe(true);
+
+    for (let offset = 1; offset <= POST_PROMOTION_FILLER_COUNT; offset += 1) {
+      consumeRateLimit(clientKey(PROMOTION_FILLER_COUNT + offset));
+    }
+
+    expect(countAllowedBeforeBlock(consumeRateLimit, VETERAN_KEY)).toBe(
+      RATE_LIMIT_MAX_REQUESTS - VETERAN_SPENT_REQUESTS
+    );
+  });
+
+  it("never asks a blocked client to retry in under a second at the edge of the window", async () => {
+    const { consumeRateLimit } = await loadRateLimit();
+
+    for (let attempt = 0; attempt < RATE_LIMIT_MAX_REQUESTS; attempt += 1) {
+      consumeRateLimit(CLIENT_KEY);
+    }
+
+    vi.setSystemTime(BASE_TIME + WINDOW_EDGE_OFFSET_MS);
+
+    const verdict = consumeRateLimit(CLIENT_KEY);
+
+    expect(verdict.isAllowed).toBe(false);
+    expect(readRetryAfterSeconds(verdict)).toBe(MIN_RETRY_AFTER_SECONDS);
   });
 
   it("fails open for a null client key so an unidentifiable order is never dropped", async () => {

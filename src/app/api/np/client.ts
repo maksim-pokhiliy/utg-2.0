@@ -11,7 +11,7 @@ export type NpResult =
 const NP_FAILURE = Object.freeze<NpResult>({ isSuccess: false });
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 export const readString = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";

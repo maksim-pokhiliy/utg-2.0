@@ -329,11 +329,12 @@ describe("callNpDirectory", () => {
 });
 
 describe("isRecord", () => {
-  it("accepts objects and arrays and rejects null and primitives", async () => {
+  it("accepts objects and rejects arrays, null and primitives", async () => {
     const { isRecord } = await loadClient();
 
     expect(isRecord({})).toBe(true);
-    expect(isRecord([])).toBe(true);
+    expect(isRecord([])).toBe(false);
+    expect(isRecord([SAMPLE_TEXT])).toBe(false);
     expect(isRecord(null)).toBe(false);
     expect(isRecord(undefined)).toBe(false);
     expect(isRecord(SAMPLE_TEXT)).toBe(false);

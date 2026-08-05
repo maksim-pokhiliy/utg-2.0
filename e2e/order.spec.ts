@@ -29,6 +29,10 @@ test.use({
 
 const OK_STATUS = 200;
 
+const UNCONFIGURED_RELAY_STATUS = 503;
+
+const ORDER_ROUTE_PATH = "/api/place_order";
+
 const EMPTY_CART_STORAGE = "[]";
 
 const SINGLE_LINE_COUNT = 1;
@@ -115,7 +119,13 @@ test.describe("the order path", () => {
     await checkoutLink(page).click();
     await expect(page).toHaveURL(new RegExp(`${CHECKOUT_PATH}$`));
 
+    const orderResponse = page.waitForResponse((response) =>
+      response.url().includes(ORDER_ROUTE_PATH)
+    );
+
     await submitCheckout(page);
+
+    expect((await orderResponse).status()).toBe(UNCONFIGURED_RELAY_STATUS);
 
     await expect(orderToast(page)).toContainText(
       UK_DICTIONARY.cart.order_error
