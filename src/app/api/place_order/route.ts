@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { consumeRateLimit, resolveClientKey } from "./rate-limit";
+import { consumeRateLimit, resolveClientKey } from "@root/app/api/rate-limit";
 
 export async function POST(request: NextRequest) {
   const verdict = consumeRateLimit(resolveClientKey(request));

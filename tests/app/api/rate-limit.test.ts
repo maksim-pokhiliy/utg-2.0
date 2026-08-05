@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { RateLimitVerdict } from "@root/app/api/place_order/rate-limit";
+import type { RateLimitVerdict } from "@root/app/api/rate-limit";
 
 const BASE_TIME = new Date("2026-01-01T00:00:00.000Z").getTime();
 
@@ -21,7 +21,11 @@ const FIRST_RETAINED_CLIENT_INDEX = EVICTED_CLIENT_COUNT;
 
 const ATTEMPT_CEILING = RATE_LIMIT_MAX_REQUESTS + 1;
 
+const DIRECTORY_MAX_REQUESTS = 60;
+const DIRECTORY_ATTEMPT_CEILING = DIRECTORY_MAX_REQUESTS + 1;
+
 const CLIENT_KEY = "203.0.113.5";
+const PAIRED_CLIENT_KEY = "203.0.113.11";
 const VICTIM_KEY = "victim";
 const FUTURE_HIT_OFFSET_MS = 120_000;
 const BLOCKED_ATTEMPT_OFFSET_MS = 10_000;
@@ -31,7 +35,7 @@ const REQUEST_URL = "https://example.test/api/place_order";
 const OVERLONG_HEADER_VALUE = "b".repeat(MAX_CLIENT_KEY_LENGTH + 15);
 const SLICED_HEADER_VALUE = "b".repeat(MAX_CLIENT_KEY_LENGTH);
 
-const loadRateLimit = () => import("@root/app/api/place_order/rate-limit");
+const loadRateLimit = () => import("@root/app/api/rate-limit");
 
 const clientKey = (index: number): string => `client-${index}`;
 
@@ -275,5 +279,69 @@ describe("resolveClientKey", () => {
     });
 
     expect(resolveClientKey(request)).toBeNull();
+  });
+});
+
+describe("consumeDirectoryRateLimit", () => {
+  it("allows sixty lookups and blocks the sixty-first with a retry-after inside the window", async () => {
+    const { consumeDirectoryRateLimit } = await loadRateLimit();
+
+    const verdicts: boolean[] = [];
+
+    for (let attempt = 0; attempt < DIRECTORY_MAX_REQUESTS; attempt += 1) {
+      verdicts.push(consumeDirectoryRateLimit(CLIENT_KEY).isAllowed);
+    }
+
+    const blocked = consumeDirectoryRateLimit(CLIENT_KEY);
+
+    expect(verdicts).toEqual(Array(DIRECTORY_MAX_REQUESTS).fill(true));
+    expect(blocked.isAllowed).toBe(false);
+    expect(readRetryAfterSeconds(blocked)).toBeGreaterThanOrEqual(
+      MIN_RETRY_AFTER_SECONDS
+    );
+    expect(readRetryAfterSeconds(blocked)).toBeLessThanOrEqual(
+      MAX_RETRY_AFTER_SECONDS
+    );
+  });
+
+  it("fails open for a null client key so an unidentifiable lookup is never dropped", async () => {
+    const { consumeDirectoryRateLimit } = await loadRateLimit();
+
+    const verdicts: boolean[] = [];
+
+    for (let attempt = 0; attempt < DIRECTORY_ATTEMPT_CEILING; attempt += 1) {
+      verdicts.push(consumeDirectoryRateLimit(null).isAllowed);
+    }
+
+    expect(verdicts).toEqual(Array(DIRECTORY_ATTEMPT_CEILING).fill(true));
+  });
+
+  it("spends a budget that is independent of the order budget for the same client key", async () => {
+    const { consumeRateLimit, consumeDirectoryRateLimit } =
+      await loadRateLimit();
+
+    for (let attempt = 0; attempt < DIRECTORY_MAX_REQUESTS; attempt += 1) {
+      consumeDirectoryRateLimit(CLIENT_KEY);
+    }
+
+    expect(consumeDirectoryRateLimit(CLIENT_KEY).isAllowed).toBe(false);
+    expect(countAllowedBeforeBlock(consumeRateLimit, CLIENT_KEY)).toBe(
+      RATE_LIMIT_MAX_REQUESTS
+    );
+
+    for (let attempt = 0; attempt < RATE_LIMIT_MAX_REQUESTS; attempt += 1) {
+      consumeRateLimit(PAIRED_CLIENT_KEY);
+    }
+
+    const directoryVerdicts: boolean[] = [];
+
+    for (let attempt = 0; attempt < DIRECTORY_MAX_REQUESTS; attempt += 1) {
+      directoryVerdicts.push(
+        consumeDirectoryRateLimit(PAIRED_CLIENT_KEY).isAllowed
+      );
+    }
+
+    expect(consumeRateLimit(PAIRED_CLIENT_KEY).isAllowed).toBe(false);
+    expect(directoryVerdicts).toEqual(Array(DIRECTORY_MAX_REQUESTS).fill(true));
   });
 });
