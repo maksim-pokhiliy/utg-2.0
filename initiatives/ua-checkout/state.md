@@ -20,11 +20,13 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U4 plan gate triaged (D-8: Present verbatim, `{ref,label,region?}` contract, 7s
-warehouse merge, force-dynamic) — executor building toward the PR; next planner
-action is spawning the fresh reviewer when it opens. U0 (B2, x-relay-secret)
-still pending — must land before U6. The UAC-4 + UAC-8 DS-hygiene/kit-backport
-window stays available between rounds.
+U4 PR #19 open (`ac47677`, CI green; internal /feature review already applied —
+10 fixed incl. the DenyToSelect fail-open bug; executor falsified its own D-i
+premise on Next 16.2.10, force-dynamic kept as insurance). Independent deep
+review running. Pending consolidated fix-round routing after it: RF-5
+(negative-cache short TTL — planner-ruled fix-now), RF-4 (page-cap heuristic →
+UAC-2/U7 live proof), RF-14/15 (Present edge cases → ledger). U0 (B2) still
+pending — must land before U6.
 
 ## Open decisions awaiting ratification
 
