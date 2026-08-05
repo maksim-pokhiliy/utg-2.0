@@ -20,16 +20,19 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U4 PR #19 open (`ac47677`, CI green; internal /feature review already applied —
-10 fixed incl. the DenyToSelect fail-open bug; executor falsified its own D-i
-premise on Next 16.2.10, force-dynamic kept as insurance). Independent deep
-review attempt #1 KILLED by a session limit mid-run — no report; one partial
-claim to recheck: «the PR's own fixture falsifies the "cap is unreachable"
-claim». Fresh reviewer #2 running (tree was left on the PR branch by #1,
-returned to master). Pending consolidated fix-round routing after review: RF-5
-(negative-cache short TTL — planner-ruled fix-now), RF-4 (page-cap heuristic →
-UAC-2/U7 live proof), RF-14/15 (Present edge cases → ledger). U0 (B2) still
-pending — must land before U6.
+U4 review #2 delivered (deep, REQUEST-CHANGES: 88 pooled → 26 post-refutation,
+no cap applied; sacred `place_order` proven byte-identical incl. a 300k-op
+differential; reviewer #1's partial claim resolved — the fixture flags test
+honesty, the real falsifiers are the unsourced Kyiv figure + the wrong cap
+denominator). Fix round OPEN on the executor: 15 code items (page-merge dedup
+IR-2, cap-exit refuses IR-3, decode-collapse guard IR-4+5, DenyToSelect trim
+regression IR-8, negative TTL RF-5/IR-24, merge-concurrency cap IR-9,
+settlement-cache sizing IR-10, zero-width strip IR-11, ref/number caps IR-12,
+cityRef case IR-15, pins IR-6/7/16, dedup helpers IR-17/18, README/PR-body
+truth IR-19/20). Planner-side: IR-1 (PRE-EXISTING null-key limiter forgery,
+prod impact unknown) — curl-probe the Vercel preview at phase 6; IR-21 D-8
+amendment done; IR-25 CLAUDE.md at close-out. Ledgered: UAC-10 (new),
+UAC-9/UAC-2 amended. U0 (B2) still pending — must land before U6.
 
 ## Open decisions awaiting ratification
 

@@ -221,5 +221,14 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
      README corrected in the PR, `CLAUDE.md` left to the planner's close-out.
   5. One PR, no warehouse split — 26 files sits within /feature size; the extra
      round trip costs more than the smaller review saves.
+- **Amendment (2026-08-06, PR #19 deep review IR-21).** The D-i premise in ¶4
+  («a GET-only route module in Next 16 is statically prerenderable») was
+  FALSIFIED twice over: the executor's own review round showed its original
+  evidence was metadata-convention files, not route handlers, and the
+  independent reviewer rebuilt with the export deleted — both routes still print
+  `ƒ (Dynamic)` on Next 16.2.10, no `.body` artifacts. `force-dynamic` stays as
+  cheap insurance against future Next behavior changes, but the premise is not
+  verified fact; the commit body of `27ad0d1` carries the stale claim (pushed
+  history, left as-is).
 - **Links.** D-7; requirements §4/§5 (amended same day); UAC-2 (residual → U7);
   UAC-9 (U5 handoff pack); step-u4-np-proxy-prompt.md; journal (U4).
