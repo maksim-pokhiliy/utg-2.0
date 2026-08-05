@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 import {
   CART_STORAGE_KEY,
+  FORWARDED_FOR_HEADER,
   PRODUCT_PATH,
+  SPEC_CLIENT_IPS,
   addToCartButton,
   cartButton,
   cartDrawer,
@@ -10,6 +12,10 @@ import {
   productHeading,
   readCartStorage,
 } from "./support/app";
+
+test.use({
+  extraHTTPHeaders: { [FORWARDED_FOR_HEADER]: SPEC_CLIENT_IPS.persistence },
+});
 
 const SINGLE_LINE_COUNT = 1;
 

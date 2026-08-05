@@ -3,15 +3,21 @@ import { expect, test, type Page, type Response } from "@playwright/test";
 import {
   EN_PRODUCT,
   EN_PRODUCT_PATH,
+  FORWARDED_FOR_HEADER,
   REPORTS_PATH,
   REPORT_COUNT,
   SITE_URL,
+  SPEC_CLIENT_IPS,
   UK_DICTIONARY,
   productPrice,
   reportFigureButton,
   reportThumbnail,
   viewerImage,
 } from "./support/app";
+
+test.use({
+  extraHTTPHeaders: { [FORWARDED_FOR_HEADER]: SPEC_CLIENT_IPS.navigation },
+});
 
 const OK_STATUS = 200;
 

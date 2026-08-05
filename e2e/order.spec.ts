@@ -2,9 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 
 import {
   CHECKOUT_PATH,
+  FORWARDED_FOR_HEADER,
   HOME_PATH,
   ORDER_ROUTE_GLOB,
   PRODUCT_PATH,
+  SPEC_CLIENT_IPS,
   UK_DICTIONARY,
   UK_PRODUCT,
   addToCartButton,
@@ -20,6 +22,10 @@ import {
   submitButton,
   successPanel,
 } from "./support/app";
+
+test.use({
+  extraHTTPHeaders: { [FORWARDED_FOR_HEADER]: SPEC_CLIENT_IPS.order },
+});
 
 const OK_STATUS = 200;
 
