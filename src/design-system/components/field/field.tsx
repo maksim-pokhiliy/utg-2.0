@@ -1,11 +1,16 @@
-import type { ReactElement, ReactNode } from "react";
+import type { AriaRole, ReactElement, ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
+
+const CAPTION = "type-caption text-ink";
 
 interface FieldProps {
   label: string;
   htmlFor?: string;
+  labelId?: string;
+  role?: AriaRole;
   required?: boolean;
+  disabled?: boolean;
   helper?: string;
   error?: string;
   className?: string;
@@ -15,18 +20,40 @@ interface FieldProps {
 export function Field({
   label,
   htmlFor,
+  labelId,
+  role,
   required = false,
+  disabled = false,
   helper,
   error,
   className,
   children,
 }: FieldProps): ReactElement {
+  const isGroup = role !== undefined;
+  const caption = (
+    <>
+      {label}
+      {required ? <span className="text-destructive"> *</span> : null}
+    </>
+  );
+
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="type-caption text-ink">
-        {label}
-        {required ? <span className="text-destructive"> *</span> : null}
-      </label>
+    <div
+      role={role}
+      aria-labelledby={isGroup ? labelId : undefined}
+      aria-required={isGroup ? required : undefined}
+      aria-disabled={isGroup ? disabled : undefined}
+      className={cn("flex flex-col gap-1.5", className)}
+    >
+      {htmlFor === undefined ? (
+        <span id={labelId} className={CAPTION}>
+          {caption}
+        </span>
+      ) : (
+        <label id={labelId} htmlFor={htmlFor} className={CAPTION}>
+          {caption}
+        </label>
+      )}
 
       {children}
 
