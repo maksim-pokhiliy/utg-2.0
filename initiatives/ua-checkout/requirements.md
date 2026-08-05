@@ -96,13 +96,17 @@ response fields there when implementing (UAC-2).
   responses minimized to what the UI needs (display string, number, category) — no
   raw NP dumps to the client; same per-IP limiter posture as `place_order`
   (fail-open); filter out `DenyToSelect`/non-selectable warehouses; postomat-vs-
-  branch filtering by `CategoryOfWarehouse` server-side or client-side (U4 call).
+  branch filtering by `CategoryOfWarehouse` server-side via a `method` query param
+  (D-7).
 - **Failure budget**: directory calls get a short timeout (~2–3s); any failure flips
   the dependent fields to fallback free-text with a hint — never a blocked form,
   never a spinner-forever. No retries that delay the buyer.
-- **Warehouse search UX**: within the fetched per-city list, filtering by number or
-  substring happens client-side (a city's list is bounded and cached; avoids
-  per-keystroke NP calls and any dependence on unverified server-side filters).
+- **Warehouse search UX** (amended by D-7; originally client-side): filtering by
+  number or substring happens at OUR proxy, inside OUR cached per-city list, with
+  the response capped (~30 rows; settlements ~10). Both original rationales hold —
+  no per-keystroke NP calls (the cache serves) and no dependence on unverified NP
+  server-side filters (the filter is our code) — while a big-city list (Kyiv ~3000
+  warehouses) never reaches the client (UAC-5 row budget).
 
 ## 5. Payload contract v2 (resolves D-3)
 

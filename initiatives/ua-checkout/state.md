@@ -13,21 +13,21 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
-| U4  | NP proxy route + caching + env plumbing                  | ⬜ pending                     | plan.md                                               |
+| U4  | NP proxy route + caching + env plumbing                  | 🔄 executor round open         | step-u4-np-proxy-prompt.md · D-7                      |
 | U5  | Checkout rework (uk both modes, contacts, copy)          | ⬜ pending                     | plan.md                                               |
 | U6  | Contract flip (paired shop+bot PRs)                      | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-U4 (NP proxy route + caching + env plumbing): contour with the user, then /step.
-U0 (B2, x-relay-secret) still pending — must land before U6. The UAC-4 + UAC-8
-DS-hygiene/kit-backport window is unblocked now that U3 is merged and can run
-between steps.
+U4 executor round OPEN on `step-u4-np-proxy-prompt.md` (contour approved, D-7
+ratified) — next planner action is the plan-gate triage. U0 (B2, x-relay-secret)
+still pending — must land before U6. The UAC-4 + UAC-8 DS-hygiene/kit-backport
+window stays available between rounds.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-4 ratified; D-3 is a planner call with the user veto explicitly open)
+(none — D-1…D-7 ratified)
 
 ## Live carry-forwards
 

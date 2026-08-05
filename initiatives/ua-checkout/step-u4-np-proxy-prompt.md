@@ -1,0 +1,37 @@
+# Step U4 — the NP directory proxy: routes, cache, limiter, env plumbing (executor prompt)
+
+---
+
+/feature Step U4 of the ua-checkout initiative: build the server-side Нова Пошта directory proxy — two GET routes under `/api/np/*`, an in-memory TTL cache, the per-IP limiter promoted to a shared module, and the `NOVA_POSHTA_API_KEY` env plumbing with e2e/CI blanking. API-only window: no UI calls these routes yet (checkout adoption is U5) — that is deliberate, not an omission. Prod takes real orders and auto-deploys `master`; nothing in this step may touch how an order is placed today.
+
+**Context (read, never edit or stage).** `initiatives/ua-checkout/`: **`requirements.md` §4 is THE spec for this step** (verified NP contract, cache/timeout/fail-open budgets, response minimization; §7 tests, §10 env); `decisions.md` D-7 (ratified: filtering happens at the proxy from OUR cache, responses capped — supersedes the older client-side-filter idea; postomat-vs-branch via a `method` param); `deferred.md` rows UAC-2, UAC-5, DEF-36 (this step's riders); `charter.md` for the sacred constraints. The existing `src/app/api/place_order/route.ts` + its `rate-limit.ts` are the in-repo pattern donor for limiter posture, error-body shape, and route-test conventions.
+
+**Process gate.** You run headless under a planner session. Stop after your plan & design stage and END YOUR TURN with the complete plan-gate summary (the plan, open questions, options each with your recommendation). Expected plan-gate proposals: the route/file layout (incl. where the shared limiter and the NP client/cache modules live); the exact minimized response types — they become the U4↔U5 contract; cache module shape (TTL values, LRU entry caps, the page-merge loop and its page size); limiter budget numbers for the search endpoints (looser than place_order's 5/60s — these fire per keystroke burst); the DEF-36 e2e isolation mechanism; the timeout wiring (AbortSignal, ~2.5s, zero retries); the `method`→`CategoryOfWarehouse` value mapping as verified under UAC-2; whether a minimal blank-env e2e spec for the new routes earns its keep.
+
+**Scope:**
+
+1. **`GET /api/np/settlements?q=<text>`** — proxies `searchSettlements` (envelope `POST https://api.novaposhta.ua/v2.0/json/`, `{apiKey, modelName: "Address", calledMethod, methodProperties}` per requirements §4). Normalizes the query; caches per normalized query with a short TTL (minutes) and an entry cap; responds `{items: [{ref, label}]}` where `label` is the display string composed server-side («Місто, область» from `MainDescription`/`Area`; exact composition per the UAC-2 re-check) and `ref` is the city ref the warehouses lookup needs (`DeliveryCity`). Response capped (~10 rows).
+2. **`GET /api/np/warehouses?city=<ref>&method=branch|postomat&q=<optional>`** — fetches the city's full warehouse list via `getWarehouses` page-merged, caches it per city with TTL ~24h (NP's own daily-refresh guidance) and an LRU city cap; filters out `DenyToSelect`/non-operational rows and by `CategoryOfWarehouse` per `method`; then applies the `q` filter (warehouse number or substring) in OUR code over the cached list; responds `{items: [{number, label}]}` (`label` = NP `Description`), capped ~30 rows (D-7/UAC-5).
+3. **Shared NP client**: one server-side module owning the envelope POST, the `NOVA_POSHTA_API_KEY` read, the ~2.5s `AbortSignal` timeout, zero retries. Key absent, timeout, network failure, non-2xx, or NP-level `success: false` → **503** with a minimal constant JSON body (no upstream details, no internals — `place_order`'s 500-body discipline). The 503 is the single "directory down" signal U5's fallback flip keys on. Next's fetch cache stays off — the in-memory layer is the only cache; routes stay on the default Node runtime.
+4. **Limiter promotion**: `place_order`'s rate limiter moves to a shared module (second consumer → extract); `place_order` switches to importing it with byte-identical behavior and its existing tests staying green. The NP routes get their own bucket with a looser budget (propose numbers at the plan gate); fail-open on missing client identity is sacred — a false 429 costs a real volunteer order, and here it would only cost autocomplete, but the posture stays uniform. 429 carries `Retry-After`.
+5. **Env plumbing**: `NOVA_POSHTA_API_KEY` documented in `.env.example` (server-only, optional — no key means uk-fallback by design); blanked in the `yarn e2e` script, the Playwright `webServer.env`, the screenshots config if it blanks env too, and the CI workflow — alongside the three existing blanked keys. Zero-env `yarn build` + boot stay green.
+6. **DEF-36 fold**: e2e limiter-bucket isolation (rate-limit state bleeds between specs sharing the dev server). Propose the mechanism at the plan gate (e.g. per-spec client identity via `x-forwarded-for` extra headers) and apply it so the battery stays deterministic with limited routes in play.
+7. **UAC-2 re-check**: re-verify the exact NP response fields (`searchSettlements` row fields, `getWarehouses` `Description`/`Number`/`CategoryOfWarehouse` values incl. the postomat category name, `WarehouseStatus` semantics) against the official portal `developers.novaposhta.ua`. It sits behind Cloudflare — if it blocks you too, say so explicitly in the plan-gate report and proceed on the two SDK mirrors' truth already recorded in requirements §4.
+
+**Out of scope (hard fence):** anything under `src/components/` (checkout UI is U5), `src/design-system/` (closed in U3), dictionaries, the order payload shape and `place_order` behavior (beyond the limiter import swap), the bot repo, `next.config.*`, new dependencies (the cache is a hand-rolled Map with TTL/LRU — the project carries no cache library and doesn't get one). Never stage `CLAUDE.md` or anything under `initiatives/`.
+
+**Acceptance gates (verify and report in the PR test plan):**
+
+- `yarn lint`, `yarn format` (run before committing), `yarn typecheck`, `yarn test`, zero-env `yarn build`, blank-env `yarn e2e` with the NP key blanked — all green.
+- Route units per requirements §7, in the project's `tests/` mirror: key-absent 503; upstream error / timeout / `success: false` mapping; cache behavior (TTL expiry, page-merge, per-query and per-city keying, entry caps); `DenyToSelect` + category filtering; the `q` filter and row caps; limiter fail-open + 429 with `Retry-After`; response minimization (no raw NP field leaks beyond the contract shapes).
+- `place_order`'s existing suite green with zero behavioral diff after the limiter move.
+- No response ever exceeds the D-7 caps; no route ever throws an unhandled rejection on NP garbage (malformed JSON, missing fields → 503).
+
+**Resource budget (WSL — mandatory).** Every heavy command (`next build`, full vitest runs, e2e) goes inside `systemd-run --user --scope -q -p MemoryMax=4G -p MemorySwapMax=1G -- <cmd>`, with `NODE_OPTIONS=--max-old-space-size=3072` on builds and vitest capped (`--maxWorkers=2`). Heavy commands strictly one at a time. If `systemd-run --user` is unavailable, say so in your report and apply the diet + sequencing alone.
+
+**Constraints:**
+
+- No comments in code; remove existing comments in any region you edit.
+- No skip flags (`--no-verify`, `--ignore-engines`, …) — root-cause failures instead.
+- Follow the existing API-route conventions you find in `place_order` (file layout, error bodies, test style).
+- Branch from `master`, PR against `master`. Commits and PR text in English, first person, no assistant signatures anywhere.

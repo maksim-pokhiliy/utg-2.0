@@ -18,6 +18,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-4 | U2 ratified: design-export is the visual SSOT                     | RATIFIED |
 | D-5 | U3 plan-gate: one skeleton cadence; summary preset ships complete | RATIFIED |
 | D-6 | U3 review round: Enter consumption supersedes prototype parity   | RATIFIED |
+| D-7 | U4 contour: proxy-side warehouse filtering + row caps (UAC-5)     | RATIFIED |
 
 ---
 
@@ -152,3 +153,27 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
      manifesto "extract on the second instance"; existing `Field` consumers stay
      byte-identical.
 - **Links.** PR #18 deep review (journal, U3 close-out); D-4; D-5; UAC-7/UAC-8.
+
+### D-7 — U4 contour: warehouse filtering moves to the proxy (UAC-5 resolution)
+
+- **Status:** RATIFIED (planner engineering call in the U4 contour; user approved
+  2026-08-05 «контур ок»; amends requirements §4).
+- **Decision.** The warehouse number/substring filtering happens at OUR proxy,
+  inside OUR cached per-city list, and the response is capped (~30 warehouse rows;
+  settlement search likewise capped ~10). This supersedes §4's original
+  "client-side filtering within the fetched list" bullet. Postomat-vs-branch
+  filtering is server-side too, via a `method` query param mapped to
+  `CategoryOfWarehouse`. The proxy's minimized response shapes
+  (`{ref, label}` settlements / `{number, label}` warehouses) are the U4↔U5
+  contract, pinned by route units. The in-memory per-instance cache is accepted as
+  best-effort (Fluid Compute instance reuse makes it real; no external store —
+  "no database" is sacred).
+- **Rationale.** Both rationales of the original client-side bullet survive: no
+  per-keystroke NP calls (the ~24h cache serves) and no dependence on unverified
+  NP server-side filters (the filter is our code over our cache). What changes is
+  who holds the full list: a big-city list (Kyiv ~3000 warehouses) never reaches
+  the client — UAC-5's measured row budget (~23ms/hover at 1000 rows) is enforced
+  in one place, the server, instead of leaking into U5 consumer code and hundreds
+  of kilobytes of payload.
+- **Links.** UAC-5; requirements §4 (amended bullet); step-u4-np-proxy-prompt.md;
+  journal (U4).
