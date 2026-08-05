@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import type { ReactElement } from "react";
 import {
   afterEach,
@@ -37,11 +43,18 @@ const INACTIVE_ROW_CLASS = "text-ink";
 const ACTIVE_META_CLASS = "text-band-muted";
 const INACTIVE_META_CLASS = "text-ink-faint";
 const PANEL_CLASSES = ["max-h-[220px]", "overflow-y-auto"];
+const PANEL_BORDER_FUSE = "-mt-0.5";
 const INVALID_BORDER_CLASS = "border-destructive";
 const VALID_BORDER_CLASS = "border-input";
 const CHEVRON_SIZE = "18";
 const NEAREST_BLOCK: ScrollIntoViewOptions = { block: "nearest" };
 const HIDDEN_SELECTOR = '[aria-hidden="true"]';
+const MODIFIERS = [
+  { ctrlKey: true },
+  { altKey: true },
+  { metaKey: true },
+  { shiftKey: true },
+];
 
 const OPTIONS: readonly ComboboxOption[] = [
   { id: "lviv", label: "Львів", meta: META_LABEL },
@@ -66,6 +79,7 @@ interface Scene {
   onValueChange: Mock<(next: string) => void>;
   onSearch: Mock<(query: string) => void>;
   onSelect: Mock<(option: ComboboxOption) => void>;
+  onSubmit: Mock<() => void>;
   update: (next: Props) => void;
   unmount: () => void;
 }
@@ -74,25 +88,28 @@ const renderCombobox = (props: Props = {}): Scene => {
   const onValueChange = vi.fn<(next: string) => void>();
   const onSearch = vi.fn<(query: string) => void>();
   const onSelect = vi.fn<(option: ComboboxOption) => void>();
+  const onSubmit = vi.fn<() => void>();
 
   const markup = (current: Props): ReactElement => (
-    <Combobox
-      id={ID}
-      label={LABEL}
-      value={current.value ?? ""}
-      onValueChange={onValueChange}
-      onSearch={onSearch}
-      onSelect={onSelect}
-      options={current.options ?? []}
-      emptyLabel={EMPTY_LABEL}
-      loading={current.loading ?? false}
-      listboxLabel={current.listboxLabel}
-      placeholder={current.placeholder}
-      required={current.required}
-      disabled={current.disabled}
-      error={current.error}
-      className={current.className}
-    />
+    <form onSubmit={onSubmit}>
+      <Combobox
+        id={ID}
+        label={LABEL}
+        value={current.value ?? ""}
+        onValueChange={onValueChange}
+        onSearch={onSearch}
+        onSelect={onSelect}
+        options={current.options ?? []}
+        emptyLabel={EMPTY_LABEL}
+        loading={current.loading ?? false}
+        listboxLabel={current.listboxLabel}
+        placeholder={current.placeholder}
+        required={current.required}
+        disabled={current.disabled}
+        error={current.error}
+        className={current.className}
+      />
+    </form>
   );
 
   const view = render(markup(props));
@@ -107,6 +124,7 @@ const renderCombobox = (props: Props = {}): Scene => {
     onValueChange,
     onSearch,
     onSelect,
+    onSubmit,
     update: (next: Props) => view.rerender(markup(next)),
     unmount: view.unmount,
   };
@@ -178,6 +196,16 @@ const openWithResults = (props: Props = {}): Scene => {
 
   fireEvent.focus(scene.input);
   tick(DEBOUNCE_MS);
+
+  return scene;
+};
+
+const settleWithResults = (query: string): Scene => {
+  const scene = renderCombobox({ value: query, options: [] });
+
+  fireEvent.focus(scene.input);
+  tick(DEBOUNCE_MS);
+  scene.update({ value: query, options: OPTIONS });
 
   return scene;
 };
@@ -285,7 +313,7 @@ describe("the pending window that keeps the panel from flashing empty", () => {
     expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
   });
 
-  it("hands the panel over to the empty label the moment the window closes", () => {
+  it("hands the panel over to the empty label the moment the window closes on an empty query", () => {
     const { input } = renderCombobox();
 
     typeInto(input, "Льв");
@@ -298,11 +326,11 @@ describe("the pending window that keeps the panel from flashing empty", () => {
 
 describe("the rows of the query the user has already moved on from", () => {
   it("pulls the previous results the instant a new keystroke opens a window", () => {
-    const { input } = openWithResults({ value: "Льв" });
+    const scene = settleWithResults("Льв");
 
     expect(rows().length).toBe(OPTIONS.length);
 
-    typeInto(input, "Киї");
+    typeInto(scene.input, "Киї");
 
     expect(screen.queryAllByRole("option").length).toBe(0);
     expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
@@ -314,7 +342,7 @@ describe("the rows of the query the user has already moved on from", () => {
   });
 
   it("keeps them back for the whole round trip once the consumer raises loading", () => {
-    const scene = openWithResults({ value: "Льв" });
+    const scene = settleWithResults("Льв");
 
     typeInto(scene.input, "Киї");
     tick(DEBOUNCE_MS);
@@ -325,6 +353,40 @@ describe("the rows of the query the user has already moved on from", () => {
 
     expect(screen.queryAllByRole("option").length).toBe(0);
     expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+  });
+
+  it("keeps them back past the search too, when the consumer answers without ever raising loading", () => {
+    const scene = settleWithResults("Льв");
+
+    expect(rows().length).toBe(OPTIONS.length);
+
+    typeInto(scene.input, "Киї");
+    tick(DEBOUNCE_MS);
+
+    expect(scene.onSearch).toHaveBeenLastCalledWith("Киї");
+    expect(screen.queryAllByRole("option").length).toBe(0);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+
+    scene.update({ value: "Киї", options: OPTIONS });
+
+    expect(screen.queryAllByRole("option").length).toBe(0);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+
+    fireEvent.keyDown(scene.input, { key: "Enter" });
+
+    expect(scene.onSelect).not.toHaveBeenCalled();
+  });
+
+  it("hands the panel over the moment the answer to the new query lands", () => {
+    const scene = settleWithResults("Льв");
+
+    typeInto(scene.input, "Киї");
+    tick(DEBOUNCE_MS);
+    scene.update({ value: "Киї", options: [OPTIONS[1]] });
+
+    expect(loadingBars().length).toBe(0);
+    expect(rows().length).toBe(1);
+    expect(rows()[0].textContent).toBe(`${OPTIONS[1].label}${OPTIONS[1].meta}`);
   });
 });
 
@@ -374,23 +436,42 @@ describe("the loading bars themselves", () => {
 });
 
 describe("the empty result row", () => {
-  it("carries the label the consumer supplied and claims no option role", () => {
+  it("publishes the consumer label as one disabled option, so the listbox holds nothing but options", () => {
     const { input } = renderCombobox();
 
     fireEvent.focus(input);
     tick(DEBOUNCE_MS);
 
-    expect(screen.getByText(EMPTY_LABEL).textContent).toBe(EMPTY_LABEL);
-    expect(screen.queryAllByRole("option").length).toBe(0);
+    const list = rows();
+
+    expect(list.length).toBe(1);
+    expect(list[0].textContent).toBe(EMPTY_LABEL);
+    expect(list[0].getAttribute("aria-disabled")).toBe("true");
+    expect(list[0].hasAttribute("id")).toBe(false);
+    expect(panel().childElementCount).toBe(1);
   });
 
-  it("stays inert, so pressing it selects nothing and leaves the panel open", () => {
+  it("never takes the active row, so aria-activedescendant points at nothing while it shows", () => {
+    const { input } = renderCombobox();
+
+    fireEvent.focus(input);
+    tick(DEBOUNCE_MS);
+
+    expect(input.hasAttribute("aria-activedescendant")).toBe(false);
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(input.hasAttribute("aria-activedescendant")).toBe(false);
+    expect(rows()[0].getAttribute("aria-selected")).toBe("false");
+  });
+
+  it("stays inert under the pointer: the press selects nothing and the panel guard keeps it alive", () => {
     const { input, onSelect } = renderCombobox();
 
     fireEvent.focus(input);
     tick(DEBOUNCE_MS);
-    fireEvent.mouseDown(screen.getByText(EMPTY_LABEL));
 
+    expect(fireEvent.mouseDown(rows()[0])).toBe(false);
     expect(onSelect).not.toHaveBeenCalled();
     expect(input.getAttribute("aria-expanded")).toBe("true");
   });
@@ -453,6 +534,21 @@ describe("the listbox a screen reader reads", () => {
     expect(list[1].getAttribute("aria-selected")).toBe("true");
     expect(list[1].getAttribute("id")).toBe(optionId(1));
   });
+
+  it("marks the listbox busy while the bars stand in for the rows", () => {
+    const { input } = renderCombobox({ options: OPTIONS });
+
+    typeInto(input, "Киї");
+
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+    expect(panel().getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("drops the busy flag once the rows are the ones on screen", () => {
+    openWithResults();
+
+    expect(panel().getAttribute("aria-busy")).toBe("false");
+  });
 });
 
 describe("the panel box the rows live in", () => {
@@ -460,6 +556,20 @@ describe("the panel box the rows live in", () => {
     openWithResults();
 
     expect(missing(panel(), PANEL_CLASSES)).toEqual([]);
+  });
+
+  it("fuses its top border into the input border instead of stacking a second one", () => {
+    openWithResults();
+
+    expect(panel().classList.contains(PANEL_BORDER_FUSE)).toBe(true);
+  });
+
+  it("cancels a press on its own chrome, so the gutter never blurs the input out from under the list", () => {
+    const { input } = openWithResults();
+
+    expect(fireEvent.mouseDown(panel())).toBe(false);
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+    expect(rows().length).toBe(OPTIONS.length);
   });
 
   it("renders the chevron at the ratified 18px", () => {
@@ -512,6 +622,17 @@ describe("walking the list from the keyboard", () => {
     expect(fireEvent.keyDown(input, { key: "ArrowDown" })).toBe(false);
   });
 
+  it("cancels the arrows over the busy panel too, so the page cannot scroll under the bars", () => {
+    const { input } = renderCombobox({ options: OPTIONS });
+
+    typeInto(input, "Киї");
+
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+    expect(fireEvent.keyDown(input, { key: "ArrowDown" })).toBe(false);
+    expect(fireEvent.keyDown(input, { key: "ArrowUp" })).toBe(false);
+    expect(input.hasAttribute("aria-activedescendant")).toBe(false);
+  });
+
   it("stays on the last row instead of wrapping to the top", () => {
     const { input } = openWithResults();
 
@@ -543,6 +664,65 @@ describe("walking the list from the keyboard", () => {
     fireEvent.keyDown(input, { key: "ArrowUp" });
 
     expect(input.getAttribute("aria-activedescendant")).toBe(optionId(1));
+  });
+
+  it("returns the active row to the top when a new list arrives, instead of teleporting it", () => {
+    const scene = openWithResults();
+
+    fireEvent.keyDown(scene.input, { key: "ArrowDown" });
+    fireEvent.keyDown(scene.input, { key: "ArrowDown" });
+
+    expect(scene.input.getAttribute("aria-activedescendant")).toBe(optionId(2));
+
+    scene.update({ options: [OPTIONS[0]] });
+    scene.update({ options: OPTIONS });
+
+    expect(scene.input.getAttribute("aria-activedescendant")).toBe(optionId(0));
+    expect(rows()[0].getAttribute("aria-selected")).toBe("true");
+  });
+});
+
+describe("the keys the combobox leaves to the browser", () => {
+  it("ignores an arrow carried by a modifier so browser and os shortcuts survive", () => {
+    const { input } = openWithResults();
+
+    for (const modifier of MODIFIERS) {
+      const isDefaultAllowed = fireEvent.keyDown(input, {
+        key: "ArrowDown",
+        ...modifier,
+      });
+
+      expect(isDefaultAllowed).toBe(true);
+    }
+
+    expect(input.getAttribute("aria-activedescendant")).toBe(optionId(0));
+  });
+
+  it("ignores Enter carried by a modifier, so the row under it survives the shortcut", () => {
+    const { input, onSelect } = openWithResults();
+
+    for (const modifier of MODIFIERS) {
+      const isDefaultAllowed = fireEvent.keyDown(input, {
+        key: "Enter",
+        ...modifier,
+      });
+
+      expect(isDefaultAllowed).toBe(true);
+    }
+
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("ignores a key another handler already cancelled", () => {
+    const { input, onSelect } = openWithResults();
+    const cancelled = createEvent.keyDown(input, { key: "Enter" });
+
+    cancelled.preventDefault();
+    fireEvent(input, cancelled);
+
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(input.getAttribute("aria-expanded")).toBe("true");
   });
 });
 
@@ -616,13 +796,52 @@ describe("picking an option", () => {
     expect(onSelect).toHaveBeenCalledWith(OPTIONS[1]);
     expect(input.getAttribute("aria-expanded")).toBe("false");
   });
+
+  it("never echoes the pick back through onValueChange, on either path, because the consumer owns the query", () => {
+    const scene = settleWithResults("Льв");
+    const echoes = scene.onValueChange.mock.calls.length;
+
+    fireEvent.keyDown(scene.input, { key: "Enter" });
+
+    expect(scene.onSelect).toHaveBeenCalledTimes(1);
+    expect(scene.onValueChange.mock.calls.length).toBe(echoes);
+
+    fireEvent.click(scene.input);
+    fireEvent.mouseDown(rows()[1]);
+
+    expect(scene.onSelect).toHaveBeenCalledTimes(2);
+    expect(scene.onValueChange.mock.calls.length).toBe(echoes);
+  });
 });
 
 describe("Enter and the form wrapped around the field", () => {
   it("cancels Enter while a row is active so the checkout cannot submit under the panel", () => {
-    const { input } = openWithResults();
+    const { input, onSubmit } = openWithResults();
 
     expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("cancels Enter while the panel is still busy, so an impatient submit waits for the list", () => {
+    const { input, onSelect, onSubmit } = renderCombobox({ options: OPTIONS });
+
+    typeInto(input, "Киї");
+
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("cancels Enter over the empty row too, so a dead query cannot submit the form either", () => {
+    const { input, onSelect, onSubmit } = renderCombobox();
+
+    fireEvent.focus(input);
+    tick(DEBOUNCE_MS);
+
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("leaves Enter alone with the panel closed so the form still submits", () => {
@@ -680,6 +899,34 @@ describe("closing and reopening the panel", () => {
 
     expect(onSearch.mock.calls.length).toBe(searches);
   });
+
+  it("reopens on a click, because a pick leaves the focus on the input and fires no second focus", () => {
+    const { input, onSearch } = openWithResults();
+
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(input.getAttribute("aria-expanded")).toBe("false");
+
+    const searches = onSearch.mock.calls.length;
+
+    fireEvent.click(input);
+
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+    expect(rows().length).toBe(OPTIONS.length);
+
+    tick(DEBOUNCE_MS);
+
+    expect(onSearch.mock.calls.length).toBe(searches);
+  });
+
+  it("leaves an open panel open when the pointer comes back to the input", () => {
+    const { input } = openWithResults();
+
+    fireEvent.click(input);
+
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+    expect(rows().length).toBe(OPTIONS.length);
+  });
 });
 
 describe("the grace period after focus leaves", () => {
@@ -715,6 +962,17 @@ describe("the grace period after focus leaves", () => {
     tick(MID_GRACE_MS);
 
     expect(input.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("drops the armed search when the grace closes the panel, the field left behind costs no request", () => {
+    const { input, onSearch } = renderCombobox({ options: OPTIONS });
+
+    typeInto(input, "Льв");
+    fireEvent.blur(input);
+    tick(DEBOUNCE_MS * 2);
+
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 });
 
@@ -795,6 +1053,16 @@ describe("the disabled combobox", () => {
 
     expect(scene.input.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("drops the armed search as well, so a locked form never queries the directory mid-submit", () => {
+    const scene = renderCombobox({ options: OPTIONS });
+
+    typeInto(scene.input, "Льв");
+    scene.update({ options: OPTIONS, disabled: true });
+    tick(DEBOUNCE_MS * 2);
+
+    expect(scene.onSearch).not.toHaveBeenCalled();
   });
 });
 

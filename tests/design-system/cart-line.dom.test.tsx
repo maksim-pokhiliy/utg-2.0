@@ -1,11 +1,12 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { CartLine, type CartLineScale } from "@root/design-system";
 
 const TITLE = "Waiting patch · L";
 const REMOVE_LABEL = "Remove the line";
 const QUANTITY_LABEL = "Quantity";
+const INCREMENT_LABEL = `${QUANTITY_LABEL} +`;
 const QUANTITY = 2;
 const TOTAL = "1 200 ₴";
 const MEDIA_TEXT = "photo";
@@ -154,6 +155,7 @@ interface CartLineParts {
 interface CartLineOverrides {
   scale?: CartLineScale;
   className?: string;
+  onQuantityChange?: (quantity: number) => void;
 }
 
 const childAt = (parent: Element, index: number, what: string): HTMLElement => {
@@ -340,6 +342,32 @@ describe("the accessible names the cart drawer and the e2e specs query by", () =
     expect(screen.getByRole("button", { name: REMOVE_LABEL })).toBe(remove);
     expect(controls.contains(stepper)).toBe(true);
     expect(stepper.value).toBe(String(QUANTITY));
+  });
+});
+
+describe("the nodes the caller hands CartLine to place", () => {
+  it("puts the media node inside the framed column rather than loose in the row", () => {
+    const { frame } = renderLine({ scale: "drawer" });
+
+    expect(frame.contains(screen.getByText(MEDIA_TEXT))).toBe(true);
+  });
+
+  it("puts the line total in the stepper row, opposite the quantity control", () => {
+    const { controls } = renderLine({ scale: "drawer" });
+
+    expect(controls.contains(screen.getByText(TOTAL))).toBe(true);
+  });
+});
+
+describe("the quantity the stepper hands back, which the cart's totals ride on", () => {
+  it("reports the incremented quantity to onQuantityChange when the customer steps up", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+
+    renderLine({ scale: "drawer", onQuantityChange });
+    fireEvent.click(screen.getByRole("button", { name: INCREMENT_LABEL }));
+
+    expect(onQuantityChange).toHaveBeenCalledTimes(1);
+    expect(onQuantityChange).toHaveBeenCalledWith(QUANTITY + 1);
   });
 });
 
