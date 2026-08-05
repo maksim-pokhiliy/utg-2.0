@@ -33,6 +33,7 @@ export type { PriceSize } from "./components/price/price";
 export { QuantityStepper } from "./components/quantity-stepper/quantity-stepper";
 
 export { CartLine } from "./components/cart-line/cart-line";
+export type { CartLineScale } from "./components/cart-line/cart-line";
 
 export { SizeSelector } from "./components/size-selector/size-selector";
 
@@ -45,6 +46,12 @@ export { Input } from "./components/input/input";
 export { Textarea } from "./components/textarea/textarea";
 export { Select } from "./components/select/select";
 export { Field } from "./components/field/field";
+
+export { Combobox } from "./components/combobox/combobox";
+export type { ComboboxOption } from "./components/combobox/combobox";
+
+export { ChoiceChips } from "./components/choice-chips/choice-chips";
+export type { ChoiceChipOption } from "./components/choice-chips/choice-chips";
 
 export { SectionBand } from "./components/section-band/section-band";
 
