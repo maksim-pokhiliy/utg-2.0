@@ -139,6 +139,34 @@ const EXPECTED_CONTROLS = [
   "gap-y-2",
 ];
 
+const EXPECTED_STEPPER = {
+  step: [
+    "inline-flex",
+    "items-center",
+    "justify-center",
+    "p-0",
+    "bg-transparent",
+    "text-ink",
+    "cursor-pointer",
+    "hover:bg-muted",
+    "disabled:text-line",
+    "disabled:cursor-not-allowed",
+    "disabled:bg-transparent",
+    "min-h-10",
+    "w-10",
+  ],
+  box: [
+    "text-center",
+    "border-x",
+    "border-line",
+    "type-price",
+    "bg-transparent",
+    "text-ink",
+    "p-0",
+    "w-9",
+  ],
+};
+
 const FIXED_FRAME_HEIGHTS = ["h-16", "h-14"];
 
 interface CartLineParts {
@@ -149,6 +177,7 @@ interface CartLineParts {
   title: HTMLElement;
   remove: HTMLElement;
   controls: HTMLElement;
+  stepper: HTMLElement;
   glyph: SVGElement;
 }
 
@@ -156,6 +185,7 @@ interface CartLineOverrides {
   scale?: CartLineScale;
   className?: string;
   onQuantityChange?: (quantity: number) => void;
+  onRemove?: () => void;
 }
 
 const childAt = (parent: Element, index: number, what: string): HTMLElement => {
@@ -180,6 +210,7 @@ const renderLine = (overrides: CartLineOverrides = {}): CartLineParts => {
   const content = childAt(row, 1, "content column");
   const titleRow = childAt(content, 0, "title row");
   const controls = childAt(content, 1, "stepper row");
+  const stepper = childAt(controls, 0, "quantity stepper");
   const title = childAt(titleRow, 0, "title span");
   const remove = childAt(titleRow, 1, "remove control");
   const glyph = remove.querySelector("svg");
@@ -188,7 +219,17 @@ const renderLine = (overrides: CartLineOverrides = {}): CartLineParts => {
     throw new Error("CartLine rendered no trash glyph");
   }
 
-  return { row, frame, content, titleRow, title, remove, controls, glyph };
+  return {
+    row,
+    frame,
+    content,
+    titleRow,
+    title,
+    remove,
+    controls,
+    stepper,
+    glyph,
+  };
 };
 
 const classesOf = (element: Element): string[] =>
@@ -311,6 +352,22 @@ describe("the axes CartLine deliberately leaves off the scale prop", () => {
       expect(classesOf(controls)).toEqual(exactly(EXPECTED_CONTROLS));
     }
   });
+
+  it("orders the small stepper at either scale, which is the geometry the row is cut for", () => {
+    for (const scale of SCALES) {
+      const { stepper } = renderLine({ scale });
+
+      expect(classesOf(childAt(stepper, 0, "decrement control"))).toEqual(
+        exactly(EXPECTED_STEPPER.step)
+      );
+      expect(classesOf(childAt(stepper, 1, "quantity box"))).toEqual(
+        exactly(EXPECTED_STEPPER.box)
+      );
+      expect(classesOf(childAt(stepper, 2, "increment control"))).toEqual(
+        exactly(EXPECTED_STEPPER.step)
+      );
+    }
+  });
 });
 
 describe("the accessible names the cart drawer and the e2e specs query by", () => {
@@ -345,6 +402,21 @@ describe("the accessible names the cart drawer and the e2e specs query by", () =
   });
 });
 
+describe("the title the customer identifies the line by", () => {
+  it("prints the title prop inside the title span at the drawer scale", () => {
+    const { title } = renderLine({ scale: "drawer" });
+
+    expect(title.textContent).toBe(TITLE);
+    expect(screen.getByText(TITLE)).toBe(title);
+  });
+
+  it("prints it at the summary scale too, where the same line rides inside checkout", () => {
+    const { title } = renderLine({ scale: "summary" });
+
+    expect(title.textContent).toBe(TITLE);
+  });
+});
+
 describe("the nodes the caller hands CartLine to place", () => {
   it("puts the media node inside the framed column rather than loose in the row", () => {
     const { frame } = renderLine({ scale: "drawer" });
@@ -368,6 +440,26 @@ describe("the quantity the stepper hands back, which the cart's totals ride on",
 
     expect(onQuantityChange).toHaveBeenCalledTimes(1);
     expect(onQuantityChange).toHaveBeenCalledWith(QUANTITY + 1);
+  });
+});
+
+describe("the remove control, the only way a line leaves the cart", () => {
+  it("reports the press to onRemove exactly once at the drawer scale", () => {
+    const onRemove = vi.fn<() => void>();
+
+    renderLine({ scale: "drawer", onRemove });
+    fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports it at the summary scale too, where the box and the glyph shrink", () => {
+    const onRemove = vi.fn<() => void>();
+
+    renderLine({ scale: "summary", onRemove });
+    fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
   });
 });
 

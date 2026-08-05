@@ -324,6 +324,37 @@ describe("pointer selection", () => {
   });
 });
 
+describe("a chip pressed inside the form the checkout wraps it in", () => {
+  it("reports the choice without submitting the order under it", () => {
+    const onSubmit = vi.fn();
+    const onChange = vi.fn();
+
+    render(
+      <form onSubmit={onSubmit}>
+        <ChoiceChips
+          label={LABEL}
+          value={MIDDLE}
+          onChange={onChange}
+          options={OPTIONS}
+        />
+      </form>
+    );
+
+    fireEvent.click(screen.getAllByRole("radio")[2]);
+
+    expect(onChange.mock.calls).toEqual([[OPTIONS[2].id]]);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("says so on every chip's type attribute, which is what holds the submit back", () => {
+    const chips = renderChips();
+
+    expect(chips.map((chip) => chip.getAttribute("type"))).toEqual(
+      OPTIONS.map(() => "button")
+    );
+  });
+});
+
 describe("the ratified chip geometry, which the addendum sizes to the thumb", () => {
   it("dresses a checked chip in the ratified chrome and not one class more", () => {
     const chips = renderChips();

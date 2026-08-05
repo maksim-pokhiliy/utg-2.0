@@ -47,6 +47,7 @@ const PANEL_BORDER_FUSE = "-mt-0.5";
 const INVALID_BORDER_CLASS = "border-destructive";
 const VALID_BORDER_CLASS = "border-input";
 const CHEVRON_SIZE = "18";
+const LUCIDE_UTILITY = /^lucide/;
 const NEAREST_BLOCK: ScrollIntoViewOptions = { block: "nearest" };
 const HIDDEN_SELECTOR = '[aria-hidden="true"]';
 const MODIFIERS = [
@@ -55,6 +56,70 @@ const MODIFIERS = [
   { metaKey: true },
   { shiftKey: true },
 ];
+
+const EXPECTED_PANEL = [
+  "absolute",
+  "top-full",
+  "inset-x-0",
+  PANEL_BORDER_FUSE,
+  "z-30",
+  ...PANEL_CLASSES,
+  "border-2",
+  "border-ink",
+  "bg-paper",
+];
+
+const EXPECTED_INPUT = [
+  "w-full",
+  "min-h-12",
+  "px-3",
+  "py-2.5",
+  "bg-white",
+  "text-ink",
+  "type-body",
+  "placeholder:text-ink-faint",
+  "border-2",
+  "disabled:bg-muted",
+  "disabled:border-ink-faint",
+  "disabled:text-ink-faint",
+  "disabled:cursor-not-allowed",
+  VALID_BORDER_CLASS,
+  "pr-10",
+];
+
+const EXPECTED_CHEVRON = [
+  "absolute",
+  "right-3",
+  "top-1/2",
+  "-translate-y-1/2",
+  "pointer-events-none",
+  "text-ink-faint",
+];
+
+const ROW_CHROME = [
+  "flex",
+  "items-center",
+  "gap-2.5",
+  "min-h-11",
+  "px-3.5",
+  "py-1.5",
+  "type-small",
+  "cursor-pointer",
+];
+
+const META_CHROME = ["flex-none", "type-caption"];
+
+const EXPECTED_ROW = {
+  active: [...ROW_CHROME, ...ACTIVE_ROW_CLASSES],
+  inactive: [...ROW_CHROME, INACTIVE_ROW_CLASS],
+};
+
+const EXPECTED_ROW_LABEL = ["flex-1", "min-w-0"];
+
+const EXPECTED_ROW_META = {
+  active: [...META_CHROME, ACTIVE_META_CLASS],
+  inactive: [...META_CHROME, INACTIVE_META_CLASS],
+};
 
 const OPTIONS: readonly ComboboxOption[] = [
   { id: "lviv", label: "Львів", meta: META_LABEL },
@@ -156,6 +221,17 @@ const loadingBars = (): Element[] =>
 const missing = (element: Element, utilities: readonly string[]): string[] =>
   utilities.filter((utility) => !element.classList.contains(utility));
 
+const classesOf = (element: Element): string[] =>
+  Array.from(element.classList).sort();
+
+const chromeOf = (element: Element): string[] =>
+  Array.from(element.classList)
+    .filter((utility) => !LUCIDE_UTILITY.test(utility))
+    .sort();
+
+const exactly = (utilities: readonly string[]): string[] =>
+  [...utilities].sort();
+
 const widthsOf = (element: Element): string[] =>
   Array.from(element.classList).filter((utility) =>
     WIDTH_UTILITY.test(utility)
@@ -169,6 +245,16 @@ const metaOf = (row: HTMLElement): Element => {
   }
 
   return meta;
+};
+
+const labelOf = (row: HTMLElement): Element => {
+  const label = row.children.item(0);
+
+  if (label === null) {
+    throw new Error("The option row carries no label span");
+  }
+
+  return label;
 };
 
 const chevron = (): Element => {
@@ -410,6 +496,28 @@ describe("the loading prop the consumer owns", () => {
     expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
     expect(screen.queryByText(EMPTY_LABEL)).toBeNull();
   });
+
+  it("counts a raised and lowered loading as the answer on its own, though the options array came back the very same reference", () => {
+    const scene = renderCombobox({ value: "Льв", options: OPTIONS });
+
+    fireEvent.focus(scene.input);
+    tick(DEBOUNCE_MS);
+
+    expect(scene.onSearch).toHaveBeenCalledTimes(1);
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+    expect(panel().getAttribute("aria-busy")).toBe("true");
+
+    scene.update({ value: "Льв", options: OPTIONS, loading: true });
+
+    expect(loadingBars().length).toBe(LOADING_BAR_COUNT);
+    expect(panel().getAttribute("aria-busy")).toBe("true");
+
+    scene.update({ value: "Льв", options: OPTIONS, loading: false });
+
+    expect(loadingBars().length).toBe(0);
+    expect(panel().getAttribute("aria-busy")).toBe("false");
+    expect(rows().length).toBe(OPTIONS.length);
+  });
 });
 
 describe("the loading bars themselves", () => {
@@ -578,6 +686,18 @@ describe("the panel box the rows live in", () => {
     expect(chevron().getAttribute("width")).toBe(CHEVRON_SIZE);
     expect(chevron().getAttribute("height")).toBe(CHEVRON_SIZE);
   });
+
+  it("stacks the panel over whatever the form puts next and not one class more", () => {
+    openWithResults();
+
+    expect(classesOf(panel())).toEqual(exactly(EXPECTED_PANEL));
+  });
+
+  it("dresses the chevron in the ratified chrome and not one class more, so the press falls through to the input", () => {
+    renderCombobox();
+
+    expect(chromeOf(chevron())).toEqual(exactly(EXPECTED_CHEVRON));
+  });
 });
 
 describe("the ink inversion that says where Enter will land", () => {
@@ -612,6 +732,38 @@ describe("the ink inversion that says where Enter will land", () => {
     expect(metaOf(list[0]).classList.contains(INACTIVE_META_CLASS)).toBe(false);
     expect(metaOf(list[1]).classList.contains(INACTIVE_META_CLASS)).toBe(true);
     expect(metaOf(list[1]).classList.contains(ACTIVE_META_CLASS)).toBe(false);
+  });
+});
+
+describe("the option row's own box, which the thumb has to land on", () => {
+  it("dresses the active row in the ratified row chrome and not one class more", () => {
+    openWithResults();
+
+    expect(classesOf(rows()[0])).toEqual(exactly(EXPECTED_ROW.active));
+  });
+
+  it("dresses an inactive row in the same chrome, minus the inversion", () => {
+    openWithResults();
+
+    expect(classesOf(rows()[1])).toEqual(exactly(EXPECTED_ROW.inactive));
+  });
+
+  it("clamps the label column so a long city cannot push the meta out of the panel", () => {
+    openWithResults();
+
+    expect(classesOf(labelOf(rows()[0]))).toEqual(exactly(EXPECTED_ROW_LABEL));
+    expect(classesOf(labelOf(rows()[1]))).toEqual(exactly(EXPECTED_ROW_LABEL));
+  });
+
+  it("holds the meta column to its own width at either inversion and not one class more", () => {
+    openWithResults();
+
+    expect(classesOf(metaOf(rows()[0]))).toEqual(
+      exactly(EXPECTED_ROW_META.active)
+    );
+    expect(classesOf(metaOf(rows()[1]))).toEqual(
+      exactly(EXPECTED_ROW_META.inactive)
+    );
   });
 });
 
@@ -1122,6 +1274,18 @@ describe("the plain input contract the field forwards", () => {
 
     expect(input.required).toBe(false);
     expect(screen.queryByText(ASTERISK)).toBeNull();
+  });
+
+  it("dresses the input in the field chrome plus the chevron gutter and not one class more", () => {
+    const { input } = renderCombobox();
+
+    expect(classesOf(input)).toEqual(exactly(EXPECTED_INPUT));
+  });
+
+  it("turns the browser's own completion off, so no native list can cover the panel", () => {
+    const { input } = renderCombobox();
+
+    expect(input.getAttribute("autocomplete")).toBe("off");
   });
 
   it("hands the consumer className to the field root rather than to the input", () => {
