@@ -22,7 +22,7 @@ Yarn is the package manager.
 - `yarn dev` — dev server on localhost:3000 (Turbopack)
 - `yarn build` — production build
 - `yarn lint` / `yarn lint:fix` — ESLint 9 flat config (`eslint.config.mjs`): `next/core-web-vitals` with `react-hooks/exhaustive-deps` active; the two react-hooks v6 Compiler-era rules are deliberately off (DEF-18); `initiatives/` is ignored. The config also enforces the design-system seal with hard errors outside `src/design-system/`: no raw color values, no raw text-size utilities, no deep imports past the barrel, no raw `<button>`/`<a>` JSX, no Dialog-internals imports.
-- `yarn format` — Prettier over the repo (`initiatives/production-polish/extracted/` is excluded — documentary recovered sources stay verbatim)
+- `yarn format` — Prettier over the repo (`initiatives/` is excluded entirely: planner prose and documentary sources — recovered 1.0 code, design exports — stay out of the code formatter; CI's prettier gate guards shipped code only)
 - `yarn typecheck` — both TS programs: the app (`tsconfig.json`, which excludes tests) and `tsconfig.test.json` (`tests/`, `e2e/`, the two test configs)
 - `yarn test` / `yarn test:watch` — Vitest, two projects split by filename infix (`*.dom.test.tsx` → jsdom, everything else → node); no globals
 - `yarn e2e` — blank-env `yarn build` + Playwright against `next start`: the script and `webServer.env` both blank `PLACE_ORDER_URL`/`EXCHANGE_RATE_API_*`, so checkout's real 503 is the deterministic error fixture and the suite can never hit the live relay (nor flake on live rates)
