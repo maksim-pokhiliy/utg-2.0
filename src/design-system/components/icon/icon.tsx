@@ -32,7 +32,7 @@ const LUCIDE_GLYPHS = {
 
 export type IconName = keyof typeof LUCIDE_GLYPHS | "instagram";
 
-export type IconSize = 20 | 22 | 24 | 40;
+export type IconSize = 16 | 18 | 20 | 22 | 24 | 40;
 
 interface IconProps {
   name: IconName;
