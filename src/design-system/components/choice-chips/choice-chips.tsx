@@ -19,6 +19,9 @@ const chip = cva(
 );
 
 function nextIndex(key: string, index: number, count: number): number | null {
+  if (count === 0) {
+    return null;
+  }
   if (key === "ArrowRight" || key === "ArrowDown") {
     return (index + 1) % count;
   }
@@ -75,7 +78,7 @@ export function ChoiceChips({
 
     const next = nextIndex(event.key, index, options.length);
 
-    if (next === null || next < 0 || next >= options.length) {
+    if (next === null) {
       return;
     }
 
@@ -88,6 +91,8 @@ export function ChoiceChips({
     <div
       role="radiogroup"
       aria-label={label}
+      aria-required={required}
+      aria-disabled={disabled}
       className={cn("flex flex-col gap-1.5", className)}
     >
       <span className="type-caption text-ink">
