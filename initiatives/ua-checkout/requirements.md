@@ -81,15 +81,23 @@ response fields there when implementing (UAC-2).
   `{success, data[], errors[]…}`.
 - **Settlement search**: `calledMethod: "searchSettlements"`,
   `methodProperties: {CityName, Limit, Page}` — NP's own online-search endpoint
-  ("немає необхідності зберігати довідники"). Result rows carry
-  `MainDescription/Area/Region/SettlementTypeCode/Ref/DeliveryCity/Warehouses`;
-  display string composed as «МІСТО, область» from those fields; `DeliveryCity` is
-  the city ref for the warehouse lookup.
+  ("немає необхідності зберігати довідники"). The payload is nested:
+  `data: [{TotalCount, Addresses[]}]` — an empty search is `TotalCount: 0`, not
+  `data: []` (D-8; the U1 mirror typed this wrong). Rows carry `Present` — NP's
+  own composed display string («м. Київ, Київська обл.», «с. Київець,
+  Миколаївський р-н, Львівська обл.») — plus
+  `MainDescription/Area/Region/Ref/DeliveryCity/Warehouses`. Display = `Present`
+  verbatim (D-8 supersedes the earlier «МІСТО, область» recipe, which lost the
+  raion that disambiguates same-named villages; the recipe stays as fallback);
+  `DeliveryCity` is the city ref for the warehouse lookup.
 - **Warehouses**: `calledMethod: "getWarehouses"`,
   `methodProperties: {CityRef, Page?, Limit?, Language?, TypeOfWarehouseRef?}` —
   rows carry `Description` («Відділення №N: адреса»), `Number`,
   `CategoryOfWarehouse` (Branch/Postomat…), `WarehouseStatus`, `DenyToSelect`,
   schedules, limits. NP's docs mandate keeping a cached copy refreshed daily.
+  Values are string-encoded (`Number` `"1"`, `DenyToSelect` `"0"|"1"`, categories
+  `"Branch"|"Postomat"`, `WarehouseStatus === "Working"`), and NP answers HTTP 200
+  even on `success: false` — `response.ok` alone proves nothing (D-8).
 - **Our proxy** (`/api/np/*`, exact routes decided in U4): key server-side only;
   per-city warehouse list fetched page-merged and cached server-side (TTL ~24h per
   NP's own guidance; settlements search cached short, e.g. minutes, keyed by query);
@@ -98,9 +106,13 @@ response fields there when implementing (UAC-2).
   (fail-open); filter out `DenyToSelect`/non-selectable warehouses; postomat-vs-
   branch filtering by `CategoryOfWarehouse` server-side via a `method` query param
   (D-7).
-- **Failure budget**: directory calls get a short timeout (~2–3s); any failure flips
-  the dependent fields to fallback free-text with a hint — never a blocked form,
-  never a spinner-forever. No retries that delay the buyer.
+- **Failure budget**: settlement calls get ~2.5s; the per-city warehouse page-merge
+  gets a 7s deadline + a 10-page hard cap (D-8: Kyiv ≈ 3000 warehouses over 6–7
+  sequential 500-row pages — a 2.5s whole-merge budget would deny the largest
+  cities autocomplete forever; paid once per city per 24h; a partial merge is
+  refused and never cached). Any failure flips the dependent fields to fallback
+  free-text with a hint — never a blocked form, never a spinner-forever. No
+  retries that delay the buyer.
 - **Warehouse search UX** (amended by D-7; originally client-side): filtering by
   number or substring happens at OUR proxy, inside OUR cached per-city list, with
   the response capped (~30 rows; settlements ~10). Both original rationales hold —
@@ -143,7 +155,9 @@ warehouse_number}` · `np_courier` `{mode, source, city, street, building,
 apartment?}` · `generic` (en) `{mode: "generic", country, state?, city, address}`.
 `patronymic`, `comment`, `apartment`, `state` are omitted when empty. Cart lines,
 `total`, `currency`, `locale` are byte-compatible with today (D-12 stays; the size
-stays inside `title` per DEF-3).
+stays inside `title` per DEF-3). `delivery.city` carries NP's `Present` string
+verbatim — under the D-8 proxy contract U5 rejoins it as `label + ", " + region`,
+never `label` alone (a truncated city loses the raion).
 
 **Rollout order (U6):** bot ships dual-accept (v1+v2 render) first → shop flips to
 v2 (all three modes) → bot drops v1 in a bot-repo follow-up. Contract tests pin v2 on

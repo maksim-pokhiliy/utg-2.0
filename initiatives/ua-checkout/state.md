@@ -20,14 +20,15 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U4 executor round OPEN on `step-u4-np-proxy-prompt.md` (contour approved, D-7
-ratified) — next planner action is the plan-gate triage. U0 (B2, x-relay-secret)
+U4 plan gate triaged (D-8: Present verbatim, `{ref,label,region?}` contract, 7s
+warehouse merge, force-dynamic) — executor building toward the PR; next planner
+action is spawning the fresh reviewer when it opens. U0 (B2, x-relay-secret)
 still pending — must land before U6. The UAC-4 + UAC-8 DS-hygiene/kit-backport
 window stays available between rounds.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-7 ratified)
+(none — D-1…D-8 ratified)
 
 ## Live carry-forwards
 
@@ -35,8 +36,11 @@ window stays available between rounds.
   decoder, → U5). DEF-41 — CLOSED by U3 (both ledgers).
 - **UAC-1** (OPEN) — real NP API key from the operator into Vercel env; needed live
   only by U7, fallback covers until then.
-- **UAC-2** (OPEN) — U4 executor re-verifies NP response fields against the official
-  portal (it's Cloudflare-gated; U1 verified via two SDK mirrors).
+- **UAC-2** (SCHEDULED) — U4 re-check DONE via five substitute sources (the portal
+  403s); residual live-key proof (string `Page`/`Limit`, multi-page Kyiv merge) → U7.
+- **UAC-9** (SCHEDULED → U5) — D-8 handoff: `delivery.city` = `label + ", " +
+  region` rejoined; 200-empty on blank `q` is not a fallback trigger; meta-slot
+  overflow watch at the browser gate.
 - **UAC-3** (SCHEDULED → U5) — uk name placeholders in the ratified dict are still
   John/Wick; dictionaries get real UA examples per requirements §6.
 - **UAC-4** (OPEN) — the Claude Design kit lags the repo DS; one `/design-sync`

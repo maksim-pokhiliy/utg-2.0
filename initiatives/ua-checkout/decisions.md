@@ -19,6 +19,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-5 | U3 plan-gate: one skeleton cadence; summary preset ships complete | RATIFIED |
 | D-6 | U3 review round: Enter consumption supersedes prototype parity   | RATIFIED |
 | D-7 | U4 contour: proxy-side warehouse filtering + row caps (UAC-5)     | RATIFIED |
+| D-8 | U4 plan-gate: Present verbatim, region in the contract, 7s merge  | RATIFIED |
 
 ---
 
@@ -177,3 +178,48 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   of kilobytes of payload.
 - **Links.** UAC-5; requirements §4 (amended bullet); step-u4-np-proxy-prompt.md;
   journal (U4).
+
+### D-8 — U4 plan-gate rulings: NP truth over U1 mirrors; the contract widens by one field
+
+- **Status:** RATIFIED (planner, 2026-08-05, U4 plan-gate triage; digest to the user
+  the same day). Grounded in the executor's UAC-2 re-check: the official portal
+  403s (Cloudflare) and legacy devcenter is dead — substituted by five independent
+  sources incl. captured API response fixtures.
+- **Decision.**
+  1. **The settlements contract is `{ref, label, region?}`** (warehouses stay
+     `{number, label}`) — amends D-7's two-field shape. The ratified addendum's
+     city rows show a right-aligned region meta (the DS `ComboboxOption` already
+     carries a `meta` slot), and the split is lossless: `label + ", " + region`
+     reproduces NP's `Present` verbatim — exactly the string §5 puts in
+     `delivery.city`. U5 could not widen a shipped route contract without
+     reopening it.
+  2. **NP's own `Present` string supersedes §4's «MainDescription, Area» recipe**
+     (split on the first `", "`; recipe stays as fallback when `Present` is
+     absent). The recipe lost the raion — the load-bearing disambiguator for
+     same-named villages; zero invented composition remains anywhere in the stack.
+  3. **The warehouse page-merge gets a 7s deadline + 10-page hard cap**
+     (settlements keep ~2.5s) — amends §4's blanket «~2–3s». Kyiv ≈ 3000
+     warehouses over 6–7 sequential 500-row pages; a 2.5s whole-merge budget
+     denies the largest cities autocomplete forever. Paid once per city per 24h
+     behind the combobox loading bars; a partial merge is refused (503, nothing
+     cached).
+  4. Bundle accepted with the executor's design: `export const dynamic =
+     "force-dynamic"` on both routes (verified: a GET-only route module in Next 16
+     is statically prerenderable — the blank-env CI build would bake the 503 into
+     the deploy artifact and keep serving it after the key lands in Vercel);
+     blank/short `q` answers 200-empty, never 400 (the combobox fires a
+     focus-search with an empty value — a 400 would trip U5's fallback flip on
+     plain focus); limiter: one shared NP bucket at 60/60s, `place_order`
+     byte-identical at 5/60s with import-line-only test edits as the proof;
+     DEF-36 via per-spec `x-forwarded-for` identities in one frozen record with an
+     import-time uniqueness throw (source-verified: Next's `??=` lets an explicit
+     header win — the limiter was already live in the battery, one shared bucket);
+     the blank-env e2e spec ships — 400 and 503 from the same path is the only
+     runtime proof a static body wasn't baked; cache single-flight with rejection
+     cleanup (acceptance item), settlement empties cached, warehouse empties NOT
+     cached (an attacker-supplied ref would evict the real cities for a day);
+     README corrected in the PR, `CLAUDE.md` left to the planner's close-out.
+  5. One PR, no warehouse split — 26 files sits within /feature size; the extra
+     round trip costs more than the smaller review saves.
+- **Links.** D-7; requirements §4/§5 (amended same day); UAC-2 (residual → U7);
+  UAC-9 (U5 handoff pack); step-u4-np-proxy-prompt.md; journal (U4).
