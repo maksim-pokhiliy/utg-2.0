@@ -31,9 +31,6 @@ const ASPECT_PRECISION = 4;
 const VIEWER_FADE_BASE = "transition-opacity duration-300";
 const VIEWER_IMAGE_LOADING = `${VIEWER_FADE_BASE} opacity-0`;
 const VIEWER_IMAGE_LOADED = `${VIEWER_FADE_BASE} opacity-100`;
-const VIEWER_SKELETON_BASE = `absolute inset-0 pointer-events-none ${VIEWER_FADE_BASE}`;
-const VIEWER_SKELETON_VISIBLE = `${VIEWER_SKELETON_BASE} opacity-100`;
-const VIEWER_SKELETON_HIDDEN = `${VIEWER_SKELETON_BASE} opacity-0 animate-none`;
 
 const formatIndex = (value: number): string => String(value).padStart(2, "0");
 
@@ -167,13 +164,7 @@ export default function ReportsScreen() {
             className="relative mx-auto"
             style={{ width: viewerWidth(viewed.width, viewed.height) }}
           >
-            <Skeleton
-              className={
-                isViewedSettled
-                  ? VIEWER_SKELETON_HIDDEN
-                  : VIEWER_SKELETON_VISIBLE
-              }
-            />
+            <Skeleton settled={isViewedSettled} className="absolute inset-0" />
 
             <Image
               key={viewed.image}
