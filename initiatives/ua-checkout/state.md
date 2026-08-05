@@ -7,23 +7,23 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Board
 
-| #   | Step                                                   | Status     | Pointer                                  |
-| --- | ------------------------------------------------------ | ---------- | ---------------------------------------- |
-| U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending | `../utg-tg-order-bot/initiatives/bot-polish/` |
-| U1  | Requirements spec + contract draft (resolve D-3)       | ✅ done    | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
-| U2  | Design pass (brief → Claude Design → export)           | ✅ done    | `design-export/` · D-4 · journal 2026-08-05 |
-| U3  | DS window: form primitives + DEF-41                    | ⬜ pending | plan.md                                  |
-| U4  | NP proxy route + caching + env plumbing                | ⬜ pending | plan.md                                  |
-| U5  | Checkout rework (uk both modes, contacts, copy)        | ⬜ pending | plan.md                                  |
-| U6  | Contract flip (paired shop+bot PRs)                    | ⬜ pending | plan.md · D-3                            |
-| U7  | Prod verify + close-out                                | ⬜ pending | charter acceptance criteria              |
+| #   | Step                                                     | Status                         | Pointer                                               |
+| --- | -------------------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
+| U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending                     | `../utg-tg-order-bot/initiatives/bot-polish/`         |
+| U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
+| U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
+| U3  | DS window: form primitives + DEF-41                      | 🔵 active — executor in flight | `step-u3-ds-window-prompt.md`                         |
+| U4  | NP proxy route + caching + env plumbing                  | ⬜ pending                     | plan.md                                               |
+| U5  | Checkout rework (uk both modes, contacts, copy)          | ⬜ pending                     | plan.md                                               |
+| U6  | Contract flip (paired shop+bot PRs)                      | ⬜ pending                     | plan.md · D-3                                         |
+| U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-U3 (DS window) via `/step`: Combobox + ChoiceChips per
-`design-export/screens/checkout/component-specs-addendum.md`, the CartLine media
-amendment, and the DEF-41 Skeleton fold-in. U0 (B2, x-relay-secret) still pending —
-can run any time, must land before U6.
+U3 is IN FLIGHT via `/step` (prompt: `step-u3-ds-window-prompt.md`; executor runs
+the /feature pipeline, plan-gate triage with the planner). After U3 merges +
+prod-verifies: U4 (NP proxy). U0 (B2, x-relay-secret) still pending — can run any
+time, must land before U6.
 
 ## Open decisions awaiting ratification
 
