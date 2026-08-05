@@ -10,12 +10,13 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 
 ## Index
 
-| ID  | Topic                                                | Status   |
-| --- | ---------------------------------------------------- | -------- |
-| D-1 | MVP scope: the four ratified axes                    | RATIFIED |
-| D-2 | Requirements-first: form + bot contract are movable  | RATIFIED |
-| D-3 | Payload v2: one discriminated envelope, bot dual-accept rollout | RATIFIED |
-| D-4 | U2 ratified: design-export is the visual SSOT                   | RATIFIED |
+| ID  | Topic                                                             | Status   |
+| --- | ----------------------------------------------------------------- | -------- |
+| D-1 | MVP scope: the four ratified axes                                 | RATIFIED |
+| D-2 | Requirements-first: form + bot contract are movable               | RATIFIED |
+| D-3 | Payload v2: one discriminated envelope, bot dual-accept rollout   | RATIFIED |
+| D-4 | U2 ratified: design-export is the visual SSOT                     | RATIFIED |
+| D-5 | U3 plan-gate: one skeleton cadence; summary preset ships complete | RATIFIED |
 
 ---
 
@@ -62,7 +63,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   discriminated `delivery.mode`: `np_branch`/`np_postomat` (city, warehouse,
   warehouse_number), `np_courier` (city, street, building, apartment?), `generic`
   (en: country, state?, city, address) — plus `delivery.source:
-  "np_directory"|"manual"`. `cart`/`total`/`currency`/`locale` stay byte-compatible
+"np_directory"|"manual"`. `cart`/`total`/`currency`/`locale` stay byte-compatible
   (D-12, DEF-3 size-in-title). No НП refs, no email (requirements §2). Rollout: bot
   ships dual-accept (v1+v2) → shop flips all three modes to v2 → bot drops v1 in a
   follow-up. Exact shape: `requirements.md` §5.
@@ -93,3 +94,27 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   prevents per-PR design relitigating.
 - **Links.** design-export/README.md; component-specs-addendum.md; journal
   2026-08-05.
+
+### D-5 — U3 plan-gate rulings: one skeleton cadence; the summary preset ships complete
+
+- **Status:** RATIFIED (planner, 2026-08-05, U3 plan-gate triage; digest to the user
+  the same day).
+- **Decision.**
+  1. The Combobox panel's loading bars compose the DS `Skeleton` at its shipped
+     **1.4s** cadence; the addendum's inline **1.2s** is SUPERSEDED. One pulse
+     system-wide — the DEF-41 principle (no skeleton forks) applied forward. Named
+     in the PR body as a knowing D-4 deviation.
+  2. `CartLine scale="summary"` ships **complete** in U3 per the addendum's summary
+     note — py-2.5 rhythm, gap-1.5, `type-small` title, 28px remove control with a
+     16px icon (`IconSize` widens by {16, 18}) — overruling the executor's
+     ship-geometry-only recommendation. A half-preset would force U5 to reopen the
+     sealed DS to finish it (scope smear over two steps), and the values are
+     ratified export constants, not invented pixels. Visual confirmation still
+     lands at the U5 browser gate.
+  3. Minor: the async-state prop is `loading` (codebase dialect, matches `Button`);
+     no `helper` passthrough on Combobox (additive later if U5 wants it);
+     executor's a11y supersets accepted (aria-activedescendant, WAI roving
+     tabindex on chips, keyboard-gated scrollIntoView, panel anchored to the input
+     wrapper so the border fuse survives an error line).
+- **Links.** step-u3-ds-window-prompt.md; addendum §Combobox/§CartLine + summary
+  note; D-4; journal (U3 close-out).

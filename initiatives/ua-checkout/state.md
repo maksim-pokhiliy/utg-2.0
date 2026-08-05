@@ -39,6 +39,8 @@ time, must land before U6.
   portal (it's Cloudflare-gated; U1 verified via two SDK mirrors).
 - **UAC-3** (SCHEDULED → U5) — uk name placeholders in the ratified dict are still
   John/Wick; dictionaries get real UA examples per requirements §6.
+- **UAC-4** (OPEN) — the Claude Design kit lags the repo DS; one `/design-sync`
+  backport pass after U3 merges (delta audit incl. 4d-era additions).
 
 ## Gotchas a resuming session must know
 
