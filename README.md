@@ -127,11 +127,22 @@ ordinary primitives to build with: `Typography`, `Container`, `Button`, `IconBut
 
 ### Orders
 
-`POST /api/place_order` is the only API route. It forwards the checkout payload to an external relay and passes the upstream
-status through; its 500 body carries nothing internal. A per-IP in-memory limiter (5 requests per 60 seconds) runs before the
-body is even parsed, and it fails **open** when no client identity is available — a false 429 costs a real volunteer order,
-which is the worse outcome. The payload field names are a fixed contract with the receiving bot, pinned by a test against the
-recovered bot source.
+`POST /api/place_order` forwards the checkout payload to an external relay and passes the upstream status through; its 500
+body carries nothing internal. A per-IP in-memory limiter (5 requests per 60 seconds) runs before the body is even parsed,
+and it fails **open** when no client identity is available — a false 429 costs a real volunteer order, which is the worse
+outcome. The payload field names are a fixed contract with the receiving bot, pinned by a test against the recovered bot
+source.
+
+### Delivery directory
+
+`GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory for the Ukrainian checkout.
+The API key stays server-side and the rows are minimized on the way out — a settlement is `{ref, label, region?}`, a
+warehouse is `{number, label}` — so a big city's three thousand branches never cross the wire. Answers are cached in
+process: five minutes per settlement query, twenty-four hours per city's warehouse list, which is the refresh cadence Нова
+Пошта's own documentation asks for. Filtering by branch or поштомат and by warehouse number happens here, over that cache,
+rather than at the carrier. These routes get their own limiter bucket (60 requests per 60 seconds) because autocomplete
+fires far more often than an order does. Every failure — missing key, timeout, carrier error — collapses to a single 503,
+and that one status is what flips the checkout to free-text city and warehouse fields.
 
 ### SEO
 
@@ -193,14 +204,15 @@ yarn dev
 Open [http://localhost:3000](http://localhost:3000) — you will be redirected to `/uk` or `/en` based on your browser language.
 
 **No environment variables are required.** The app boots, builds and passes its whole test suite with an empty environment:
-the catalog is static, and the exchange-rate fetch is guarded so prices fall back to hryvnia. The three optional keys in
+the catalog is static, and the exchange-rate fetch is guarded so prices fall back to hryvnia. The four optional keys in
 `.env.example` only add capability on top:
 
-| Variable                | Without it                                     |
-| ----------------------- | ---------------------------------------------- |
-| `EXCHANGE_RATE_API_URL` | `en` prices stay in UAH                        |
-| `EXCHANGE_RATE_API_KEY` | `en` prices stay in UAH                        |
-| `PLACE_ORDER_URL`       | checkout answers 503 and the cart is preserved |
+| Variable                | Without it                                                    |
+| ----------------------- | ------------------------------------------------------------- |
+| `EXCHANGE_RATE_API_URL` | `en` prices stay in UAH                                       |
+| `EXCHANGE_RATE_API_KEY` | `en` prices stay in UAH                                       |
+| `PLACE_ORDER_URL`       | checkout answers 503 and the cart is preserved                |
+| `NOVA_POSHTA_API_KEY`   | uk checkout falls back to free-text city and warehouse fields |
 
 ### Scripts
 
@@ -219,7 +231,7 @@ the catalog is static, and the exchange-rate fetch is guarded so prices fall bac
 ## Tests and CI
 
 One job runs on every pull request and every push to `master`: install, lint, `prettier --check`, typecheck of both TS
-programs, Vitest, a build with the three environment keys explicitly blanked, and the Playwright suite. It needs no secrets,
+programs, Vitest, a build with the four environment keys explicitly blanked, and the Playwright suite. It needs no secrets,
 which means a fork's pull request gets exactly the same signal as a branch.
 
 The suite is shaped around contracts rather than a coverage percentage. The order payload is pinned against the receiving
