@@ -17,6 +17,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-3 | Payload v2: one discriminated envelope, bot dual-accept rollout   | RATIFIED |
 | D-4 | U2 ratified: design-export is the visual SSOT                     | RATIFIED |
 | D-5 | U3 plan-gate: one skeleton cadence; summary preset ships complete | RATIFIED |
+| D-6 | U3 review round: Enter consumption supersedes prototype parity   | RATIFIED |
 
 ---
 
@@ -118,3 +119,36 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
      wrapper so the border fuse survives an error line).
 - **Links.** step-u3-ds-window-prompt.md; addendum §Combobox/§CartLine + summary
   note; D-4; journal (U3 close-out).
+
+### D-6 — U3 review-round rulings: correctness beats prototype parity
+
+- **Status:** RATIFIED (planner, 2026-08-05, routing the deep review of PR #18).
+- **Decision.**
+  1. **The combobox owns the keyboard while its panel is open**: Enter never
+     reaches the enclosing form (busy, empty, or with rows — select only when an
+     active row exists), arrows never scroll the page. This supersedes the
+     ratified prototype's behavior (Enter during the debounce window submitted
+     the form) — a mock artifact, not design intent; the reviewer browser-proved
+     it submitting the real checkout form shape. UAC-7 amended accordingly.
+  2. **The stale-results kill must live inside the component**: the
+     required-`loading` contract is insufficient (async `onSearch`,
+     `setQuery`+`useEffect`, and `startTransition` consumers all leave a rendered
+     clickable frame of the previous query's rows — reviewer-reproduced). The
+     internal pending state persists from dispatch until the consumer
+     acknowledges (`loading` flips true, `options` identity changes, or the
+     query empties).
+  3. **Panel `z-30` under the sticky header (`z-40`) is not a defect**: the
+     overlap only occurs once the anchor input itself is under the header, where
+     the control is already unusable; raising the panel above site chrome would
+     be worse. Watch at the U5 browser gate (UAC-7).
+  4. **Deferred, not silently dropped**: RF-15 (chip cva forked from
+     SizeSelector — the addendum's "promoted" intent) and RF-19 (300ms settle
+     fade duplicated between Skeleton and ReportsScreen) go to UAC-8, one DS
+     hygiene window with the UAC-4 kit backport — theme/tokens were frozen in
+     U3 and SizeSelector is untested, so touching it now would widen the fence
+     at the end of a long round.
+  5. `ChoiceChips` composes an extended `Field` (additive optional wiring for a
+     non-input labelled group) instead of carrying byte-copied internals —
+     manifesto "extract on the second instance"; existing `Field` consumers stay
+     byte-identical.
+- **Links.** PR #18 deep review (journal, U3 close-out); D-4; D-5; UAC-7/UAC-8.
