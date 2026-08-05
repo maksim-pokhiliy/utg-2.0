@@ -41,6 +41,8 @@ time, must land before U6.
   John/Wick; dictionaries get real UA examples per requirements §6.
 - **UAC-4** (OPEN) — the Claude Design kit lags the repo DS; one `/design-sync`
   backport pass after U3 merges (delta audit incl. 4d-era additions).
+- **UAC-5/6/7** (SCHEDULED) — U3-review riders: NP-proxy row cap (→ U4), drawer
+  `sizes` hint + combobox adoption notes (→ U5).
 
 ## Gotchas a resuming session must know
 

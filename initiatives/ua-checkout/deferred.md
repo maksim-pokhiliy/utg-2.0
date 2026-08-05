@@ -21,6 +21,9 @@ when they close here).
 | UAC-2  | NP response fields re-verified against the official portal              | U1 verified via two SDK mirrors (requirements §4); the U4 executor re-checks on the Cloudflare-gated portal                                      | OPEN      |
 | UAC-3  | uk name placeholders in the ratified prototype dict are still John/Wick | U5 dictionaries use real UA examples per requirements §6 (e.g. Марія / Шевченко); no design impact                                               | SCHEDULED |
 | UAC-4  | The Claude Design kit (`62bf007e`) lags the repo DS                     | after U3 merges: audit the full kit↔repo-DS delta (the U3 four + any 4d-era additions never backported) and backport in one `/design-sync` pass | OPEN      |
+| UAC-5  | Combobox panel has no row budget (~23ms/hover at 1000 rows, measured)   | cap the option-list size at the NP proxy (U4) — the server decides how much directory reaches the client                                        | SCHEDULED |
+| UAC-6  | `CartDrawer` `sizes="64px"` under-hints the stretched ~72–92px frame    | one-token consumer-side fix, rides U5 (drawer stays byte-identical through U3 by design)                                                       | SCHEDULED |
+| UAC-7  | Combobox adoption notes for U5: Enter during the 250ms debounce can submit the form (parity with the ratified prototype); keyboard scroll can hand the active row to a resting pointer (bounded to one steal) | U5 verifies both against real checkout behavior at the browser gate; promote to fixes only if they bite there | SCHEDULED |
 
 ## Detail on the live ones
 
