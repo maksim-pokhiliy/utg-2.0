@@ -203,6 +203,9 @@ the hop through the header icon into the drawer. Requirement: edit where you dec
 - The summary column adopts the drawer's line anatomy — DS `CartLine` (media, title,
   `QuantityStepper`, line total, remove) + the existing remove `ConfirmDialog` and
   its `cart.remove_*` strings. No new DS primitives; sizing tuned for the aside.
+- `CartLine` media fills the full line height (user finding 2026-08-05: the fixed
+  64×64 frame floats small in a taller row). DS-internal change, lands with the U3
+  DS window per the U2-ratified proportions; the drawer picks it up automatically.
 - Edits mutate the store directly; the summary totals and the submitted payload
   `total` stay live (payload is composed at submit time from the store, as today).
 - Removing the last line lands on the checkout screen's existing empty-cart state —

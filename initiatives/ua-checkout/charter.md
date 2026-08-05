@@ -53,7 +53,8 @@ and exported to `design-export/` in this directory.
   pending submit locks editing.
 - Bot contract update as a paired shop+bot step; contract tests on both sides.
 - DS window: the form primitives the ratified design needs (async combobox,
-  choice-chips/radio group — exact set ratified in U2) + the DEF-41 fold-in.
+  choice-chips/radio group — exact set ratified in U2) + the DEF-41 fold-in +
+  `CartLine` media-fill polish (media frame spans the full line height).
 - Tests: units for new primitives / route / normalization; e2e for both uk modes + en
   regression; DEF-36/37/39 folded where steps touch their zones.
 

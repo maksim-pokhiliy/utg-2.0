@@ -54,3 +54,13 @@ Append-only. One entry per session/step.
   acceptance #8), requirements new §9 (in-place editing, live totals, empty-out
   transition, locked-while-pending, e2e list), brief (context + task section +
   states). Lands in U5 with the checkout rework; U2 designs the aside states.
+
+## 2026-08-05 — second scope add before U2 restart: CartLine media fills the line
+
+- User stopped the first design session to fold new findings; screenshot finding:
+  drawer cart photos sit in a fixed 64×64 frame while the line is taller. Verified
+  in DS `cart-line.tsx` (`h-16 w-16` pin inside a `grid-cols-[64px_1fr]` row).
+- Directive folded into the brief (CartLine media polish section: full-line-height
+  frame, drawer + summary, proportions to ratify), requirements §9 bullet, charter
+  DS-window bullet. Implementation: U3 DS window. **User restarts the design
+  session with the updated brief.**

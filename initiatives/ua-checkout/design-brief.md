@@ -60,6 +60,15 @@ confirm dialog) per line, live totals. States: editing, remove-confirm,
 empty-after-last-remove (hands off to the existing empty-cart screen), and
 locked-while-submit-pending. Same in all three modes; desktop + mobile.
 
+### CartLine media polish (drawer + checkout summary)
+
+Today `CartLine` pins its media to a fixed 64×64 frame while the content column
+(title row + stepper/price row) is taller — the photo floats small at the top of
+the line. Directive: the framed media stretches to the FULL line height wherever
+`CartLine` renders (cart drawer and the newly-editable checkout summary). Ratify
+the proportions: frame width, crop behavior (`object-cover` today), and how the
+frame tracks line height on mobile where the content column wraps taller.
+
 ### New DS primitives to spec (anatomy + all states, DS-grade)
 
 - **Combobox** — async single-select: idle / typing / loading / results /
