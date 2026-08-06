@@ -20,6 +20,16 @@ const NOT_CONFIGURED_BODY = '{"error":"Order service is not configured"}';
 const TOO_MANY_REQUESTS_BODY = '{"error":"Too many requests"}';
 const FAILED_BODY = '{"error":"Failed to place order"}';
 
+const RELAY_SECRET_NAME = "ORDER_RELAY_SECRET";
+const RELAY_SECRET = "s3cret-relay-token";
+const PADDED_RELAY_SECRET = `  ${RELAY_SECRET}  `;
+const BLANK_RELAY_SECRETS = ["", "   "] as const;
+
+const AUTHENTICATED_HEADERS = {
+  "Content-Type": "application/json",
+  "x-relay-secret": RELAY_SECRET,
+};
+
 const ORDER_PAYLOAD = {
   first_name: "John",
   total: "1200.00",
@@ -43,9 +53,20 @@ const trapRequestBody = (request: NextRequest) =>
     throw new Error(BODY_TRAP_MESSAGE);
   });
 
+const stubAcceptedUpstream = () =>
+  stubUpstream(() =>
+    Promise.resolve(
+      new Response("{}", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  );
+
 beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("PLACE_ORDER_URL", FAKE_RELAY_ORIGIN);
+  vi.stubEnv(RELAY_SECRET_NAME, undefined);
 });
 
 afterEach(() => {
@@ -129,6 +150,58 @@ describe("POST /api/place_order", () => {
     });
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
+
+  it("presents the x-relay-secret header when a relay secret is configured", async () => {
+    vi.stubEnv(RELAY_SECRET_NAME, RELAY_SECRET);
+
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    await POST(buildOrderRequest());
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
+      method: "POST",
+      headers: AUTHENTICATED_HEADERS,
+      body: JSON.stringify(ORDER_PAYLOAD),
+    });
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+  });
+
+  it("strips the padding around a configured relay secret", async () => {
+    vi.stubEnv(RELAY_SECRET_NAME, PADDED_RELAY_SECRET);
+
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    await POST(buildOrderRequest());
+
+    expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
+      method: "POST",
+      headers: AUTHENTICATED_HEADERS,
+      body: JSON.stringify(ORDER_PAYLOAD),
+    });
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+  });
+
+  it.each(BLANK_RELAY_SECRETS)(
+    "sends no x-relay-secret header when the relay secret is %j",
+    async (secret) => {
+      vi.stubEnv(RELAY_SECRET_NAME, secret);
+
+      const fetchStub = stubAcceptedUpstream();
+      const { POST } = await loadRoute();
+
+      await POST(buildOrderRequest());
+
+      expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ORDER_PAYLOAD),
+      });
+      expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+    }
+  );
 
   it("forwards the upstream status, content type and body verbatim", async () => {
     const upstreamBody = '{"orderId":"77"}';
