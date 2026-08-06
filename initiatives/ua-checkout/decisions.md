@@ -22,6 +22,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-8 | U4 plan-gate: Present verbatim, region in the contract, 7s merge  | RATIFIED |
 | D-9 | Bot-first sequencing; U5 splits into U5a (contacts) + U5b (delivery) | RATIFIED |
 | D-10 | U0/B2 rulings: the relay fetch refuses redirects; secret scope Production-only | RATIFIED |
+| D-11 | Orders become durable: relay persistence (bot B4) + `idempotency_key` from U5a | RATIFIED |
 
 ---
 
@@ -323,3 +324,35 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   UAC-11 (the fail-open limiter now guards an authenticated path); UAC-12 (the
   pre-existing body/Content-Type forwarding, surfaced by the same review);
   journal.
+
+### D-11 — Orders become durable: the relay persists them, and U5a mints an idempotency key
+
+- **Status:** RATIFIED (user, 2026-08-06, after correcting the planner: «никакой базы»
+  was never a project law — the owner has managed Postgres (Neon, paid) available;
+  the planner had wrongly imported this initiative's `any database` non-goal into the
+  bot repo as an axiom and used it to justify deferring BDEF-3).
+- **Decision.**
+  1. **The relay will persist every decoded order** — bot-polish step **B4**, after
+     B3. Write first, then send to Telegram. **The store must never gate the send**:
+     a database that is down costs an audit row, never an order. Fail-open is not a
+     nicety here, it is the whole safety argument for touching the sacred path at all.
+  2. **The v2 envelope gains an optional top-level `idempotency_key`** (UUID),
+     minted by the shop when the buyer first submits and REUSED across retries of
+     that same order, reset only on success. Emitted by **U5a** — the step already
+     rewriting the payload composer — even though nothing consumes it until B4. The
+     relay decodes and carries it from B3 onward.
+  3. **No decoder on either side may reject a v2 body for unknown fields.** Unknown
+     keys are ignored; known keys are validated strictly. Without this rule every
+     future additive field becomes a breaking paired change.
+- **Rationale.** The motive is not deduplication — it is that **a delivered order is
+  durable nowhere today**. Its only trace is a message in a Telegram chat, and one
+  operators' chat has already died once (bot journal, 2026-08-03), taking its history
+  with it; if a send fails, the buyer sees an error and the order simply evaporates
+  with no replay path. A duplicate order costs a phone call; a lost one costs a
+  volunteer donation. Persistence also makes BDEF-3 nearly free (a unique index over
+  the key, or a content hash within a time window). Emitting the key in U5a rather
+  than later is close to zero cost — the shop rewrites that composer anyway and the
+  relay ignores unknown fields — while deciding it later would mean a second paired
+  shop+bot change.
+- **Links.** requirements.md §5; bot-polish BDEF-3 and its B4 step;
+  D-3 (the v2 envelope); journal 2026-08-06.

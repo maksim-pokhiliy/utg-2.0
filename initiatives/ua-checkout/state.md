@@ -29,10 +29,17 @@ U0/B2 CLOSED: PR #20 merged, both Vercel projects carry `ORDER_RELAY_SECRET`
 relay 401s header-less callers, 400s the shop's authenticated probe. DEF-13 and
 BDEF-1 closed.
 
-**Next: B3 in the bot repo** (`../utg-tg-order-bot`, initiative `bot-polish`) —
-the relay dual-accepts v1 + v2 per requirements §5. It gates U5a, which is where
-the shop's payload flips. Then U5a → U5b → U6. The UAC-4 + UAC-8 DS-hygiene
-window remains available between steps.
+**B3 executor round OPEN in the bot repo** (`../utg-tg-order-bot`, initiative
+`bot-polish`) — the relay dual-accepts v1 + v2 per requirements §5. It gates U5a,
+where the shop's payload flips. Then U5a → U5b → U6.
+
+**D-11 ratified mid-round:** orders become durable. The relay persists each order
+before sending (bot step B4, after B3 — the store must NEVER gate the send), and
+**U5a mints an optional `idempotency_key`** on the v2 envelope, reused across
+retries of the same order. Both decoders must ignore unknown fields, or every
+future additive contract field becomes a breaking paired change.
+
+The UAC-4 + UAC-8 DS-hygiene window remains available between steps.
 The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
 ## Open decisions awaiting ratification
