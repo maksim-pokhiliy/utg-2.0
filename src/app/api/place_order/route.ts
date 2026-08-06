@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const relaySecret = process.env.ORDER_RELAY_SECRET?.trim();
+
   try {
     const body = await request.json();
 
@@ -29,6 +31,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(relaySecret ? { "x-relay-secret": relaySecret } : {}),
       },
       body: JSON.stringify(body),
     });
