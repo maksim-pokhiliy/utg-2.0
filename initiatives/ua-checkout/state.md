@@ -20,19 +20,21 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-U4 review #2 delivered (deep, REQUEST-CHANGES: 88 pooled → 26 post-refutation,
-no cap applied; sacred `place_order` proven byte-identical incl. a 300k-op
-differential; reviewer #1's partial claim resolved — the fixture flags test
-honesty, the real falsifiers are the unsourced Kyiv figure + the wrong cap
-denominator). Fix round OPEN on the executor: 15 code items (page-merge dedup
-IR-2, cap-exit refuses IR-3, decode-collapse guard IR-4+5, DenyToSelect trim
-regression IR-8, negative TTL RF-5/IR-24, merge-concurrency cap IR-9,
-settlement-cache sizing IR-10, zero-width strip IR-11, ref/number caps IR-12,
-cityRef case IR-15, pins IR-6/7/16, dedup helpers IR-17/18, README/PR-body
-truth IR-19/20). Planner-side: IR-1 (PRE-EXISTING null-key limiter forgery,
-prod impact unknown) — curl-probe the Vercel preview at phase 6; IR-21 D-8
-amendment done; IR-25 CLAUDE.md at close-out. Ledgered: UAC-10 (new),
-UAC-9/UAC-2 amended. U0 (B2) still pending — must land before U6.
+U4 PR #19 at `ac6e38a` — **planner-verified, merge-ready, awaiting the owner's
+merge**. Deep review #2 (REQUEST-CHANGES: 88 pooled → 26 post-refutation, no cap)
+routed into one fix round; all 15 items landed, none pushed back. Phase-6
+verification re-run personally: lint / prettier / typecheck green, 590 units /
+27 files, zero-env build green (both np routes `ƒ (Dynamic)`, zero `.body`
+under `api/`, zero NP host strings in client chunks), blank-env e2e 15/15;
+`place_order` diff is one import + the shared 429 helper; ratified constants,
+the shared NP bucket and per-city separation are pinned in tests; the key is
+blanked at all five points; no comments in the diff. Deferred from the round:
+IR-1 → **UAC-11** (pre-existing limiter identity forgery; the preview could not
+answer — Deployment Protection 302s everything — so the probe moves to the U7
+prod gate); UAC-10 (Present edges + server-only boundary); UAC-2/UAC-9 amended.
+After merge: prod smoke + CLAUDE.md truth fix (IR-25: it still claims
+`place_order` is the only API route and three env keys). U0 (B2) still
+pending — must land before U6.
 
 ## Open decisions awaiting ratification
 
