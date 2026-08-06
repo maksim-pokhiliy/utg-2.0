@@ -28,6 +28,14 @@ const UNSENDABLE_RELAY_SECRETS = [
   `${RELAY_SECRET}\nx-injected: 1`,
   `${RELAY_SECRET}\rx-injected: 1`,
   "секрет-реле",
+  "café-token",
+] as const;
+const SENDABLE_RELAY_SECRETS = [
+  "aGVsbG8+d29ybGQ/cmVsYXk==",
+  "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.foo-bar_baz",
+  "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
+  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "pass phrase with spaces ~ and !punctuation!",
 ] as const;
 
 const AUTHENTICATED_HEADERS = {
@@ -196,9 +204,32 @@ describe("POST /api/place_order", () => {
       expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
       expect(bodyTrap).not.toHaveBeenCalled();
       expect(fetchStub).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy.mock.calls.flat().map(String).join(" ")).not.toContain(
         secret
       );
+    }
+  );
+
+  it.each(SENDABLE_RELAY_SECRETS)(
+    "presents a realistically shaped relay secret unchanged: %j",
+    async (secret) => {
+      vi.stubEnv(RELAY_SECRET_NAME, secret);
+
+      const fetchStub = stubAcceptedUpstream();
+      const { POST } = await loadRoute();
+
+      await POST(buildOrderRequest());
+
+      expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-relay-secret": secret,
+        },
+        body: JSON.stringify(ORDER_PAYLOAD),
+      });
+      expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
     }
   );
 
