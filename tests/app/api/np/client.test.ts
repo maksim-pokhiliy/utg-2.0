@@ -26,6 +26,7 @@ const WAREHOUSE_PROPERTIES = {
 
 const REQUEST_METHOD = "POST";
 const NO_STORE = "no-store";
+const ERROR_REDIRECT = "error";
 const CONTENT_TYPE_HEADER = "Content-Type";
 const JSON_CONTENT_TYPE = "application/json";
 const JSON_HEADERS = { [CONTENT_TYPE_HEADER]: JSON_CONTENT_TYPE };
@@ -127,6 +128,15 @@ describe("callNpDirectory", () => {
       calledMethod: SETTLEMENTS_METHOD,
       methodProperties: SETTLEMENT_PROPERTIES,
     });
+  });
+
+  it("refuses to follow a redirect that would carry the api key to another host", async () => {
+    const fetchStub = stubUpstream(() => Promise.resolve(successResponse()));
+    const { callNpDirectory } = await loadClient();
+
+    await callNpDirectory(SETTLEMENTS_METHOD, SETTLEMENT_PROPERTIES);
+
+    expect(readSentInit(fetchStub)?.redirect).toBe(ERROR_REDIRECT);
   });
 
   it("sends page and limit as strings", async () => {

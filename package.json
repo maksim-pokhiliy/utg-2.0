@@ -16,8 +16,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "e2e": "PLACE_ORDER_URL= EXCHANGE_RATE_API_URL= EXCHANGE_RATE_API_KEY= NOVA_POSHTA_API_KEY= yarn build && playwright test",
-    "screenshots": "PLACE_ORDER_URL= EXCHANGE_RATE_API_URL= EXCHANGE_RATE_API_KEY= NOVA_POSHTA_API_KEY= yarn build && playwright test --config playwright.screenshots.config.ts"
+    "e2e": "PLACE_ORDER_URL= EXCHANGE_RATE_API_URL= EXCHANGE_RATE_API_KEY= NOVA_POSHTA_API_KEY= ORDER_RELAY_SECRET= yarn build && playwright test",
+    "screenshots": "PLACE_ORDER_URL= EXCHANGE_RATE_API_URL= EXCHANGE_RATE_API_KEY= NOVA_POSHTA_API_KEY= ORDER_RELAY_SECRET= yarn build && playwright test --config playwright.screenshots.config.ts"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.4",

@@ -39,6 +39,7 @@ export const callNpDirectory = async (
     const response = await fetch(NP_API_URL, {
       method: "POST",
       cache: "no-store",
+      redirect: "error",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         apiKey,

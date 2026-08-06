@@ -33,6 +33,7 @@ export default defineConfig({
       EXCHANGE_RATE_API_URL: "",
       EXCHANGE_RATE_API_KEY: "",
       NOVA_POSHTA_API_KEY: "",
+      ORDER_RELAY_SECRET: "",
     },
   },
 });

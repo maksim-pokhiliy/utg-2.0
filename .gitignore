@@ -32,8 +32,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# env files: the example is the only one that belongs in the repo
+.env*
+!.env.example
 
 # vercel
 .vercel
