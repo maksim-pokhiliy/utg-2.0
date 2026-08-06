@@ -24,11 +24,14 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 U4 CLOSED (merged, prod-verified, docs promoted, CLAUDE.md corrected). **D-9
 ratified: the bot leads, and U5 splits into U5a/U5b by payload truthfulness.**
 
-**Next: U0/B2 — the `x-relay-secret` sender in this repo** (`/feature small`,
-payload-neutral, merges immediately; header name `x-relay-secret`, bot env
-`ORDER_RELAY_SECRET`). Owner enablement order after merge (BD-4): shop env →
-bot env. Then **B3 in the bot repo** (relay dual-accepts v1+v2 per requirements
-§5) — the gate for every shop payload change. Then U5a → U5b → U6.
+**U0/B2 in flight: PR #20 open**, fix round running (D-10: refuse redirects on
+the relay fetch, trim over verbatim, keep the ASCII guard, accept the
+README/.gitignore scope). The shop-side Vercel secret is ALREADY SET
+(`ORDER_RELAY_SECRET`, project `utg`, Production, Sensitive) — the relay's own
+env stays UNSET until the shop deploy carrying the sender is live, or every real
+order 401s. Env changes only bind on the NEXT deployment, and B2's merge is that
+deployment. Then **B3 in the bot repo** (relay dual-accepts v1+v2 per
+requirements §5) — the gate for every shop payload change. Then U5a → U5b → U6.
 The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
 ## Open decisions awaiting ratification

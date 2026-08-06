@@ -21,6 +21,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-7 | U4 contour: proxy-side warehouse filtering + row caps (UAC-5)     | RATIFIED |
 | D-8 | U4 plan-gate: Present verbatim, region in the contract, 7s merge  | RATIFIED |
 | D-9 | Bot-first sequencing; U5 splits into U5a (contacts) + U5b (delivery) | RATIFIED |
+| D-10 | U0/B2 rulings: the relay fetch refuses redirects; secret scope Production-only | RATIFIED |
 
 ---
 
@@ -267,3 +268,41 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   surface — U3 produced 76 pre-cap candidates at half of U5's scope.
 - **Links.** D-2; D-3 (rollout order); requirements §1/§5/§9; bot-polish plan
   (B2, and B3 to be opened there); journal 2026-08-06.
+
+### D-10 — U0/B2 rulings: the relay fetch refuses redirects; the secret is Production-only
+
+- **Status:** RATIFIED (planner, 2026-08-06, U0/B2 review-round triage).
+- **Decision.**
+  1. **`redirect: "error"` on the relay fetch.** The executor proved that a
+     cross-origin 307 hands hop two both the `x-relay-secret` header AND the full
+     order payload (name, phone, address, cart), while a control `authorization`
+     header is correctly dropped — so the platform's own protection does not cover
+     our header. It flagged the fix as too risky to apply blind because nobody knew
+     what `PLACE_ORDER_URL` resolves to. **The planner resolved it:** the value is
+     the bare Vercel deployment URL `https://telegram-bot-server-maksim-pokhiliys-projects.vercel.app`
+     (no custom domain, no apex→www hop), and it answers `405` on the exact relay
+     path with zero redirects — measured. The legitimate path never redirects, so
+     refusing redirects costs nothing and closes a real leak. A future redirect
+     (custom domain, protection page) now fails loudly as a 500 with the cart
+     preserved instead of silently shipping a customer's order to another host.
+     This also retires the bot-repo BD-5 uncertainty («the live `PLACE_ORDER_URL`
+     value is recorded nowhere») — it is recorded here now; it is a public URL,
+     not a secret.
+  2. **Trim over verbatim** (superseding the step prompt's "forwarded verbatim"):
+     `fetch` strips surrounding whitespace before the wire and the relay trims
+     again, so both paths put the identical string on the wire; carrying two
+     variables for one result is worse.
+  3. **The printable-ASCII guard stays tight** (stricter than the Latin-1 the wire
+     allows): our secret is generated `token_urlsafe`, so the strictness costs
+     nothing and the guard exists to stop a paste artifact from writing the shared
+     secret into runtime logs via a `TypeError` message.
+  4. **README and `.gitignore` scope accepted**: three README statements were
+     about to start lying, and `.env*` (keeping `.env.example`) closes a
+     committable `cp .env.example .env` — now carrying a fifth credential.
+  5. **The secret is set on Production only** (planner set it in Vercel the same
+     day, project `utg`, marked Sensitive). Consequence accepted knowingly: once
+     the relay enforces, checkout on preview deployments answers 401 — which also
+     stops previews from posting test orders into the operators' real chat.
+     Reversible with one command if a browser gate ever needs preview checkout.
+- **Links.** PR #20; bot-polish BD-4 (enablement order), BD-5 (now resolved);
+  UAC-11 (the fail-open limiter now guards an authenticated path); journal.
