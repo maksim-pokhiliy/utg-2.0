@@ -9,7 +9,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 | #   | Step                                                     | Status                         | Pointer                                               |
 | --- | -------------------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
-| U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) + B3 (bot dual-accepts v2) | 🔄 B2 next — executor round     | step-u0-b2-secret-sender-prompt.md · D-9              |
+| U0  | PREREQ: bot-polish B2 (sender) + B3 (bot dual-accepts v2) | ✅ B2 done — PR #20 `bb3f866`, enforcement LIVE and verified end-to-end; ⬜ B3 next (bot repo) | PR #20 · D-10 · journal 2026-08-06 |
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
@@ -24,14 +24,15 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 U4 CLOSED (merged, prod-verified, docs promoted, CLAUDE.md corrected). **D-9
 ratified: the bot leads, and U5 splits into U5a/U5b by payload truthfulness.**
 
-**U0/B2 in flight: PR #20 open**, fix round running (D-10: refuse redirects on
-the relay fetch, trim over verbatim, keep the ASCII guard, accept the
-README/.gitignore scope). The shop-side Vercel secret is ALREADY SET
-(`ORDER_RELAY_SECRET`, project `utg`, Production, Sensitive) — the relay's own
-env stays UNSET until the shop deploy carrying the sender is live, or every real
-order 401s. Env changes only bind on the NEXT deployment, and B2's merge is that
-deployment. Then **B3 in the bot repo** (relay dual-accepts v1+v2 per
-requirements §5) — the gate for every shop payload change. Then U5a → U5b → U6.
+U0/B2 CLOSED: PR #20 merged, both Vercel projects carry `ORDER_RELAY_SECRET`
+(Production, Sensitive), the relay enforces it, and the chain was proven live —
+relay 401s header-less callers, 400s the shop's authenticated probe. DEF-13 and
+BDEF-1 closed.
+
+**Next: B3 in the bot repo** (`../utg-tg-order-bot`, initiative `bot-polish`) —
+the relay dual-accepts v1 + v2 per requirements §5. It gates U5a, which is where
+the shop's payload flips. Then U5a → U5b → U6. The UAC-4 + UAC-8 DS-hygiene
+window remains available between steps.
 The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
 ## Open decisions awaiting ratification
