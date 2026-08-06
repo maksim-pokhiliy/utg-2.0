@@ -24,6 +24,7 @@ const RELAY_SECRET_NAME = "ORDER_RELAY_SECRET";
 const RELAY_SECRET = "s3cret-relay-token";
 const PADDED_RELAY_SECRET = `  ${RELAY_SECRET}  `;
 const BLANK_RELAY_SECRETS = ["", "   "] as const;
+const RELAY_ORIGIN_SUFFIXES = ["/", "//", "///"] as const;
 const UNSENDABLE_RELAY_SECRETS = [
   `${RELAY_SECRET}\nx-injected: 1`,
   `${RELAY_SECRET}\rx-injected: 1`,
@@ -92,6 +93,9 @@ describe("POST /api/place_order", () => {
   it("answers 503 without reading the body when the relay is not configured", async () => {
     vi.stubEnv("PLACE_ORDER_URL", undefined);
 
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
     const fetchStub = stubUpstream(() => Promise.resolve(new Response(null)));
     const { POST } = await loadRoute();
     const request = buildOrderRequest();
@@ -103,7 +107,23 @@ describe("POST /api/place_order", () => {
     expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
     expect(bodyTrap).not.toHaveBeenCalled();
     expect(fetchStub).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
+
+  it.each(RELAY_ORIGIN_SUFFIXES)(
+    "trims a trailing %j off the configured relay origin before appending the path",
+    async (suffix) => {
+      vi.stubEnv("PLACE_ORDER_URL", `${FAKE_RELAY_ORIGIN}${suffix}`);
+
+      const fetchStub = stubAcceptedUpstream();
+      const { POST } = await loadRoute();
+
+      await POST(buildOrderRequest());
+
+      expect(fetchStub).toHaveBeenCalledTimes(1);
+      expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+    }
+  );
 
   it("answers 429 with a Retry-After header on the sixth request from one client", async () => {
     const fetchStub = stubUpstream(() =>
@@ -180,10 +200,27 @@ describe("POST /api/place_order", () => {
       headers: AUTHENTICATED_HEADERS,
       body: JSON.stringify(ORDER_PAYLOAD),
     });
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+  });
 
-    const [, init] = fetchStub.mock.calls[0];
+  it("keeps presenting the secret on a second order served by the same warm module", async () => {
+    vi.stubEnv(RELAY_SECRET_NAME, RELAY_SECRET);
 
-    expect(() => new Headers(init?.headers)).not.toThrow();
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    const first = await POST(buildOrderRequest());
+    const second = await POST(buildOrderRequest());
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(fetchStub).toHaveBeenCalledTimes(2);
+    expect(fetchStub.mock.calls[0]?.[1]?.headers).toEqual(
+      AUTHENTICATED_HEADERS
+    );
+    expect(fetchStub.mock.calls[1]?.[1]?.headers).toEqual(
+      AUTHENTICATED_HEADERS
+    );
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
@@ -254,15 +291,19 @@ describe("POST /api/place_order", () => {
   });
 
   it.each(BLANK_RELAY_SECRETS)(
-    "sends no x-relay-secret header when the relay secret is %j",
+    "sends no x-relay-secret header, and says so, when the relay secret is %j",
     async (secret) => {
       vi.stubEnv(RELAY_SECRET_NAME, secret);
 
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
       const fetchStub = stubAcceptedUpstream();
       const { POST } = await loadRoute();
 
       await POST(buildOrderRequest());
 
+      expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
         method: "POST",
         redirect: "error",

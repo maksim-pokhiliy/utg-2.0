@@ -6,7 +6,9 @@ import {
   resolveClientKey,
 } from "@root/app/api/rate-limit";
 
+const RELAY_SECRET_HEADER = "x-relay-secret";
 const SENDABLE_SECRET_PATTERN = /^[\x20-\x7e]+$/;
+const TRAILING_SLASHES = /\/+$/;
 
 const buildNotConfiguredResponse = () =>
   NextResponse.json(
@@ -24,10 +26,13 @@ export async function POST(request: NextRequest) {
   const placeOrderUrl = process.env.PLACE_ORDER_URL;
 
   if (!placeOrderUrl) {
+    console.error("Order relay URL is not configured");
+
     return buildNotConfiguredResponse();
   }
 
-  const relaySecret = process.env.ORDER_RELAY_SECRET?.trim();
+  const configuredSecret = process.env.ORDER_RELAY_SECRET;
+  const relaySecret = configuredSecret?.trim();
 
   if (relaySecret && !SENDABLE_SECRET_PATTERN.test(relaySecret)) {
     console.error("Order relay secret is not a usable header value");
@@ -35,15 +40,21 @@ export async function POST(request: NextRequest) {
     return buildNotConfiguredResponse();
   }
 
+  if (configuredSecret !== undefined && !relaySecret) {
+    console.error("Order relay secret is blank; sending the order unsigned");
+  }
+
+  const relayOrigin = placeOrderUrl.replace(TRAILING_SLASHES, "");
+
   try {
     const body = await request.json();
 
-    const response = await fetch(`${placeOrderUrl}/place_order`, {
+    const response = await fetch(`${relayOrigin}/place_order`, {
       method: "POST",
       redirect: "error",
       headers: {
         "Content-Type": "application/json",
-        ...(relaySecret ? { "x-relay-secret": relaySecret } : {}),
+        ...(relaySecret ? { [RELAY_SECRET_HEADER]: relaySecret } : {}),
       },
       body: JSON.stringify(body),
     });

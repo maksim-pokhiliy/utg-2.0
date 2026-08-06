@@ -21,6 +21,7 @@ const ORDER_PAYLOAD = {
 type ReceivedRequest = {
   url: string;
   secret: string | string[] | undefined;
+  headerNames: string[];
 };
 
 type Reply = {
@@ -42,6 +43,7 @@ const startServer = async (reply: () => Reply): Promise<LocalServer> => {
     received.push({
       url: request.url ?? "",
       secret: request.headers[SECRET_HEADER],
+      headerNames: Object.keys(request.headers),
     });
 
     const answer = reply();
@@ -123,6 +125,22 @@ describe("POST /api/place_order against a real relay socket", () => {
     expect(relay.received).toHaveLength(1);
     expect(relay.received[0]?.url).toBe("/place_order");
     expect(relay.received[0]?.secret).toBe(RELAY_SECRET);
+  });
+
+  it("puts no secret header on the wire at all when the variable is unset", async () => {
+    vi.stubEnv("ORDER_RELAY_SECRET", undefined);
+
+    const relay = await track(acceptOrder);
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+
+    expect(response.status).toBe(200);
+    expect(relay.received).toHaveLength(1);
+    expect(relay.received[0]?.secret).toBeUndefined();
+    expect(relay.received[0]?.headerNames).not.toContain(SECRET_HEADER);
   });
 
   it("never lets a redirecting relay hand the order or the secret to a second hop", async () => {
