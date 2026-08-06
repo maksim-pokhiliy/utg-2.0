@@ -206,7 +206,7 @@ yarn dev
 Open [http://localhost:3000](http://localhost:3000) — you will be redirected to `/uk` or `/en` based on your browser language.
 
 **No environment variables are required.** The app boots, builds and passes its whole test suite with an empty environment:
-the catalog is static, and the exchange-rate fetch is guarded so prices fall back to hryvnia. The four optional keys in
+the catalog is static, and the exchange-rate fetch is guarded so prices fall back to hryvnia. The five optional keys in
 `.env.example` only add capability on top:
 
 | Variable                | Without it                                                    |
@@ -215,6 +215,7 @@ the catalog is static, and the exchange-rate fetch is guarded so prices fall bac
 | `EXCHANGE_RATE_API_KEY` | `en` prices stay in UAH                                       |
 | `PLACE_ORDER_URL`       | checkout answers 503 and the cart is preserved                |
 | `NOVA_POSHTA_API_KEY`   | uk checkout falls back to free-text city and warehouse fields |
+| `ORDER_RELAY_SECRET`    | orders go to the relay unauthenticated                        |
 
 ### Scripts
 
@@ -233,7 +234,7 @@ the catalog is static, and the exchange-rate fetch is guarded so prices fall bac
 ## Tests and CI
 
 One job runs on every pull request and every push to `master`: install, lint, `prettier --check`, typecheck of both TS
-programs, Vitest, a build with the four environment keys explicitly blanked, and the Playwright suite. It needs no secrets,
+programs, Vitest, a build with the five environment keys explicitly blanked, and the Playwright suite. It needs no secrets,
 which means a fork's pull request gets exactly the same signal as a branch.
 
 The suite is shaped around contracts rather than a coverage percentage. The order payload is pinned against the receiving
