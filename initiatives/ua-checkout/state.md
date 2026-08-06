@@ -13,28 +13,21 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
-| U4  | NP proxy route + caching + env plumbing                  | 🔄 executor round open         | step-u4-np-proxy-prompt.md · D-7                      |
+| U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
 | U5  | Checkout rework (uk both modes, contacts, copy)          | ⬜ pending                     | plan.md                                               |
 | U6  | Contract flip (paired shop+bot PRs)                      | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-U4 PR #19 at `ac6e38a` — **planner-verified, merge-ready, awaiting the owner's
-merge**. Deep review #2 (REQUEST-CHANGES: 88 pooled → 26 post-refutation, no cap)
-routed into one fix round; all 15 items landed, none pushed back. Phase-6
-verification re-run personally: lint / prettier / typecheck green, 590 units /
-27 files, zero-env build green (both np routes `ƒ (Dynamic)`, zero `.body`
-under `api/`, zero NP host strings in client chunks), blank-env e2e 15/15;
-`place_order` diff is one import + the shared 429 helper; ratified constants,
-the shared NP bucket and per-city separation are pinned in tests; the key is
-blanked at all five points; no comments in the diff. Deferred from the round:
-IR-1 → **UAC-11** (pre-existing limiter identity forgery; the preview could not
-answer — Deployment Protection 302s everything — so the probe moves to the U7
-prod gate); UAC-10 (Present edges + server-only boundary); UAC-2/UAC-9 amended.
-After merge: prod smoke + CLAUDE.md truth fix (IR-25: it still claims
-`place_order` is the only API route and three env keys). U0 (B2) still
-pending — must land before U6.
+U4 CLOSED (merged, prod-verified, docs promoted, CLAUDE.md corrected).
+**Next: U5 (checkout rework) — contour with the user, then /step.** It is the
+initiative's biggest step: both uk modes on the ratified design, the contact
+block with +380 normalization, the editable summary (§9), dictionaries, and the
+UAC-3/6/7/9/10 + DEF-39 riders. Consider splitting it in the contour (delivery
+flow vs contact block + summary) — one executor run may not carry it all.
+U0 (B2, x-relay-secret) still pending — must land before U6. The UAC-4 + UAC-8
+DS-hygiene/kit-backport window is still available between steps.
 
 ## Open decisions awaiting ratification
 
@@ -42,8 +35,16 @@ pending — must land before U6.
 
 ## Live carry-forwards
 
-- Inherited, SCHEDULED into steps: DEF-36 + DEF-37 (e2e, → U4/U5/U6), DEF-39 (cart
-  decoder, → U5). DEF-41 — CLOSED by U3 (both ledgers).
+- Inherited: DEF-36 — CLOSED by U4 (per-spec limiter identities); DEF-37 (relay
+  forwarding e2e, → U6); DEF-39 (cart decoder, → U5). DEF-41 — CLOSED by U3.
+  Both closures also recorded in the production-polish canonical ledger.
+- **UAC-11** (SCHEDULED → U7) — the limiter can be disabled by a client sending an
+  EMPTY `x-forwarded-for`/`x-real-ip` (pre-existing on master; fails open by
+  design). Unverifiable on previews (Deployment Protection 302s them) — probe the
+  live GET route at the prod gate; if real, tighten the directory bucket only,
+  never `place_order`.
+- **UAC-10** (SCHEDULED → U5) — NP-proxy polish: `Present` edge guards and the
+  `server-only` import boundary (the package is absent from the repo).
 - **UAC-1** (OPEN) — real NP API key from the operator into Vercel env; needed live
   only by U7, fallback covers until then.
 - **UAC-2** (SCHEDULED) — U4 re-check DONE via five substitute sources (the portal

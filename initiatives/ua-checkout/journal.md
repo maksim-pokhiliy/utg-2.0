@@ -119,3 +119,58 @@ Append-only. One entry per session/step.
 - Ledger deltas of the step: UAC-5/6/7 (review riders → U4/U5), UAC-8 (chip-base
   unification + fade-duration dedup → the DS-hygiene window with UAC-4).
 - Next: U4 contour (NP proxy). U0/B2 still pending — must precede U6.
+
+## 2026-08-06 — U4 shipped: PR #19 squash-merged (`a17aa30`), prod-verified
+
+- Full /step pipeline. Contour ratified D-7 (warehouse filtering + row caps move
+  to the proxy — UAC-5 resolved server-side; a Kyiv-sized list never reaches the
+  client). Executor ran /feature from `step-u4-np-proxy-prompt.md`.
+- **UAC-2 discharged the hard way**: the official portal 403s (Cloudflare) and the
+  legacy devcenter is dead, so the executor substituted five independent sources
+  including captured API-response fixtures. Three §4 corrections followed →
+  **D-8**: `searchSettlements` rows are nested (`data[0].Addresses`, empty search
+  is `TotalCount: 0`, not `data: []` — the U1 mirror typed it wrong); NP ships its
+  own composed `Present` string, which supersedes our «MainDescription, Area»
+  recipe (the recipe lost the raion — the disambiguator for same-named villages);
+  values are string-encoded and NP answers HTTP 200 even on `success:false`. The
+  settlements contract widened to `{ref,label,region?}` (the ratified combobox row
+  has a meta slot; `label + ", " + region` rejoins `Present` losslessly), and the
+  warehouse page-merge got 7s/10 pages against the settlement 2.5s.
+- Independent deep review #2 (attempt #1 died on a session limit with no report):
+  **88 pooled → 26 after refutation, no cap applied**; 14 sent to refuters →
+  10 confirmed, 3 refuted, 1 split. Sacred `place_order` proven byte-identical
+  three ways, including a 300k-operation differential fuzz between the old and new
+  limiter (zero divergence) — the one thing that could have cost a real buyer.
+- One consolidated fix round, all 15 routed items landed: page-merge dedup by
+  warehouse number (a `Page`-ignoring carrier could merge one page ten times);
+  the 10-page cap exit now REFUSES like the deadline does (D-8.3 read literally —
+  serving two thirds of a city and caching it for a day is worse); a non-empty
+  container decoding to zero rows is capability-down on both directories (it used
+  to answer a cheerful 200-empty, which UAC-9 says the checkout must NOT treat as
+  a fallback trigger); `DenyToSelect` regained the trimming the previous fix cost
+  it; 30s negative TTL; concurrent-merge cap of 4 (moved out of the cache loader
+  by the executor's own judgment so a transient shed never gets negative-cached);
+  settlement cache 200→2000; invisible-character strip; `ref`/`number` caps;
+  lowercased city key; the 429 response and the label caps extracted to shared
+  modules; six ratified constants, the shared NP bucket and per-city separation
+  pinned with mutation-proven tests.
+- Planner verification (phase 6, own runs): lint / prettier / typecheck, 590 units
+  / 27 files, zero-env build (both routes `ƒ (Dynamic)`, zero `.body` under
+  `api/`, zero carrier-host strings in client chunks), blank-env e2e 15/15 — all
+  green under the WSL fences; `place_order`'s diff is one import plus the shared
+  429 helper.
+- **The executor's own D-i premise was falsified twice** (its evidence was
+  metadata-convention files, not route handlers; the reviewer rebuilt with the
+  export deleted and both routes still printed `ƒ (Dynamic)`). `force-dynamic`
+  stays as cheap insurance; D-8 carries the correction.
+- Merged by the planner on the owner's explicit delegation («сделай мерж»).
+  Prod verified: four pages 200, both directory routes answer the constant 503
+  (correct fail-open with no key in Vercel yet), a bad `method` answers 400 —
+  400 and 503 from one path also prove nothing was baked static.
+- Ledger deltas: **UAC-11** (pre-existing limiter identity forgery — an empty
+  `x-forwarded-for` makes the limiter fail open; NOT verifiable on the PR preview,
+  which 302s behind Deployment Protection → probe at the U7 prod gate),
+  **UAC-10** (Present edge guards + `server-only` boundary → U5), UAC-2 and UAC-9
+  amended. `CLAUDE.md` corrected (it still claimed one API route and three env
+  keys) — IR-25 closed.
+- Next: U5 (checkout rework) — the big one. U0/B2 still pending, must precede U6.
