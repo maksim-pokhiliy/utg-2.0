@@ -128,6 +128,7 @@ bot can accept v1+v2 during the rollout window:
 ```json
 {
   "version": 2,
+  "idempotency_key": "3f2b8c1e-9a44-4d7e-8b2f-16c0a9e5d731",
   "locale": "uk",
   "customer": {
     "first_name": "Марія",
@@ -153,6 +154,13 @@ bot can accept v1+v2 during the rollout window:
 `delivery` variants: `np_branch`/`np_postomat` `{mode, source, city, warehouse,
 warehouse_number}` · `np_courier` `{mode, source, city, street, building,
 apartment?}` · `generic` (en) `{mode: "generic", country, state?, city, address}`.
+`idempotency_key` (D-11) is an optional top-level UUID the shop mints when the buyer
+first submits and REUSES for every retry of that same order, resetting only on
+success — so a retry after an ambiguous failure is recognizable as the same order
+rather than a second one. It is optional in the envelope (a v2 body without it stays
+valid), the relay must accept and carry it without requiring it, and no decoder on
+either side may reject a v2 body for carrying fields it does not know.
+
 `patronymic`, `comment`, `apartment`, `state` are omitted when empty. Cart lines,
 `total`, `currency`, `locale` are byte-compatible with today (D-12 stays; the size
 stays inside `title` per DEF-3). `delivery.city` carries NP's `Present` string
