@@ -20,6 +20,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-6 | U3 review round: Enter consumption supersedes prototype parity   | RATIFIED |
 | D-7 | U4 contour: proxy-side warehouse filtering + row caps (UAC-5)     | RATIFIED |
 | D-8 | U4 plan-gate: Present verbatim, region in the contract, 7s merge  | RATIFIED |
+| D-9 | Bot-first sequencing; U5 splits into U5a (contacts) + U5b (delivery) | RATIFIED |
 
 ---
 
@@ -232,3 +233,37 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   history, left as-is).
 - **Links.** D-7; requirements §4/§5 (amended same day); UAC-2 (residual → U7);
   UAC-9 (U5 handoff pack); step-u4-np-proxy-prompt.md; journal (U4).
+
+### D-9 — Bot-first sequencing, and U5 splits by payload truthfulness
+
+- **Status:** RATIFIED (user, 2026-08-06, post-U4 contour Q&A: «сначала бот» +
+  «резать на два»).
+- **Decision.**
+  1. **The bot leads.** Nothing in the shop that changes the order payload merges
+     before the relay accepts it. Order of work: **U0/B2** (shop-side
+     `x-relay-secret` sender — payload-neutral, merges immediately) → **B3, new in
+     bot-polish** (relay dual-accepts v1 + v2 per requirements §5) → U5a → U5b →
+     U6 (now shrunk to: bot drops v1, contract tests pinned on both sides).
+  2. **U5 splits into two steps, cut so that each PR ships a TRUTHFUL payload** —
+     not by UI area:
+     - **U5a — contacts, copy, summary**: recipient names in the ratified order,
+       uk-only patronymic, +380 normalization (§3), contact-channel chips, consent
+       line, pre-submit expectations block, dictionaries with real UA placeholders
+       (UAC-3), the editable order summary (§9) with the pending lock, plus riders
+       DEF-39 and UAC-6. **This is where the payload flips to the v2 envelope**,
+       with `delivery.mode: "generic"` for BOTH locales — which is the literal
+       truth at that point, since uk delivery is still the generic free-text set.
+     - **U5b — delivery**: method chips, the two NP comboboxes on the U4 proxy,
+       runtime per-capability fallback (§1), courier fields, and the `np_branch` /
+       `np_postomat` / `np_courier` delivery variants with the `source` flag —
+       plus riders UAC-7, UAC-9, UAC-10.
+- **Rationale.** A form change and its payload change cannot be separated without
+  either breaking prod checkout or packing structured data into legacy string
+  fields — the exact hack D-2 forbids. Cutting by *what the payload can honestly
+  say* means every merge point is shippable to a prod that takes real orders:
+  U5a's `generic` mode is not a placeholder, it describes the delivery model the
+  uk form still has. The alternative cut (delivery first) would have forced either
+  an invented `contact_channel` or a v1 bridge. Splitting also halves the review
+  surface — U3 produced 76 pre-cap candidates at half of U5's scope.
+- **Links.** D-2; D-3 (rollout order); requirements §1/§5/§9; bot-polish plan
+  (B2, and B3 to be opened there); journal 2026-08-06.

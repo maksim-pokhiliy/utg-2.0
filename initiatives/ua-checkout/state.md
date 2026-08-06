@@ -9,25 +9,27 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 | #   | Step                                                     | Status                         | Pointer                                               |
 | --- | -------------------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
-| U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) | ⬜ pending                     | `../utg-tg-order-bot/initiatives/bot-polish/`         |
+| U0  | PREREQ: bot-polish B2 (x-relay-secret sender, this repo) + B3 (bot dual-accepts v2) | 🔄 B2 next — executor round     | step-u0-b2-secret-sender-prompt.md · D-9              |
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
-| U5  | Checkout rework (uk both modes, contacts, copy)          | ⬜ pending                     | plan.md                                               |
-| U6  | Contract flip (paired shop+bot PRs)                      | ⬜ pending                     | plan.md · D-3                                         |
+| U5a | Contacts + copy + editable summary; payload flips to v2   | ⬜ pending — gated on bot B3    | plan.md · D-9 · requirements §5/§9                    |
+| U5b | Delivery: method chips, NP comboboxes, courier fields     | ⬜ pending                     | plan.md · D-9 · requirements §1/§4                    |
+| U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-U4 CLOSED (merged, prod-verified, docs promoted, CLAUDE.md corrected).
-**Next: U5 (checkout rework) — contour with the user, then /step.** It is the
-initiative's biggest step: both uk modes on the ratified design, the contact
-block with +380 normalization, the editable summary (§9), dictionaries, and the
-UAC-3/6/7/9/10 + DEF-39 riders. Consider splitting it in the contour (delivery
-flow vs contact block + summary) — one executor run may not carry it all.
-U0 (B2, x-relay-secret) still pending — must land before U6. The UAC-4 + UAC-8
-DS-hygiene/kit-backport window is still available between steps.
+U4 CLOSED (merged, prod-verified, docs promoted, CLAUDE.md corrected). **D-9
+ratified: the bot leads, and U5 splits into U5a/U5b by payload truthfulness.**
+
+**Next: U0/B2 — the `x-relay-secret` sender in this repo** (`/feature small`,
+payload-neutral, merges immediately; header name `x-relay-secret`, bot env
+`ORDER_RELAY_SECRET`). Owner enablement order after merge (BD-4): shop env →
+bot env. Then **B3 in the bot repo** (relay dual-accepts v1+v2 per requirements
+§5) — the gate for every shop payload change. Then U5a → U5b → U6.
+The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
 ## Open decisions awaiting ratification
 
