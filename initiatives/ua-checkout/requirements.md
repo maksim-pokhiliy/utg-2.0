@@ -154,6 +154,32 @@ bot can accept v1+v2 during the rollout window:
 `delivery` variants: `np_branch`/`np_postomat` `{mode, source, city, warehouse,
 warehouse_number}` · `np_courier` `{mode, source, city, street, building,
 apartment?}` · `generic` (en) `{mode: "generic", country, state?, city, address}`.
+**Which fields the RELAY may require (resolves the §3-vs-§5 ambiguity, B3 plan gate
+Q12).** §3 governs requiredness; §5 governs shape and names. The `?` marks in §5 are
+not the whole optional set — they describe the SHOP's emit contract, and a decoder
+that treats every unmarked field as mandatory would reject real orders over
+diagnostics. Concretely, the relay requires only what it cannot render an order
+without: `delivery.mode`, and per mode `city` + (`warehouse` | `street`+`building` |
+`address`), plus `customer.first_name`/`last_name`/`phone`. It must NOT reject on a
+missing `source` (a verify-on-the-call hint — absent renders as "not stated"),
+`warehouse_number` (already contained inside the `warehouse` string), or
+`contact_channel` (a preference; the phone is mandatory anyway and §2 names a call
+the universal fallback). The shop still sends all three — but a shop bug must cost a
+hint, never a volunteer's order.
+
+**`contact_channel` wire values** (B3 plan gate Q1): the shop emits exactly
+`call` | `telegram` | `viber` (lowercase, `call` being §2's preselected default).
+The relay accepts ANY non-empty string and renders it verbatim — no closed enum, no
+display map: an enum mismatch would 400 the single most common order shape, and the
+field is informational. The canonical triple is the shop's obligation, pinned by its
+own contract test, not a gate the relay enforces.
+
+**No cross-validation of `locale` against `delivery.mode`** (B3 plan gate Q9 — the
+contract's least obvious trap): a rule like "generic ⟺ en" would reject EVERY real
+order during the U5a window, because per D-9 `mode: "generic"` ships under
+`locale: "uk"` by design until U5b lands the НП modes. Neither side may infer one
+from the other, ever.
+
 `idempotency_key` (D-11) is an optional top-level UUID the shop mints when the buyer
 first submits and REUSES for every retry of that same order, resetting only on
 success — so a retry after an ambiguous failure is recognizable as the same order
