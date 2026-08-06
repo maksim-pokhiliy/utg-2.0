@@ -158,6 +158,7 @@ describe("POST /api/place_order", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
       method: "POST",
+      redirect: "error",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(ORDER_PAYLOAD),
     });
@@ -175,6 +176,7 @@ describe("POST /api/place_order", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
       method: "POST",
+      redirect: "error",
       headers: AUTHENTICATED_HEADERS,
       body: JSON.stringify(ORDER_PAYLOAD),
     });
@@ -223,6 +225,7 @@ describe("POST /api/place_order", () => {
 
       expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
         method: "POST",
+        redirect: "error",
         headers: {
           "Content-Type": "application/json",
           "x-relay-secret": secret,
@@ -243,6 +246,7 @@ describe("POST /api/place_order", () => {
 
     expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
       method: "POST",
+      redirect: "error",
       headers: AUTHENTICATED_HEADERS,
       body: JSON.stringify(ORDER_PAYLOAD),
     });
@@ -261,6 +265,7 @@ describe("POST /api/place_order", () => {
 
       expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
         method: "POST",
+        redirect: "error",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ORDER_PAYLOAD),
       });

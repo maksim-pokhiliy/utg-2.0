@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
 
     const response = await fetch(`${placeOrderUrl}/place_order`, {
       method: "POST",
+      redirect: "error",
       headers: {
         "Content-Type": "application/json",
         ...(relaySecret ? { "x-relay-secret": relaySecret } : {}),
