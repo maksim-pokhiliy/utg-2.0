@@ -29,9 +29,19 @@ U0/B2 CLOSED: PR #20 merged, both Vercel projects carry `ORDER_RELAY_SECRET`
 relay 401s header-less callers, 400s the shop's authenticated probe. DEF-13 and
 BDEF-1 closed.
 
-**B3 executor round OPEN in the bot repo** (`../utg-tg-order-bot`, initiative
-`bot-polish`) — the relay dual-accepts v1 + v2 per requirements §5. It gates U5a,
-where the shop's payload flips. Then U5a → U5b → U6.
+**B3 DONE** (bot PR #2 `66134ee`, merged and prod-smoked: a v1 AND a v2 order both
+delivered live to the operators' chat). The relay now accepts the v2 envelope.
+
+**Next: B4 in the bot repo, then U5a here — and B4 gates U5a's MERGE.** The B3
+review measured the relay's pre-existing width bug against the new code: a v2
+free-form message reaches 7150 UTF-16 units at 3830 code points, +74% over
+Telegram's real 4096 limit, because our truncation counts code points and Telegram
+counts UTF-16. An emoji-heavy comment would pass our budget, get a 400 from
+Telegram, surface as a 500 — and the order is LOST. v2 stays dormant until U5a
+ships it, so the fix lands first. U5a may be BUILT in parallel; it must not merge
+before B4.
+
+Then U5a → U5b → U6.
 
 **D-11 ratified mid-round:** orders become durable. The relay persists each order
 before sending (bot step B4, after B3 — the store must NEVER gate the send), and
