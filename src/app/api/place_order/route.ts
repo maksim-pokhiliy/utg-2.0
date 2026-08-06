@@ -6,6 +6,14 @@ import {
   resolveClientKey,
 } from "@root/app/api/rate-limit";
 
+const SENDABLE_SECRET_PATTERN = /^[\x20-\x7e]+$/;
+
+const buildNotConfiguredResponse = () =>
+  NextResponse.json(
+    { error: "Order service is not configured" },
+    { status: 503 }
+  );
+
 export async function POST(request: NextRequest) {
   const verdict = consumeRateLimit(resolveClientKey(request));
 
@@ -16,13 +24,16 @@ export async function POST(request: NextRequest) {
   const placeOrderUrl = process.env.PLACE_ORDER_URL;
 
   if (!placeOrderUrl) {
-    return NextResponse.json(
-      { error: "Order service is not configured" },
-      { status: 503 }
-    );
+    return buildNotConfiguredResponse();
   }
 
   const relaySecret = process.env.ORDER_RELAY_SECRET?.trim();
+
+  if (relaySecret && !SENDABLE_SECRET_PATTERN.test(relaySecret)) {
+    console.error("Order relay secret is not a usable header value");
+
+    return buildNotConfiguredResponse();
+  }
 
   try {
     const body = await request.json();

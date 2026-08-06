@@ -24,6 +24,11 @@ const RELAY_SECRET_NAME = "ORDER_RELAY_SECRET";
 const RELAY_SECRET = "s3cret-relay-token";
 const PADDED_RELAY_SECRET = `  ${RELAY_SECRET}  `;
 const BLANK_RELAY_SECRETS = ["", "   "] as const;
+const UNSENDABLE_RELAY_SECRETS = [
+  `${RELAY_SECRET}\nx-injected: 1`,
+  `${RELAY_SECRET}\rx-injected: 1`,
+  "секрет-реле",
+] as const;
 
 const AUTHENTICATED_HEADERS = {
   "Content-Type": "application/json",
@@ -165,8 +170,37 @@ describe("POST /api/place_order", () => {
       headers: AUTHENTICATED_HEADERS,
       body: JSON.stringify(ORDER_PAYLOAD),
     });
+
+    const [, init] = fetchStub.mock.calls[0];
+
+    expect(() => new Headers(init?.headers)).not.toThrow();
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
+
+  it.each(UNSENDABLE_RELAY_SECRETS)(
+    "answers 503 without reading the body, calling the relay or logging the value when the relay secret cannot ride a header: %j",
+    async (secret) => {
+      vi.stubEnv(RELAY_SECRET_NAME, secret);
+
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const fetchStub = stubAcceptedUpstream();
+      const { POST } = await loadRoute();
+      const request = buildOrderRequest();
+      const bodyTrap = trapRequestBody(request);
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(503);
+      expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
+      expect(bodyTrap).not.toHaveBeenCalled();
+      expect(fetchStub).not.toHaveBeenCalled();
+      expect(errorSpy.mock.calls.flat().map(String).join(" ")).not.toContain(
+        secret
+      );
+    }
+  );
 
   it("strips the padding around a configured relay secret", async () => {
     vi.stubEnv(RELAY_SECRET_NAME, PADDED_RELAY_SECRET);
