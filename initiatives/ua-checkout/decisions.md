@@ -304,5 +304,22 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
      the relay enforces, checkout on preview deployments answers 401 — which also
      stops previews from posting test orders into the operators' real chat.
      Reversible with one command if a browser gate ever needs preview checkout.
+- **Recorded consequence (PR #20 review, RF-11).** With `redirect: "error"` the
+  relay's own `3xx` responses — 301/302/303/307/308, with or without a `Location`
+  header — now surface as our 500 with the cart preserved, where master forwarded
+  them to the browser. Measured clean: `300` and `304` are not redirect statuses,
+  so the null-body branch (204/205/304) is untouched, and 401/405 still forward
+  verbatim. Accepted: the relay is a JSON API that has no reason to redirect, and
+  a loud failure beats a silent hand-off of a customer's order to another host.
+- **Gate discharged (2026-08-06).** The review made the merge conditional on two
+  dashboard values nobody had read. Planner measured both from the pulled
+  production env: `PLACE_ORDER_URL` carries no trailing slash (a stray one would
+  become `//place_order`, which Vercel's CDN 308-normalizes BEFORE app code runs —
+  a total checkout outage under `redirect: "error"`, a class master silently
+  self-healed), and the stored `ORDER_RELAY_SECRET` is 43 printable-ASCII
+  characters equal to its own trim. A defensive trailing-slash strip ships anyway:
+  the field is human-editable and the failure mode is 100% of orders.
 - **Links.** PR #20; bot-polish BD-4 (enablement order), BD-5 (now resolved);
-  UAC-11 (the fail-open limiter now guards an authenticated path); journal.
+  UAC-11 (the fail-open limiter now guards an authenticated path); UAC-12 (the
+  pre-existing body/Content-Type forwarding, surfaced by the same review);
+  journal.
