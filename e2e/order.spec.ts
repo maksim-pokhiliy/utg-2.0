@@ -2,9 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 
 import {
   CHECKOUT_PATH,
+  FORWARDED_FOR_HEADER,
   HOME_PATH,
   ORDER_ROUTE_GLOB,
   PRODUCT_PATH,
+  SPEC_CLIENT_IPS,
   UK_DICTIONARY,
   UK_PRODUCT,
   addToCartButton,
@@ -21,7 +23,15 @@ import {
   successPanel,
 } from "./support/app";
 
+test.use({
+  extraHTTPHeaders: { [FORWARDED_FOR_HEADER]: SPEC_CLIENT_IPS.order },
+});
+
 const OK_STATUS = 200;
+
+const UNCONFIGURED_RELAY_STATUS = 503;
+
+const ORDER_ROUTE_PATH = "/api/place_order";
 
 const EMPTY_CART_STORAGE = "[]";
 
@@ -109,7 +119,13 @@ test.describe("the order path", () => {
     await checkoutLink(page).click();
     await expect(page).toHaveURL(new RegExp(`${CHECKOUT_PATH}$`));
 
+    const orderResponse = page.waitForResponse((response) =>
+      response.url().includes(ORDER_ROUTE_PATH)
+    );
+
     await submitCheckout(page);
+
+    expect((await orderResponse).status()).toBe(UNCONFIGURED_RELAY_STATUS);
 
     await expect(orderToast(page)).toContainText(
       UK_DICTIONARY.cart.order_error

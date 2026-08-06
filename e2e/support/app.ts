@@ -35,6 +35,27 @@ export const REPORT_COUNT = REPORT_DIMENSIONS.length;
 
 export const ORDER_ROUTE_GLOB = "**/api/place_order";
 
+export const SETTLEMENTS_PATH = "/api/np/settlements";
+
+export const WAREHOUSES_PATH = "/api/np/warehouses";
+
+export const FORWARDED_FOR_HEADER = "x-forwarded-for";
+
+export const SPEC_CLIENT_IPS = {
+  navigation: "203.0.113.21",
+  order: "203.0.113.22",
+  persistence: "203.0.113.23",
+  npDirectory: "203.0.113.24",
+} as const;
+
+const specClientIps = Object.values(SPEC_CLIENT_IPS);
+
+if (new Set(specClientIps).size !== specClientIps.length) {
+  throw new Error(
+    "SPEC_CLIENT_IPS must hold a unique address per spec — duplicates share one rate-limit bucket"
+  );
+}
+
 const CART_BUTTON_TESTID = "cart-button";
 
 const PRODUCT_PRICE_TESTID = "product-price";

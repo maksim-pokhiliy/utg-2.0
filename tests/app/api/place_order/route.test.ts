@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NextRequest } from "next/server";
 
+import { expectUpstreamOnly, stubUpstream } from "../../../support/apiTest";
+
 const ROUTE_URL = "https://example.test/api/place_order";
 const FAKE_RELAY_ORIGIN = "https://relay.invalid";
 const RELAY_HOST = "relay.invalid";
@@ -24,11 +26,6 @@ const ORDER_PAYLOAD = {
   cart: [{ title: "«Waiting»", quantity: 2 }],
 };
 
-type FetchStub = (
-  input: string | URL | Request,
-  init?: RequestInit
-) => Promise<Response>;
-
 const loadRoute = () => import("@root/app/api/place_order/route");
 
 const buildOrderRequest = (): NextRequest =>
@@ -45,20 +42,6 @@ const trapRequestBody = (request: NextRequest) =>
   vi.spyOn(request, "json").mockImplementation(() => {
     throw new Error(BODY_TRAP_MESSAGE);
   });
-
-const stubUpstream = (respond: () => Promise<Response>) => {
-  const fetchStub = vi.fn<FetchStub>(respond);
-
-  vi.stubGlobal("fetch", fetchStub);
-
-  return fetchStub;
-};
-
-const expectUpstreamOnly = (calls: readonly Parameters<FetchStub>[]): void => {
-  for (const [input] of calls) {
-    expect(input).toBe(UPSTREAM_URL);
-  }
-};
 
 beforeEach(() => {
   vi.resetModules();
@@ -122,7 +105,7 @@ describe("POST /api/place_order", () => {
     expect(retryAfter).toBeLessThanOrEqual(MAX_RETRY_AFTER_SECONDS);
 
     expect(fetchStub).toHaveBeenCalledTimes(RATE_LIMIT_MAX_REQUESTS);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
   it("posts the order payload to the configured relay unchanged", async () => {
@@ -144,7 +127,7 @@ describe("POST /api/place_order", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(ORDER_PAYLOAD),
     });
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
   it("forwards the upstream status, content type and body verbatim", async () => {
@@ -166,7 +149,7 @@ describe("POST /api/place_order", () => {
       "application/json; charset=utf-8"
     );
     expect(await response.text()).toBe(upstreamBody);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
   it("forwards an upstream rejection status and its non-json content type", async () => {
@@ -188,7 +171,7 @@ describe("POST /api/place_order", () => {
       "text/plain; charset=utf-8"
     );
     expect(await response.text()).toBe(upstreamBody);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
   it("answers with a null body when the upstream answers 204", async () => {
@@ -202,7 +185,7 @@ describe("POST /api/place_order", () => {
     expect(response.status).toBe(204);
     expect(response.body).toBeNull();
     expect(response.headers.get("Content-Type")).toBe("application/json");
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
   it("answers 500 without leaking the relay when the upstream throws", async () => {
@@ -221,6 +204,6 @@ describe("POST /api/place_order", () => {
     expect(body).not.toContain("details");
     expect(body).not.toContain(RELAY_HOST);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls);
+    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 });
