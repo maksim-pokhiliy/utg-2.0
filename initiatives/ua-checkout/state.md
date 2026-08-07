@@ -1,6 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-05
+**Updated:** 2026-08-06 (U0 + U3 + U4 shipped; the bot leads — B4 is the next step,
+and it lives in `../utg-tg-order-bot`)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -9,7 +10,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 | #   | Step                                                     | Status                         | Pointer                                               |
 | --- | -------------------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
-| U0  | PREREQ: bot-polish B2 (sender) + B3 (bot dual-accepts v2) | ✅ B2 done — PR #20 `bb3f866`, enforcement LIVE and verified end-to-end; ⬜ B3 next (bot repo) | PR #20 · D-10 · journal 2026-08-06 |
+| U0  | PREREQ: bot-polish B2 (sender) + B3 (bot dual-accepts v2) | ✅ done — PR #20 `bb3f866` (secret enforced live) + bot PR #2 `66134ee` (v2 accepted); both prod-smoked | PR #20 · D-10 · journal 2026-08-06 |
 | U1  | Requirements spec + contract draft (resolve D-3)         | ✅ done                        | `requirements.md` · D-3 RATIFIED · journal 2026-08-05 |
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
@@ -49,12 +50,11 @@ before sending (bot step B4, after B3 — the store must NEVER gate the send), a
 retries of the same order. Both decoders must ignore unknown fields, or every
 future additive contract field becomes a breaking paired change.
 
-The UAC-4 + UAC-8 DS-hygiene window remains available between steps.
 The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-8 ratified)
+(none — D-1…D-11 ratified)
 
 ## Live carry-forwards
 
