@@ -1,24 +1,31 @@
 "use client";
 
-import type { ChangeEventHandler, ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { Field, Input } from "@root/design-system";
-import { useDictionary } from "@root/i18n";
+import { useDictionary, type Dictionary } from "@root/i18n";
 
 import {
   AUTOFILL_TOKENS,
   isRequiredField,
   type CheckoutFieldName,
 } from "./fields";
+import type { CheckoutFieldError } from "./validation";
+
+const ERROR_KEYS = {
+  required: "required",
+  phone_format: "phone_invalid",
+} as const satisfies Record<CheckoutFieldError, keyof Dictionary["cart"]>;
 
 interface CheckoutFieldProps {
   label: string;
   name: CheckoutFieldName;
   type?: "text" | "tel";
   value: string;
-  placeholder: string;
-  isInvalid: boolean;
-  onChange: ChangeEventHandler<HTMLInputElement>;
+  placeholder?: string;
+  error?: CheckoutFieldError;
+  disabled?: boolean;
+  onValueChange: (name: CheckoutFieldName, value: string) => void;
 }
 
 export function CheckoutField({
@@ -27,28 +34,34 @@ export function CheckoutField({
   type,
   value,
   placeholder,
-  isInvalid,
-  onChange,
+  error,
+  disabled,
+  onValueChange,
 }: CheckoutFieldProps): ReactElement {
   const dictionary = useDictionary();
 
   const isRequired = isRequiredField(name);
+  const isInvalid = error !== undefined;
 
   return (
     <Field
       label={label}
       htmlFor={name}
       required={isRequired}
-      error={isInvalid ? dictionary.cart.required : undefined}
+      error={
+        error === undefined ? undefined : dictionary.cart[ERROR_KEYS[error]]
+      }
     >
       <Input
         id={name}
         name={name}
         type={type}
+        inputMode={type === "tel" ? "tel" : undefined}
         autoComplete={AUTOFILL_TOKENS[name]}
         value={value}
         placeholder={placeholder}
-        onChange={onChange}
+        disabled={disabled}
+        onChange={(event) => onValueChange(name, event.target.value)}
         invalid={isInvalid}
         required={isRequired}
         aria-invalid={isInvalid}

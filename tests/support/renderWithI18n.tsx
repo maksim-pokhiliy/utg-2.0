@@ -1,6 +1,7 @@
 import { render, type RenderResult } from "@testing-library/react";
 import type { ReactElement } from "react";
 
+import enDictionary from "@root/app/[lang]/dictionaries/en.json";
 import ukDictionary from "@root/app/[lang]/dictionaries/uk.json";
 import type { Locale } from "@root/data";
 import { Toaster } from "@root/design-system";
@@ -8,6 +9,8 @@ import { I18nProvider, type Dictionary } from "@root/i18n";
 import type { IMoney } from "@root/utils/formatPrice";
 
 export const UK_DICTIONARY: Dictionary = ukDictionary;
+
+export const EN_DICTIONARY: Dictionary = enDictionary;
 
 export const UAH_MONEY: IMoney = { coefficient: 1, currency: "UAH" };
 
