@@ -580,3 +580,56 @@ describe("the consumer className on the row", () => {
     expect(row.classList.contains("grid-cols-[64px_1fr]")).toBe(true);
   });
 });
+
+describe("the quantity guard on a line that locks while the buyer is typing in it", () => {
+  const DRAFT_QUANTITY = "5";
+
+  const renderLockable = (onQuantityChange: (quantity: number) => void) => {
+    const view = render(
+      <CartLine {...LINE_PROPS} onQuantityChange={onQuantityChange} />
+    );
+
+    return {
+      ...view,
+      lock: () =>
+        view.rerender(
+          <CartLine
+            {...LINE_PROPS}
+            onQuantityChange={onQuantityChange}
+            locked
+          />
+        ),
+    };
+  };
+
+  it("refuses the commit a blur fires after the lock landed, which is how a mid-flight order would still be mutated", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+    const { lock } = renderLockable(onQuantityChange);
+    const input = screen.getByLabelText(QUANTITY_LABEL);
+
+    fireEvent.change(input, { target: { value: DRAFT_QUANTITY } });
+
+    expect(onQuantityChange).toHaveBeenCalledWith(Number(DRAFT_QUANTITY));
+
+    lock();
+    onQuantityChange.mockClear();
+
+    fireEvent.blur(input);
+
+    expect(onQuantityChange).not.toHaveBeenCalled();
+  });
+
+  it("still commits that blur when the line is not locked, so the guard is the lock and not the blur", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+
+    render(<CartLine {...LINE_PROPS} onQuantityChange={onQuantityChange} />);
+
+    const input = screen.getByLabelText(QUANTITY_LABEL);
+
+    fireEvent.change(input, { target: { value: DRAFT_QUANTITY } });
+    onQuantityChange.mockClear();
+    fireEvent.blur(input);
+
+    expect(onQuantityChange).toHaveBeenCalledWith(Number(DRAFT_QUANTITY));
+  });
+});

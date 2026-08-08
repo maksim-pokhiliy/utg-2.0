@@ -10,7 +10,11 @@ import {
   type ComposeOrderInput,
   type OrderPayloadV2,
 } from "@root/components/checkout/payload";
-import { composeCartLine, type ICartItem } from "@root/store/cart";
+import {
+  MAX_CART_QUANTITY,
+  composeCartLine,
+  type ICartItem,
+} from "@root/store/cart";
 import type { IMoney } from "@root/utils/formatPrice";
 
 interface AnnotatedCartLine extends ICartItem {
@@ -117,7 +121,7 @@ const compose = (overrides: Partial<ComposeOrderInput> = {}): OrderPayloadV2 =>
     ...overrides,
   });
 
-describe("the v2 order envelope — the shop's half of the contract in initiatives/ua-checkout/requirements.md §5", () => {
+describe("the v2 order envelope — the shop's half of the contract in initiatives/ua-checkout/requirements.md §5, whose other half is pinned by the relay in ../utg-tg-order-bot/tests/support/contract.ts (ORDER_V2_KEYS, ORDER_V2_CUSTOMER_KEYS, ORDER_V2_DELIVERY_GENERIC_KEYS)", () => {
   it("stamps version 2 so the relay can tell it from the v1 body", () => {
     expect(compose().version).toBe(2);
   });
@@ -270,6 +274,15 @@ describe("the money on the envelope", () => {
 
   it("sends the total as a string with two fraction digits", () => {
     expect(compose().total).toBe("600.00");
+  });
+
+  it("keeps the total a plain decimal at the cart's quantity ceiling, because the relay refuses exponential notation outright", () => {
+    const saturated = compose({
+      cart: [{ ...PATCH, quantity: MAX_CART_QUANTITY }],
+    });
+
+    expect(saturated.total).toMatch(/^\d+\.\d{2}$/);
+    expect(saturated.total).not.toContain("e");
   });
 
   it("passes the display currency through untouched", () => {

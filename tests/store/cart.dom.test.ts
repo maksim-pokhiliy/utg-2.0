@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   CART_STORAGE_KEY,
+  MAX_CART_QUANTITY,
   composeCartLine,
   useCartStore,
   type ICartItem,
@@ -445,5 +446,121 @@ describe("useCartStore.clear", () => {
     useCartStore.getState().clear();
 
     expect(readItems()).toEqual([]);
+  });
+});
+
+describe("the cart quantity ceiling", () => {
+  const RUNAWAY_QUANTITY = 4000000000000000000;
+
+  const SELF_HEALING_QUANTITY = 1e23;
+
+  it("clamps a runaway quantity typed into the stepper, because a total of 1.2e+21 is not a decimal the relay accepts", () => {
+    useCartStore.getState().addItem(composeCartLine(lineInput()));
+    useCartStore.getState().setQuantity(PATCH_SLUG, RUNAWAY_QUANTITY);
+
+    expect(readItems()[0].quantity).toBe(MAX_CART_QUANTITY);
+  });
+
+  it("keeps the clamped total a plain decimal, which is the whole point of the ceiling", () => {
+    useCartStore.getState().addItem(composeCartLine(lineInput()));
+    useCartStore.getState().setQuantity(PATCH_SLUG, RUNAWAY_QUANTITY);
+
+    const total = (PATCH_PRICE * readItems()[0].quantity).toFixed(2);
+
+    expect(total).toMatch(/^\d+\.\d{2}$/);
+    expect(total).not.toContain("e");
+  });
+
+  it("clamps a runaway quantity coming back out of storage", async () => {
+    seedStorage([storedLine({ quantity: RUNAWAY_QUANTITY })]);
+    await rehydrate();
+
+    expect(readItems()[0].quantity).toBe(MAX_CART_QUANTITY);
+  });
+
+  it("clamps a runaway quantity arriving through addItem", () => {
+    useCartStore
+      .getState()
+      .addItem(composeCartLine(lineInput({ quantity: RUNAWAY_QUANTITY })));
+
+    expect(readItems()[0].quantity).toBe(MAX_CART_QUANTITY);
+  });
+
+  it("holds the ceiling for a quantity large enough to self-heal through parseInt, so the guard does not rest on that accident", () => {
+    useCartStore.getState().addItem(composeCartLine(lineInput()));
+    useCartStore.getState().setQuantity(PATCH_SLUG, SELF_HEALING_QUANTITY);
+
+    expect(readItems()[0].quantity).toBe(MAX_CART_QUANTITY);
+  });
+
+  it("leaves an ordinary quantity untouched", () => {
+    useCartStore.getState().addItem(composeCartLine(lineInput()));
+    useCartStore.getState().setQuantity(PATCH_SLUG, 7);
+
+    expect(readItems()[0].quantity).toBe(7);
+  });
+});
+
+describe("the cart storage when the browser refuses storage access", () => {
+  const denyStorage = (): (() => void) => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("access denied", "SecurityError");
+      },
+    });
+
+    return () => {
+      if (descriptor === undefined) {
+        Reflect.deleteProperty(window, "localStorage");
+
+        return;
+      }
+
+      Object.defineProperty(window, "localStorage", descriptor);
+    };
+  };
+
+  it("decodes to null instead of throwing when reading localStorage is blocked", async () => {
+    const restore = denyStorage();
+
+    try {
+      expect(await decodeStorage()).toBeNull();
+    } finally {
+      restore();
+    }
+  });
+
+  it("finishes hydration when reading localStorage is blocked, so the checkout screen never renders nothing forever", async () => {
+    const restore = denyStorage();
+
+    try {
+      let hasFinished = false;
+      const unsubscribe = useCartStore.persist.onFinishHydration(() => {
+        hasFinished = true;
+      });
+
+      await rehydrate();
+      unsubscribe();
+
+      expect(hasFinished).toBe(true);
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps add-to-cart working when writing to localStorage is blocked", () => {
+    const restore = denyStorage();
+
+    try {
+      expect(() =>
+        useCartStore.getState().addItem(composeCartLine(lineInput()))
+      ).not.toThrow();
+      expect(readItems()).toHaveLength(1);
+    } finally {
+      restore();
+    }
   });
 });
