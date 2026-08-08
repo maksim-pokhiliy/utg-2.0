@@ -15,7 +15,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
-| U5a | Contacts + copy + editable summary; payload flips to v2   | ⬜ **NEXT — ungated** (bot B4 shipped, D-12) | plan.md · D-9 · D-11 · D-12 · requirements §5/§9      |
+| U5a | Contacts + copy + editable summary; payload flips to v2   | 🟡 running — pre-step probe passed (prod relay accepted v2 + `idempotency_key` + generic-under-uk, 200) | `step-u5a-payload-truth-prompt.md` · D-9 · D-11 · D-12 |
 | U5b | Delivery: method chips, NP comboboxes, courier fields     | ⬜ pending                     | plan.md · D-9 · requirements §1/§4                    |
 | U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
