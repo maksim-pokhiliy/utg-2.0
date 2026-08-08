@@ -40,10 +40,11 @@ B4 sharpened for it: the RENDERED MESSAGE is lossy (truncation drops cart lines 
 
 Then U5b → U6 → U7.
 
-**D-12 also binds the rest of this initiative:** reconnaissance that gates a step runs
-BEFORE the step prompt. Applied immediately to Нова Пошта — UAC-1's key request goes to
-the operator now, and the live Kyiv directory is reconciled against requirements §4
-**before U5b starts**, not at the U7 prod gate as originally scheduled.
+**D-12 already paid for itself.** Its rule — reconnaissance that gates a step runs BEFORE
+the step prompt — was applied to Нова Пошта the same day: the operator's key went in and
+the live Kyiv directory was probed against requirements §4 instead of waiting for the U7
+gate. It found UAC-13, a defect no test in this repo can ever catch, one step before U5b
+would have built comboboxes on top of it.
 
 The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
 
@@ -63,10 +64,18 @@ The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps
   never `place_order`.
 - **UAC-10** (SCHEDULED → U5) — NP-proxy polish: `Present` edge guards and the
   `server-only` import boundary (the package is absent from the repo).
-- **UAC-1** (OPEN → PULLED FORWARD by D-12) — real NP API key from the operator into
-  Vercel env. Previously "needed live only by U7"; that scheduling repeats the mistake
-  B4 made, so the key is requested NOW and the live directory is probed before U5b
-  builds UI on an unverified response shape.
+- **UAC-13** (SCHEDULED → U5b, FIRST task) — **the NP warehouse page-merge is broken
+  against the live API**: Kyiv page 1 succeeds, page 2 comes back `"To many requests" /
+  "Try again after 0.5 seconds"`, and the proxy collapses it to 503. Every multi-page
+  city — Kyiv, and by inference Харків/Одеса/Дніпро/Львів — silently falls back to
+  free-text, i.e. the NP feature would never work where the orders are. Single-page
+  cities work end to end. Fixtures never rate-limit, so U4's tests are green and always
+  will be. Fix by pacing/retrying inside the existing 7s budget; never serve a partial
+  list.
+- **UAC-1** and **UAC-2** — **CLOSED 2026-08-08.** The operator's key is set on Vercel
+  (Production, Sensitive; binds on the next natural deploy — nothing reads it until
+  U5b), and the residual live-key reconciliation is done. Pulling both forward from U7
+  per D-12 is what surfaced UAC-13, one step before it would have cost UI work.
 - **UAC-2** (SCHEDULED) — U4 re-check DONE via five substitute sources (the portal
   403s); residual live-key proof (string `Page`/`Limit`, multi-page Kyiv merge) → U7.
 - **UAC-9** (SCHEDULED → U5) — D-8 handoff: `delivery.city` = `label + ", " +
