@@ -11,6 +11,7 @@ import {
 } from "@root/design-system";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
 import {
+  MAX_CART_QUANTITY,
   selectItemCount,
   selectSubtotal,
   useCartStore,
@@ -48,6 +49,10 @@ export function CheckoutSummary({
   };
 
   const handleRemoveConfirm = () => {
+    if (isPending) {
+      return;
+    }
+
     if (removeTarget) {
       removeItem(removeTarget.id);
     }
@@ -88,6 +93,7 @@ export function CheckoutSummary({
             }
             total={formatPrice(item.price * item.quantity, money, locale)}
             quantity={item.quantity}
+            max={MAX_CART_QUANTITY}
             onQuantityChange={(quantity) => setQuantity(item.id, quantity)}
             onRemove={() => handleRemoveRequest(item)}
             quantityLabel={`${dictionary.shared.quantity}: ${item.title}`}

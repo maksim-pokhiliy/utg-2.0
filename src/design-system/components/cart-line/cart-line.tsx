@@ -78,6 +78,7 @@ interface CartLineProps {
   quantityLabel: string;
   removeLabel: string;
   locked?: boolean;
+  max?: number;
   scale?: CartLineScale;
   className?: string;
 }
@@ -92,6 +93,7 @@ export function CartLine({
   quantityLabel,
   removeLabel,
   locked = false,
+  max,
   scale = "drawer",
   className,
 }: CartLineProps): ReactElement {
@@ -136,6 +138,7 @@ export function CartLine({
             onChange={handleQuantityChange}
             ariaLabel={quantityLabel}
             disabled={locked}
+            max={max}
           />
 
           <Price>{total}</Price>

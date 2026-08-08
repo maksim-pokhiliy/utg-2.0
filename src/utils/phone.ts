@@ -2,6 +2,8 @@ import type { Locale } from "@root/data";
 
 const SEPARATORS = /[\s()\-‐-―]/g;
 
+const INVISIBLES = /\p{Cf}/gu;
+
 const UK_NATIONAL = /^0(\d{9})$/;
 
 const UK_TRUNK = /^380(\d{9})$/;
@@ -12,7 +14,8 @@ const EN_INTERNATIONAL = /^\+(\d{8,15})$/;
 
 const UK_PREFIX = "+380";
 
-const stripSeparators = (raw: string): string => raw.replace(SEPARATORS, "");
+const stripSeparators = (raw: string): string =>
+  raw.replace(INVISIBLES, "").replace(SEPARATORS, "");
 
 const normalizeUkrainian = (compact: string): string | null => {
   const match =

@@ -15,6 +15,7 @@ interface QuantityStepperProps {
   onChange: (quantity: number) => void;
   ariaLabel: string;
   disabled?: boolean;
+  max?: number;
   size?: "default" | "sm";
 }
 
@@ -23,8 +24,11 @@ export function QuantityStepper({
   onChange,
   ariaLabel,
   disabled = false,
+  max,
   size = "default",
 }: QuantityStepperProps): ReactElement {
+  const clamp = (quantity: number): number =>
+    max === undefined ? quantity : Math.min(max, quantity);
   const [draft, setDraft] = useState(String(value));
 
   useEffect(() => {
@@ -39,7 +43,7 @@ export function QuantityStepper({
     const parsed = parseInt(next, 10);
 
     if (Number.isInteger(parsed) && parsed >= 1) {
-      onChange(parsed);
+      onChange(clamp(parsed));
     }
   };
 
@@ -47,14 +51,16 @@ export function QuantityStepper({
     const parsed = parseInt(draft, 10);
 
     if (Number.isInteger(parsed) && parsed >= 1) {
-      onChange(parsed);
-      setDraft(String(parsed));
+      const next = clamp(parsed);
+
+      onChange(next);
+      setDraft(String(next));
     } else {
       setDraft(String(value));
     }
   };
 
-  const increase = () => onChange(value + 1);
+  const increase = () => onChange(clamp(value + 1));
 
   const decrease = () => onChange(Math.max(1, value - 1));
 
@@ -90,13 +96,14 @@ export function QuantityStepper({
         value={draft}
         type="number"
         min={1}
+        max={max}
         disabled={disabled}
       />
 
       <button
         type="button"
         onClick={increase}
-        disabled={disabled}
+        disabled={disabled || (max !== undefined && value >= max)}
         aria-label={`${ariaLabel} +`}
         className={stepButton}
       >

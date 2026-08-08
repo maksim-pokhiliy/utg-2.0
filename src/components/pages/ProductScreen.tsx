@@ -18,7 +18,11 @@ import {
 } from "@root/design-system";
 import { ProductView } from "@root/data";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
-import { composeCartLine, useCartStore } from "@root/store/cart";
+import {
+  composeCartLine,
+  MAX_CART_QUANTITY,
+  useCartStore,
+} from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
 import { formatPrice } from "@root/utils/formatPrice";
 
@@ -179,6 +183,7 @@ export default function ProductScreen({
                     </Typography>
                     <QuantityStepper
                       value={quantity}
+                      max={MAX_CART_QUANTITY}
                       onChange={setQuantity}
                       ariaLabel={dictionary.shared.quantity}
                     />
