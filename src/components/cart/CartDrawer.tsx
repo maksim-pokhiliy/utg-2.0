@@ -147,7 +147,7 @@ export default function CartDrawer(): ReactElement {
                       alt=""
                       fill
                       quality={75}
-                      sizes="64px"
+                      sizes="96px"
                     />
                   }
                   total={formatPrice(item.price * item.quantity, money, locale)}

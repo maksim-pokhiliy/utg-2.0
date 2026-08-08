@@ -77,6 +77,7 @@ interface CartLineProps {
   onRemove: () => void;
   quantityLabel: string;
   removeLabel: string;
+  locked?: boolean;
   scale?: CartLineScale;
   className?: string;
 }
@@ -90,9 +91,26 @@ export function CartLine({
   onRemove,
   quantityLabel,
   removeLabel,
+  locked = false,
   scale = "drawer",
   className,
 }: CartLineProps): ReactElement {
+  const handleQuantityChange = (next: number): void => {
+    if (locked) {
+      return;
+    }
+
+    onQuantityChange(next);
+  };
+
+  const handleRemove = (): void => {
+    if (locked) {
+      return;
+    }
+
+    onRemove();
+  };
+
   return (
     <div className={cn(cartLine({ scale }), className)}>
       <div className={cartLineMedia({ scale })}>{media}</div>
@@ -103,7 +121,8 @@ export function CartLine({
 
           <IconButton
             aria-label={removeLabel}
-            onClick={onRemove}
+            onClick={handleRemove}
+            inert={locked ? true : undefined}
             className={cartLineRemove({ scale })}
           >
             <Icon name="trash-2" size={REMOVE_ICON_SIZE[scale]} />
@@ -114,8 +133,9 @@ export function CartLine({
           <QuantityStepper
             size="sm"
             value={quantity}
-            onChange={onQuantityChange}
+            onChange={handleQuantityChange}
             ariaLabel={quantityLabel}
+            disabled={locked}
           />
 
           <Price>{total}</Price>
