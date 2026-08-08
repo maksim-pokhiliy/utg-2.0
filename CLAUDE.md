@@ -75,7 +75,7 @@ Catalog `page.tsx` files are server components: they read the catalog module syn
 ### Tests & CI
 
 - `tests/` and `e2e/` mirror `src/` from the repo root — deliberately outside `src/` so the DS seal lint never fights test fixtures; they compile in their own TS program (`tsconfig.test.json`), so the production build never typechecks test tooling.
-- The floor is contract-shaped: the payload test pins the checkout key set against the bot contract (`extracted/bot-contract-index.js`); drift-guards assert every declared image dimension (catalog `imageSize`, `reports.ts`, `LOGO_SIZE`) byte-matches the PNG/JPEG headers under `public/images/` (hand-rolled reader in `tests/support/imageHeader.ts`); the sitemap test pins 38 URLs.
+- The floor is contract-shaped: `tests/components/checkout/payload.test.ts` pins the v2 order envelope against `initiatives/ua-checkout/requirements.md` §5, and the relay pins its half in `../utg-tg-order-bot/tests/support/contract.ts` — change one side and the other must move in the same paired step (the old v1 pointer to `extracted/bot-contract-index.js` documented a bot that has since moved, and was retired with U5a); drift-guards assert every declared image dimension (catalog `imageSize`, `reports.ts`, `LOGO_SIZE`) byte-matches the PNG/JPEG headers under `public/images/` (hand-rolled reader in `tests/support/imageHeader.ts`); the sitemap test pins 38 URLs.
 - `.github/workflows/ci.yml` — one battery job on every PR and master push: install → lint → prettier → typecheck → vitest → zero-env build (the five env keys explicitly blanked) → Playwright (chromium cached). Secretless by construction.
 
 ## Quirks

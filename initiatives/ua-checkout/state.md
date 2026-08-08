@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-08 (bot B4 shipped and its gate on U5a is LIFTED — D-12; U5a is the
-next step and it is unblocked outright)
+**Updated:** 2026-08-08 (U5a shipped and prod-smoked — the payload is v2 end to end;
+U5b is next and it opens with two known defects to fix before any UI)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -15,42 +15,45 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U2  | Design pass (brief → Claude Design → export)             | ✅ done                        | `design-export/` · D-4 · journal 2026-08-05           |
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
-| U5a | Contacts + copy + editable summary; payload flips to v2   | 🟡 running — pre-step probe passed (prod relay accepted v2 + `idempotency_key` + generic-under-uk, 200) | `step-u5a-payload-truth-prompt.md` · D-9 · D-11 · D-12 |
-| U5b | Delivery: method chips, NP comboboxes, courier fields     | ⬜ pending                     | plan.md · D-9 · requirements §1/§4                    |
+| U5a | Contacts + copy + editable summary; payload flips to v2   | ✅ done — PR #21 `9099402`, prod-smoked end to end through the live shop route | PR #21 · D-13 · journal 2026-08-08 |
+| U5b | Delivery: method chips, NP comboboxes, courier fields     | ⬜ **NEXT** — opens with UAC-13 + UAC-15 before any UI | plan.md · D-9 · requirements §1/§4 · UAC-13/15/16/17 |
 | U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-**U5a — and it is unblocked outright.** Bot B4 shipped (bot PR #3 `7594e94`) and the gate
-it held over U5a's merge is gone, because the danger it was gating against turned out not
-to exist: a live probe falsified the Telegram width premise (bot BDEF-4 / journal
-2026-08-08). Nothing in the shop's plan depended on that premise except the merge gate.
+**U5a CLOSED** (PR #21 `9099402`, squash-merged, deployed, prod-smoked end to end: a v2
+envelope carrying an `idempotency_key` with `mode: "generic"` under `locale: "uk"` went
+through the LIVE shop route → the secret injection → the relay → the operators' chat, 200).
+The payload is now truthful for everything that does not involve Нова Пошта. Rulings and
+the review outcome are D-13.
 
-U5a's scope is unchanged: contacts + copy + editable summary, the payload flips to the v2
-envelope with `delivery.mode: "generic"` for BOTH locales, and it mints the optional
-`idempotency_key` (D-11). Riders due here: UAC-3 (real UA name placeholders), UAC-6,
-UAC-9 (`delivery.city` rejoin, 200-empty is not a fallback trigger), UAC-10, DEF-39.
+**U5b is next, and it does NOT open with UI.** Two things must land before a single
+combobox exists, both found by probing rather than by reading:
 
-**Then B5** — the relay persists every decoded order before the Telegram send (D-11,
-closes bot BDEF-3). It does NOT gate U5a; the ordering is a priority call recorded in
-D-12, and the Neon provisioning request goes out now so it ripens in parallel. One thing
-B4 sharpened for it: the RENDERED MESSAGE is lossy (truncation drops cart lines behind a
-"+N more positions" marker), so the durable record must be the decoded PAYLOAD.
+1. **UAC-13** — the NP warehouse page-merge is broken against the live carrier API. Kyiv
+   page 1 succeeds, page 2 comes back `"To many requests"`, and the proxy collapses it to
+   503. Every multi-page city silently loses the directory. No test in this repo can ever
+   catch it, because fixtures do not rate-limit.
+2. **UAC-15** — `CheckoutForm.tsx` is already 315 LOC against a 300 bar, and U5b adds the
+   whole delivery-method surface to that same file. Extract first; it is a rewrite after.
 
-Then U5b → U6 → U7.
+Then the UI: method chips, both NP comboboxes on the U4 proxy, runtime fallback, courier
+fields. Riders that were always U5b's, never U5a's: **UAC-9** (rejoin `delivery.city` as
+`label + ", " + region`; a 200-empty on a blank query is not a fallback trigger),
+**UAC-10** (NP-proxy `Present` edge guards), **UAC-16**, **UAC-17**.
 
-**D-12 already paid for itself.** Its rule — reconnaissance that gates a step runs BEFORE
-the step prompt — was applied to Нова Пошта the same day: the operator's key went in and
-the live Kyiv directory was probed against requirements §4 instead of waiting for the U7
-gate. It found UAC-13, a defect no test in this repo can ever catch, one step before U5b
-would have built comboboxes on top of it.
+**Then B5** (bot repo) — orders become durable. D-13 puts a hard constraint on it: the
+`idempotency_key` deliberately spans an order the buyer EDITED between retries, so
+**dedupe must be on a content hash, never on the key alone** — key-only dedupe would
+answer 200 to a corrected order that was never delivered, and the shop would show the
+success screen and clear the cart.
 
-The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps.
+Then U6 → U7.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-12 ratified)
+(none — D-1…D-13 ratified)
 
 ## Live carry-forwards
 
@@ -78,11 +81,10 @@ The UAC-4 + UAC-8 DS-hygiene/kit-backport window remains available between steps
   per D-12 is what surfaced UAC-13, one step before it would have cost UI work.
 - **UAC-2** (SCHEDULED) — U4 re-check DONE via five substitute sources (the portal
   403s); residual live-key proof (string `Page`/`Limit`, multi-page Kyiv merge) → U7.
-- **UAC-9** (SCHEDULED → U5) — D-8 handoff: `delivery.city` = `label + ", " +
-  region` rejoined; 200-empty on blank `q` is not a fallback trigger; meta-slot
-  overflow watch at the browser gate.
-- **UAC-3** (SCHEDULED → U5) — uk name placeholders in the ratified dict are still
-  John/Wick; dictionaries get real UA examples per requirements §6.
+- **UAC-9** and **UAC-10** (SCHEDULED → **U5b**, not U5a) — both are pure NP-directory
+  concerns; an earlier version of this board listed them among U5a's riders, which
+  contradicted D-9 and the step prompt. The prompt was right.
+- **UAC-3**, **UAC-6**, **DEF-39** — **CLOSED 2026-08-08 by U5a.**
 - **UAC-4** (OPEN) — the Claude Design kit lags the repo DS; one `/design-sync`
   backport pass after U3 merges (delta audit incl. 4d-era additions).
 - **UAC-5/6/7** (SCHEDULED) + **UAC-8** (OPEN) — review riders: NP-proxy row cap (→ U4), drawer

@@ -243,3 +243,44 @@ Append-only. One entry per session/step.
   buffering + verbatim `Content-Type` echo, surfaced by the review).
 - Next: **B3 in the bot repo** — the relay dual-accepts v1 + v2 (requirements §5).
   It gates U5a. Then U5a → U5b → U6.
+
+## 2026-08-08 — U5a: the payload becomes truthful, and three tests stop lying
+
+- **U5a CLOSED** (PR #21 `9099402`, 8 commits, squash-merged, deployed, prod-smoked end
+  to end through the LIVE shop route: v2 + `idempotency_key` + `generic` under `uk`, 200,
+  delivered). 793 unit tests (from 763 at the first PR push, 707 before the step), 20/20
+  e2e, zero-env build clean. Rulings: D-13.
+- **The step prompt was written AFTER the external unknowns were closed, per D-12** — the
+  relay was probed live with the exact target shape before a line was specced. Both
+  unknowns (does the relay accept the key; does it cross-validate locale against mode)
+  came back clean, so the executor spent zero effort on hypotheses.
+- **The review earned its keep on the one check no test in this repo can do.** It bundled
+  the shop's real composer and the relay's real decoders into a cross-repo harness and ran
+  composed payloads through `parseOrder` → `renderOrder`. Every shape decodes and renders,
+  key sets match the relay's own contract constants, optionals are absent rather than `""`.
+  That same harness surfaced the one reachable shape the relay REJECTS: an unbounded cart
+  quantity pushes `total` into exponential notation (`1.2e+21`), which `isPlainDecimal`
+  refuses — a hard 400 behind a generic toast, with the order gone and no route out.
+- **Three tests were green over broken code, and that is the entry's real lesson.** The
+  phone table did not pin the trunk-prefix rule (mutate it to accept any leading digit:
+  40/40 still green, and `9671234567` would silently become `+380671234567`). The e2e
+  quantity lock proved an attribute rather than a guard — React drops `onClick` on a real
+  `disabled` button, so the click never reached the handler. And a test named for
+  "hydration always finishes" left the one hole that makes the name false. **A test's name
+  is a claim, and this round is the third time a claim went unverified.** Every fix in the
+  round was mutation-proven red before being restored, by the executor and again by the
+  planner.
+- **A raw NUL byte had turned the phone contract into a binary file.** Invisible to
+  `git diff`, to the web diff, to `git log -S` and to `grep` — the 161-line table deciding
+  who may place an order was the one file in the PR no human could read, and lint, prettier
+  and vitest all passed over it. CI structurally cannot catch this class.
+- **One finding was promoted from ledger to fix on a codebase-pattern argument**, not a
+  severity one: the shop already strips invisible characters one field away (the NP proxy),
+  so the same paste from a messenger cleaned the city field and was refused by the phone
+  field — and the refusal was sticky, because the form never rewrites the value.
+- **Two consequences named rather than buried:** the phone field no longer accepts a
+  Telegram handle (§3 wants a callable number for a ТТН; the preference moved to the
+  contact chips), and the uk checkout deliberately does not match the ratified design
+  export until U5b.
+- Counts, per the standing rule: **70 raw candidates → 28 distinct → 21 reported, no cap
+  binding**, five refuted with executed evidence. verified ≈ reported, so no invisible tail.

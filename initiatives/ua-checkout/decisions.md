@@ -397,3 +397,60 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Links.** bot-polish journal 2026-08-08, BDEF-4 (falsification trail), BDEF-8 (the
   metric the probe could not discriminate, worth ~980 units of cart room); D-9, D-11;
   UAC-1, UAC-2.
+
+### D-13 — U5a rulings: payload truth ships, and three tests that lied get killed
+
+- **Status:** RATIFIED (user, 2026-08-08 — "мержим"). Shipped as PR #21 `9099402`,
+  prod-smoked end to end through the live shop route (200, v2 + `idempotency_key` +
+  `generic` under `locale: "uk"`, delivered to the operators' chat).
+- **Decision (plan-gate rulings).**
+  1. **No live phone mask** — a masked placeholder only. A mask is a caret/paste/autofill
+     bug farm that fights `type="tel"`, and the normalizer already accepts every form a
+     mask would produce. NOT carried forward as debt: if wanted, decide it against the
+     form's final shape after U5b.
+  2. **`cart.phone_invalid` added.** «Обов'язкове поле» on a filled field is the form
+     lying to a volunteer about what is wrong — a defect, not a copy preference.
+  3. **en placeholder `+1 202 555 0100`.** The ratified `555-0100` is rejected by the
+     new en rule; a field must not advertise a value it refuses.
+  4. **Ratified copy verbatim, except the en expectations ending takes §6's "at carrier
+     rates".** The prototype's "at Nova Poshta rates" states something false for an
+     en-generic order. Prototype wins on style, requirements win on fact.
+  5. **The README screenshot is NOT regenerated** — U5a deliberately ships a uk checkout
+     that is not the ratified design (generic delivery until U5b), so regenerating buys
+     one stale screenshot replaced by another a step later. It regenerates with U5b.
+  6. **UAC-12 defers to U6** on revert-unit hygiene: U5a's deploy is the riskiest moment
+     in this initiative, and an unrelated proxy hardening sharing its revert unit means
+     rolling back one rolls back both.
+  7. **The design export has no authority over a validation rule.** Its uk check
+     ("≥12 digits") rejects `0671234567`, the commonest national form; `requirements.md`
+     §3 is the SSOT and wins. The export governs the visual, not the contract.
+- **Decision (review-round rulings).** The independent review pooled 70 raw candidates →
+  28 distinct → 21 reported, no cap binding. Four were blocking and all are fixed:
+  1. **A raw NUL byte made the phone contract a binary file.** Invisible to `git diff`,
+     to the web diff, to `git log -S` and to `grep` — the 161-line table deciding who may
+     place an order was the one file in the PR no human could read, and lint, prettier and
+     vitest all passed over it. **CI structurally cannot catch this class.**
+  2. **An unbounded cart quantity lost the order.** A 19-digit quantity pushed `total`
+     into exponential notation (`1.2e+21`), which the relay's `isPlainDecimal` rejects
+     outright — a hard 400 behind a generic toast. Clamped at `normalizeQuantity`, the one
+     funnel every entry point passes through, mirroring the relay's `MAX_QUANTITY`.
+  3. **Three tests stayed green over broken code** — the phone table did not pin the
+     trunk-prefix rule, the e2e quantity lock proved an attribute rather than a guard
+     (React drops `onClick` on a real `disabled` button), and a test named for "hydration
+     always finishes" left the one hole that makes the name false. All three are now
+     mutation-proven red before being restored.
+  4. **The phone normalizer must strip `\p{Cf}`.** The decisive argument was not the
+     character class but that this codebase ALREADY strips invisibles one field away
+     (`np/settlements/directory.ts`), so the same paste cleans the city and is refused by
+     the phone — and the refusal is STICKY, because the form never rewrites the value.
+- **Decision (a hard constraint on B5).** The `idempotency_key` deliberately spans an
+  order the buyer EDITED between retries: D-11 says reset only on success, and re-minting
+  on a cart change would resurrect the exact duplicate the key exists to prevent.
+  Therefore **B5 must never deduplicate on the key alone.** Key-only dedupe would answer
+  200 to a corrected order that was never delivered, and the shop would show the success
+  screen and clear the cart. Dedupe on a content hash within a time window; the key is a
+  hint, not an identity.
+- **Also ruled:** the uk phone rule accepts landlines and does NOT police operator
+  prefixes (§3 amended — a stale prefix list rejects a valid volunteer's number, which
+  costs a real order, while a landline costs nothing).
+- **Links.** PR #21; requirements §2/§3/§5/§6/§9; D-1, D-9, D-11, D-12; UAC-14…UAC-17.

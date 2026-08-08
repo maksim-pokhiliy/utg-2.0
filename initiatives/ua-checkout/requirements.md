@@ -59,8 +59,13 @@ refs serve only ТТН automation, a non-goal), order numbers/accounts (no datab
 ## 3. Validation & normalization
 
 - **Phone (uk)**: accept `0XXXXXXXXX`, `380…`, `+380…` with spaces/dashes/parens;
-  strip separators, normalize to `+380XXXXXXXXX` (9 digits after 380, mobile);
-  anything else → inline field error. The bot receives only the normalized form.
+  strip separators AND invisible format characters (`\p{Cf}` — the same class the NP
+  proxy already strips one field away), normalize to `+380XXXXXXXXX` (9 digits after
+  380); anything else → inline field error. The bot receives only the normalized form.
+  **Amended by D-13:** "mobile" is intent, not a rule — operator prefixes are NOT
+  policed and landlines are accepted. A hardcoded prefix list goes stale the moment a
+  carrier gets a new range and then silently rejects a valid volunteer's number, which
+  costs a real order; a landline costs nothing.
 - **Phone (en)**: strip separators; require `+` and 8–15 digits (E.164-lenient).
 - **Required by mode**: recipient names + phone + channel always; uk NP-branch/
   postomat: settlement + warehouse; uk courier: settlement + street + building;
