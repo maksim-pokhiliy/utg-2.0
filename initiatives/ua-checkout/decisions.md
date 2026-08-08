@@ -356,3 +356,44 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   shop+bot change.
 - **Links.** requirements.md §5; bot-polish BDEF-3 and its B4 step;
   D-3 (the v2 envelope); journal 2026-08-06.
+
+### D-12 — B4 closed on a falsified premise; the U5a gate lifts; probe external ceilings before speccing
+
+- **Status:** RATIFIED (user, 2026-08-08 — "мержим, все решения зафиксированы"; the
+  user also named the process defect first: "шаг выполнен, после чего проведена
+  разведка под этот шаг").
+- **Decision.**
+  1. **The B4 gate on U5a's merge is LIFTED.** Bot B4 shipped (bot PR #3 `7594e94`),
+     and the width danger it was gating against turned out not to exist. **U5a is
+     unblocked outright** — build and merge on its own schedule.
+  2. **B5 (persistence) does NOT gate U5a.** U5a leaves orders exactly as durable as
+     they are today, so this is a priority call, not a correctness gate. Ruling:
+     **U5a next, B5 immediately after**, because U5a is the initiative's purpose and is
+     fully unblocked, while B5 carries an external dependency (a provisioned Neon
+     database and its connection string) that needs owner wall-clock time anyway — so
+     that request goes out NOW and ripens in parallel. Note the counter-argument on the
+     record: U5a's deploy is the riskiest moment in this initiative, and persistence
+     would make a bad new-shape order recoverable rather than lost.
+  3. **Reconnaissance that gates a step runs BEFORE the step prompt.** When a step's
+     justification rests on an external system's behavior — a carrier API, a messenger's
+     limits, a platform's semantics — the planner probes that system live before writing
+     the prompt, and cites the probe in it. A documented contract is a hypothesis; a live
+     response is evidence. This binds every remaining step.
+  4. **Applied immediately to Нова Пошта.** U4 was built against substitute fixtures
+     because the portal 403s, and UAC-1/UAC-2 scheduled the live-key proof at U7 — i.e.
+     AFTER U5b builds comboboxes on an unverified response shape. The key request goes to
+     the operator now, and the live Kyiv directory is probed and reconciled against
+     requirements §4 **before U5b starts**, not at the prod gate.
+- **Rationale.** B4's whole case was a table the planner measured personally: a saturated
+  v1 order at 4092–4203 raw UTF-16 against Telegram's 4096. The measurement was correct
+  and the ceiling was assumed — the Bot API applies 4096 AFTER entities parsing, and ~980
+  units of our message are markup that parsing consumes. A single live POST (4178 raw
+  UTF-16, delivered, relay 200) falsified it, and it was run last, after an executor
+  round, an xhigh review round and a fix round. Measuring one side of an inequality to
+  the unit while assuming the other is worth nothing. The fix still merged, on the
+  narrower claim that raw UTF-16 upper-bounds all four candidate metrics — but the
+  ordering it justified (B4 ahead of persistence) was a planner error, and it cost
+  orders a round of non-durability.
+- **Links.** bot-polish journal 2026-08-08, BDEF-4 (falsification trail), BDEF-8 (the
+  metric the probe could not discriminate, worth ~980 units of cart room); D-9, D-11;
+  UAC-1, UAC-2.
