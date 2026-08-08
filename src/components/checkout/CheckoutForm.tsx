@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -9,6 +10,7 @@ import {
 
 import {
   Button,
+  ChoiceChips,
   Field,
   Separator,
   Textarea,
@@ -16,55 +18,100 @@ import {
   toast,
 } from "@root/design-system";
 import { useDictionary, useLocale, useMoney } from "@root/i18n";
-import { selectSubtotal, useCartStore } from "@root/store/cart";
+import { useCartStore } from "@root/store/cart";
+import { createIdempotencyKey } from "@root/utils/idempotencyKey";
 
 import { CheckoutField } from "./CheckoutField";
 import {
+  CHANNEL_LABEL_KEYS,
+  CONTACT_CHANNELS,
+  DEFAULT_CONTACT_CHANNEL,
   INITIAL_FORM,
-  REQUIRED_FIELDS,
+  isContactChannel,
   trimFormValues,
   type CheckoutFieldName,
   type CheckoutFormValues,
+  type ContactChannel,
 } from "./fields";
+import { composeOrderPayload } from "./payload";
+import { validateCheckout, type CheckoutErrors } from "./validation";
 
 const FIELD_PAIR = "grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4";
 
+const ORDER_ROUTE = "/api/place_order";
+
+const COMMENT_ROWS = 4;
+
 interface CheckoutFormProps {
+  isPending: boolean;
+  onPendingChange: (isPending: boolean) => void;
   onPlaced: () => void;
 }
 
-export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
+export function CheckoutForm({
+  isPending,
+  onPendingChange,
+  onPlaced,
+}: CheckoutFormProps): ReactElement {
   const cart = useCartStore((state) => state.items);
-  const total = useCartStore(selectSubtotal);
 
   const dictionary = useDictionary();
   const money = useMoney();
   const locale = useLocale();
 
   const [form, setForm] = useState<CheckoutFormValues>(INITIAL_FORM);
-  const [errors, setErrors] = useState<CheckoutFieldName[]>([]);
-  const [isPending, setIsPending] = useState(false);
+  const [errors, setErrors] = useState<CheckoutErrors>({});
+  const [channel, setChannel] = useState<ContactChannel>(
+    DEFAULT_CONTACT_CHANNEL
+  );
 
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = event.target;
+  const idempotencyKey = useRef<string | undefined>(undefined);
 
+  const handleValueChange = (name: CheckoutFieldName, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => prev.filter((field) => field !== name));
+    setErrors((prev) => {
+      if (prev[name] === undefined) {
+        return prev;
+      }
+
+      const next = { ...prev };
+
+      delete next[name];
+
+      return next;
+    });
   };
 
-  const placeOrder = async (values: CheckoutFormValues): Promise<boolean> => {
-    const payload = {
-      ...values,
+  const handleCommentChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    handleValueChange("comment", event.target.value);
+  };
+
+  const handleChannelChange = (id: string) => {
+    if (isContactChannel(id)) {
+      setChannel(id);
+    }
+  };
+
+  const placeOrder = async (
+    values: CheckoutFormValues,
+    phone: string
+  ): Promise<boolean> => {
+    if (idempotencyKey.current === undefined) {
+      idempotencyKey.current = createIdempotencyKey();
+    }
+
+    const payload = composeOrderPayload({
+      values,
+      phone,
+      channel,
       cart,
       locale,
-      total: (total * money.coefficient).toFixed(2),
-      currency: money.currency,
-    };
+      money,
+      idempotencyKey: idempotencyKey.current,
+    });
 
     try {
-      const response = await fetch("/api/place_order", {
+      const response = await fetch(ORDER_ROUTE, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,6 +124,8 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
 
         return false;
       }
+
+      idempotencyKey.current = undefined;
 
       return true;
     } catch {
@@ -94,21 +143,21 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
     }
 
     const values = trimFormValues(form);
-    const missing = REQUIRED_FIELDS.filter((name) => values[name] === "");
-    const [firstMissing] = missing;
+    const verdict = validateCheckout(values, locale);
 
-    if (firstMissing !== undefined) {
-      setErrors(missing);
-      document.getElementById(firstMissing)?.focus();
+    if (!verdict.isValid) {
+      setErrors(verdict.errors);
+      document.getElementById(verdict.firstInvalid)?.focus();
 
       return;
     }
 
-    setIsPending(true);
+    setErrors({});
+    onPendingChange(true);
 
-    const isPlaced = await placeOrder(values);
+    const isPlaced = await placeOrder(values, verdict.phone);
 
-    setIsPending(false);
+    onPendingChange(false);
 
     if (isPlaced) {
       onPlaced();
@@ -128,23 +177,36 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
       <div className="flex flex-col gap-4">
         <div className={FIELD_PAIR}>
           <CheckoutField
-            name="first_name"
-            label={dictionary.cart.first_name}
-            placeholder={dictionary.cart.first_name_placeholder}
-            value={form.first_name}
-            isInvalid={errors.includes("first_name")}
-            onChange={handleChange}
-          />
-
-          <CheckoutField
             name="last_name"
             label={dictionary.cart.last_name}
             placeholder={dictionary.cart.last_name_placeholder}
             value={form.last_name}
-            isInvalid={errors.includes("last_name")}
-            onChange={handleChange}
+            error={errors.last_name}
+            disabled={isPending}
+            onValueChange={handleValueChange}
+          />
+
+          <CheckoutField
+            name="first_name"
+            label={dictionary.cart.first_name}
+            placeholder={dictionary.cart.first_name_placeholder}
+            value={form.first_name}
+            error={errors.first_name}
+            disabled={isPending}
+            onValueChange={handleValueChange}
           />
         </div>
+
+        {locale === "uk" ? (
+          <CheckoutField
+            name="patronymic"
+            label={dictionary.cart.patronymic}
+            value={form.patronymic}
+            error={errors.patronymic}
+            disabled={isPending}
+            onValueChange={handleValueChange}
+          />
+        ) : null}
 
         <CheckoutField
           name="telephone"
@@ -152,8 +214,21 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
           label={dictionary.cart.telephone}
           placeholder={dictionary.cart.telephone_placeholder}
           value={form.telephone}
-          isInvalid={errors.includes("telephone")}
-          onChange={handleChange}
+          error={errors.telephone}
+          disabled={isPending}
+          onValueChange={handleValueChange}
+        />
+
+        <ChoiceChips
+          label={dictionary.cart.contact_channel}
+          value={channel}
+          onChange={handleChannelChange}
+          options={CONTACT_CHANNELS.map((id) => ({
+            id,
+            label: dictionary.cart[CHANNEL_LABEL_KEYS[id]],
+          }))}
+          required
+          disabled={isPending}
         />
       </div>
 
@@ -170,8 +245,9 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
             label={dictionary.cart.country}
             placeholder={dictionary.cart.country_placeholder}
             value={form.country}
-            isInvalid={errors.includes("country")}
-            onChange={handleChange}
+            error={errors.country}
+            disabled={isPending}
+            onValueChange={handleValueChange}
           />
 
           <CheckoutField
@@ -179,8 +255,9 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
             label={dictionary.cart.state}
             placeholder={dictionary.cart.state_placeholder}
             value={form.state}
-            isInvalid={errors.includes("state")}
-            onChange={handleChange}
+            error={errors.state}
+            disabled={isPending}
+            onValueChange={handleValueChange}
           />
         </div>
 
@@ -189,8 +266,9 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
           label={dictionary.cart.city}
           placeholder={dictionary.cart.city_placeholder}
           value={form.city}
-          isInvalid={errors.includes("city")}
-          onChange={handleChange}
+          error={errors.city}
+          disabled={isPending}
+          onValueChange={handleValueChange}
         />
 
         <CheckoutField
@@ -198,23 +276,35 @@ export function CheckoutForm({ onPlaced }: CheckoutFormProps): ReactElement {
           label={dictionary.cart.address}
           placeholder={dictionary.cart.address_placeholder}
           value={form.address}
-          isInvalid={errors.includes("address")}
-          onChange={handleChange}
+          error={errors.address}
+          disabled={isPending}
+          onValueChange={handleValueChange}
         />
 
-        <Field label={dictionary.cart.additional} htmlFor="additional">
+        <Field label={dictionary.cart.comment} htmlFor="comment">
           <Textarea
-            id="additional"
-            name="additional"
-            value={form.additional}
-            onChange={handleChange}
-            rows={5}
+            id="comment"
+            name="comment"
+            value={form.comment}
+            onChange={handleCommentChange}
+            disabled={isPending}
+            rows={COMMENT_ROWS}
           />
         </Field>
       </div>
 
-      <Typography variant="small" as="p" className="my-6 text-ink-soft">
-        {dictionary.cart.review}
+      <div className="mt-6 border-2 border-ink px-5 py-4">
+        <Typography variant="small" as="p" className="max-w-[60ch] text-pretty">
+          {dictionary.cart.expectations}
+        </Typography>
+      </div>
+
+      <Typography
+        variant="caption"
+        as="p"
+        className="mt-4 mb-3 max-w-[60ch] text-pretty text-ink-faint"
+      >
+        {dictionary.cart.consent}
       </Typography>
 
       <Button variant="accent" block type="submit" loading={isPending}>

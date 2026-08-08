@@ -1,0 +1,210 @@
+import { describe, expect, it } from "vitest";
+
+import type { Locale } from "@root/data";
+import { normalizePhone } from "@root/utils/phone";
+
+type PhoneCase = readonly [string, string];
+
+const UK_MOBILE = "+380671234567";
+
+const UK_LANDLINE = "+380322461000";
+
+const LVIV_LANDLINE_INPUT = "0322461000";
+
+const LEGACY_INTER_CITY_FORM = "80671234567";
+
+const NATIONAL_MOBILE_INPUT = "0671234567";
+
+const NBSP_SEPARATED = "067 123 45 67";
+
+const EN_DASH_SEPARATED = "067–123–45–67";
+
+const DOT_SEPARATED = "067.123.45.67";
+
+const LOCALES: readonly Locale[] = ["uk", "en"];
+
+const UK_ACCEPTED: readonly PhoneCase[] = [
+  [NATIONAL_MOBILE_INPUT, UK_MOBILE],
+  ["067 123 45 67", UK_MOBILE],
+  ["(067) 123-45-67", UK_MOBILE],
+  ["380671234567", UK_MOBILE],
+  ["380 67 123 45 67", UK_MOBILE],
+  ["+380671234567", UK_MOBILE],
+  ["+380 67 123 45 67", UK_MOBILE],
+  ["+38 (067) 123-45-67", UK_MOBILE],
+  [LVIV_LANDLINE_INPUT, UK_LANDLINE],
+];
+
+const WRONG_NATIONAL_TRUNK = "9671234567";
+
+const WRONG_COUNTRY_TRUNK = "381671234567";
+
+const UK_REJECTED: readonly string[] = [
+  "",
+  "067123456",
+  "06712345678",
+  LEGACY_INTER_CITY_FORM,
+  "00380671234567",
+  "+1 202 555 0123",
+  "+380671234ab",
+  DOT_SEPARATED,
+  "@mariia",
+  WRONG_NATIONAL_TRUNK,
+  WRONG_COUNTRY_TRUNK,
+];
+
+const EN_ACCEPTED: readonly PhoneCase[] = [
+  ["+12025550123", "+12025550123"],
+  ["+1 202 555 0123", "+12025550123"],
+  ["+44 (20) 7946 0958", "+442079460958"],
+  ["+380 67 123 45 67", UK_MOBILE],
+  ["+12345678", "+12345678"],
+  ["+123456789012345", "+123456789012345"],
+];
+
+const EN_REJECTED: readonly string[] = [
+  "",
+  "555-0100",
+  "12025550123",
+  "0044 20 7946 0958",
+  "+1234567",
+  "+1234567890123456",
+  "+1-202-555-012a",
+];
+
+const JUNK: readonly string[] = [
+  "@mariia",
+  "+",
+  "++++",
+  "0",
+  "не телефон",
+  "\0",
+  "☎",
+  NATIONAL_MOBILE_INPUT.repeat(50),
+];
+
+describe("normalizePhone under the uk rule", () => {
+  it.each(UK_ACCEPTED)(
+    "normalises %j to the single form the relay ever receives",
+    (raw, normalized) => {
+      expect(normalizePhone(raw, "uk")).toBe(normalized);
+    }
+  );
+
+  it.each(UK_REJECTED)(
+    "refuses %j, which no Ukrainian number can be read out of",
+    (raw) => {
+      expect(normalizePhone(raw, "uk")).toBeNull();
+    }
+  );
+
+  it("accepts a landline because the operator prefix is deliberately not policed", () => {
+    expect(normalizePhone(LVIV_LANDLINE_INPUT, "uk")).toBe(UK_LANDLINE);
+  });
+
+  it("refuses the legacy inter-city 8 form instead of guessing what it meant", () => {
+    expect(normalizePhone(LEGACY_INTER_CITY_FORM, "uk")).toBeNull();
+  });
+
+  it("refuses a national number whose trunk digit is not zero, rather than overwriting the digit the buyer typed", () => {
+    expect(normalizePhone(WRONG_NATIONAL_TRUNK, "uk")).toBeNull();
+  });
+
+  it("refuses a twelve-digit number whose country code is not 380", () => {
+    expect(normalizePhone(WRONG_COUNTRY_TRUNK, "uk")).toBeNull();
+  });
+});
+
+describe("normalizePhone under the en rule", () => {
+  it.each(EN_ACCEPTED)(
+    "normalises %j to the single form the relay ever receives",
+    (raw, normalized) => {
+      expect(normalizePhone(raw, "en")).toBe(normalized);
+    }
+  );
+
+  it.each(EN_REJECTED)(
+    "refuses %j, which is not an international number a manager can dial",
+    (raw) => {
+      expect(normalizePhone(raw, "en")).toBeNull();
+    }
+  );
+
+  it("accepts the eight-digit floor and the fifteen-digit ceiling of E.164", () => {
+    expect(normalizePhone("+12345678", "en")).toBe("+12345678");
+    expect(normalizePhone("+123456789012345", "en")).toBe("+123456789012345");
+  });
+});
+
+describe("the separator alphabet normalizePhone strips", () => {
+  it("treats spaces, parens and dashes as separators and nothing else", () => {
+    expect(normalizePhone(DOT_SEPARATED, "uk")).toBeNull();
+  });
+
+  it("strips the non-breaking spaces a number pasted from a messenger carries", () => {
+    expect(normalizePhone(NBSP_SEPARATED, "uk")).toBe(UK_MOBILE);
+  });
+
+  it("strips the wider hyphen family a number pasted from a document carries", () => {
+    expect(normalizePhone(EN_DASH_SEPARATED, "uk")).toBe(UK_MOBILE);
+  });
+});
+
+describe("the locale scope of the phone rule", () => {
+  it("reads the bare national form as Ukrainian and refuses the same input under en", () => {
+    expect(normalizePhone(NATIONAL_MOBILE_INPUT, "uk")).toBe(UK_MOBILE);
+    expect(normalizePhone(NATIONAL_MOBILE_INPUT, "en")).toBeNull();
+  });
+
+  it("normalises a fully qualified Ukrainian number under either locale", () => {
+    expect(normalizePhone("+380 67 123 45 67", "uk")).toBe(UK_MOBILE);
+    expect(normalizePhone("+380 67 123 45 67", "en")).toBe(UK_MOBILE);
+  });
+});
+
+describe("invisible characters a paste carries in", () => {
+  const INVISIBLES: readonly [string, string][] = [
+    ["soft hyphen", "­"],
+    ["arabic letter mark", "؜"],
+    ["zero width space", "​"],
+    ["zero width non-joiner", "‌"],
+    ["zero width joiner", "‍"],
+    ["left-to-right mark", "‎"],
+    ["right-to-left mark", "‏"],
+    ["word joiner", "⁠"],
+    ["left-to-right isolate", "⁦"],
+    ["right-to-left isolate", "⁧"],
+    ["first strong isolate", "⁨"],
+    ["pop directional isolate", "⁩"],
+    ["byte order mark", "﻿"],
+  ];
+
+  it.each(INVISIBLES)(
+    "strips a %s so a number pasted out of a messenger is not refused over a character nobody can see",
+    (_name, invisible) => {
+      expect(normalizePhone(`+380${invisible}67 123 45 67`, "uk")).toBe(
+        UK_MOBILE
+      );
+      expect(normalizePhone(`${invisible}0671234567`, "uk")).toBe(UK_MOBILE);
+      expect(normalizePhone(`+1 202 555${invisible} 0123`, "en")).toBe(
+        "+12025550123"
+      );
+    }
+  );
+
+  it("still refuses a number that is only invisible characters", () => {
+    expect(normalizePhone("​​​", "uk")).toBeNull();
+    expect(normalizePhone("​​​", "en")).toBeNull();
+  });
+});
+
+describe("normalizePhone on junk input", () => {
+  it("returns null instead of throwing, whatever the buyer pasted", () => {
+    for (const locale of LOCALES) {
+      for (const raw of JUNK) {
+        expect(() => normalizePhone(raw, locale)).not.toThrow();
+        expect(normalizePhone(raw, locale), `${locale}: ${raw}`).toBeNull();
+      }
+    }
+  });
+});

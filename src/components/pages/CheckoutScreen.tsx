@@ -6,7 +6,6 @@ import { Container, SectionBand, Typography } from "@root/design-system";
 import { useDictionary, useLocale } from "@root/i18n";
 import {
   selectItemCount,
-  selectSubtotal,
   useCartHydrated,
   useCartStore,
 } from "@root/store/cart";
@@ -20,7 +19,6 @@ import { NavLink } from "@root/components/layout/NavLink";
 export default function CheckoutScreen(): ReactElement {
   const cart = useCartStore((state) => state.items);
   const itemCount = useCartStore(selectItemCount);
-  const total = useCartStore(selectSubtotal);
   const clear = useCartStore((state) => state.clear);
   const isHydrated = useCartHydrated();
 
@@ -28,6 +26,7 @@ export default function CheckoutScreen(): ReactElement {
   const locale = useLocale();
 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const isFormVisible = isHydrated && !isSuccess && cart.length > 0;
   const isEmptyVisible = isHydrated && !isSuccess && cart.length === 0;
@@ -58,15 +57,15 @@ export default function CheckoutScreen(): ReactElement {
       ) : isFormVisible ? (
         <Container className="pt-8 pb-24">
           <div className="flex flex-row-reverse flex-wrap items-start gap-x-12 gap-y-8">
-            <aside className="min-w-0 flex-[1_1_320px]">
-              <CheckoutSummary
-                items={cart}
-                itemCount={itemCount}
-                total={total}
-              />
+            <aside className="min-w-0 flex-[1_1_320px] min-[900px]:sticky min-[900px]:top-[76px]">
+              <CheckoutSummary isPending={isPending} />
             </aside>
 
-            <CheckoutForm onPlaced={handlePlaced} />
+            <CheckoutForm
+              isPending={isPending}
+              onPendingChange={setIsPending}
+              onPlaced={handlePlaced}
+            />
           </div>
         </Container>
       ) : isEmptyVisible ? (

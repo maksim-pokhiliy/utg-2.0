@@ -6,8 +6,11 @@ import { persist, type PersistStorage } from "zustand/middleware";
 
 export const CART_STORAGE_KEY = "utg-cart-v2";
 
+export const MAX_CART_QUANTITY = 100_000;
+
 const CART_ID_SEPARATOR = "::";
 const CART_TITLE_SEPARATOR = " · ";
+const CART_STORAGE_VERSION = 0;
 
 export interface ICartItem {
   id: string;
@@ -53,45 +56,120 @@ interface CartStore {
   clear: () => void;
 }
 
-const normalizeQuantity = (quantity: number): number =>
-  Number.isFinite(quantity) ? Math.max(1, Math.trunc(quantity)) : 1;
+const normalizeQuantity = (quantity: unknown): number =>
+  typeof quantity === "number" && Number.isFinite(quantity)
+    ? Math.min(MAX_CART_QUANTITY, Math.max(1, Math.trunc(quantity)))
+    : 1;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const readText = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() !== "" ? value : null;
+
+const readPrice = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : null;
+
+const decodeLine = (value: unknown): ICartItem | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readText(value.id);
+  const title = readText(value.title);
+  const image = readText(value.image);
+  const productUrl = readText(value.productUrl);
+  const price = readPrice(value.price);
+
+  if (
+    id === null ||
+    title === null ||
+    image === null ||
+    productUrl === null ||
+    price === null
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    title,
+    price,
+    quantity: normalizeQuantity(value.quantity),
+    image,
+    productUrl,
+  };
+};
+
+const readStoredText = (name: string): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(name);
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredText = (name: string, text: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(name, text);
+  } catch {
+    return;
+  }
+};
+
+const dropStoredText = (name: string): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(name);
+  } catch {
+    return;
+  }
+};
 
 const cartStorage: PersistStorage<Pick<CartStore, "items">> = {
   getItem: (name) => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const raw = window.localStorage.getItem(name);
+    const raw = readStoredText(name);
 
     if (raw === null) {
       return null;
     }
 
-    try {
-      const items = JSON.parse(raw).map((item: ICartItem) => ({
-        ...item,
-        quantity: normalizeQuantity(item.quantity),
-      })) as ICartItem[];
+    let parsed: unknown;
 
-      return { state: { items }, version: 0 };
+    try {
+      parsed = JSON.parse(raw);
     } catch {
       return null;
     }
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const items = parsed
+      .map(decodeLine)
+      .filter((line): line is ICartItem => line !== null);
+
+    return { state: { items }, version: CART_STORAGE_VERSION };
   },
   setItem: (name, value) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(name, JSON.stringify(value.state.items));
+    writeStoredText(name, JSON.stringify(value.state.items));
   },
   removeItem: (name) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.removeItem(name);
+    dropStoredText(name);
   },
 };
 

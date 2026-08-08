@@ -23,6 +23,7 @@ import {
   useCartStore,
   selectItemCount,
   selectSubtotal,
+  MAX_CART_QUANTITY,
   type ICartItem,
 } from "@root/store/cart";
 import { useSidebarStore } from "@root/store/sidebar";
@@ -147,11 +148,12 @@ export default function CartDrawer(): ReactElement {
                       alt=""
                       fill
                       quality={75}
-                      sizes="64px"
+                      sizes="96px"
                     />
                   }
                   total={formatPrice(item.price * item.quantity, money, locale)}
                   quantity={item.quantity}
+                  max={MAX_CART_QUANTITY}
                   onQuantityChange={(quantity) =>
                     setQuantity(item.id, quantity)
                   }

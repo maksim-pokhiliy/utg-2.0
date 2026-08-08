@@ -169,6 +169,16 @@ const EXPECTED_STEPPER = {
 
 const FIXED_FRAME_HEIGHTS = ["h-16", "h-14"];
 
+const LOCK_TREATMENT = ["opacity-35", "pointer-events-none"];
+
+const STEPPER_CONTROLS = [
+  "decrement control",
+  "quantity box",
+  "increment control",
+];
+
+const NEW_QUANTITY = "5";
+
 interface CartLineParts {
   row: HTMLElement;
   frame: HTMLElement;
@@ -184,6 +194,7 @@ interface CartLineParts {
 interface CartLineOverrides {
   scale?: CartLineScale;
   className?: string;
+  locked?: boolean;
   onQuantityChange?: (quantity: number) => void;
   onRemove?: () => void;
 }
@@ -230,6 +241,19 @@ const renderLine = (overrides: CartLineOverrides = {}): CartLineParts => {
     stepper,
     glyph,
   };
+};
+
+const stepperControls = (stepper: HTMLElement): HTMLElement[] =>
+  STEPPER_CONTROLS.map((what, index) => childAt(stepper, index, what));
+
+const quantityBox = (stepper: HTMLElement): HTMLInputElement => {
+  const box = childAt(stepper, 1, "quantity box");
+
+  if (!(box instanceof HTMLInputElement)) {
+    throw new Error("CartLine rendered no quantity input");
+  }
+
+  return box;
 };
 
 const classesOf = (element: Element): string[] =>
@@ -463,11 +487,149 @@ describe("the remove control, the only way a line leaves the cart", () => {
   });
 });
 
+describe("the line lock the checkout summary raises while an order is in flight", () => {
+  it("stamps no lock treatment when the prop is omitted, so the drawer's line is untouched", () => {
+    const { remove, stepper } = renderLine();
+
+    expect(remove.hasAttribute("aria-disabled")).toBe(false);
+    expect(present(remove, LOCK_TREATMENT)).toEqual([]);
+
+    for (const control of stepperControls(stepper)) {
+      expect(control.hasAttribute("disabled")).toBe(false);
+    }
+  });
+
+  it("marks the remove control aria-disabled rather than disabled, so a locked line never strands focus", () => {
+    const { remove } = renderLine({ locked: true });
+
+    expect(remove.getAttribute("aria-disabled")).toBe("true");
+    expect(remove.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("dims the remove control and lifts it out of the pointer flow while locked", () => {
+    const { remove } = renderLine({ locked: true });
+
+    expect(present(remove, LOCK_TREATMENT)).toEqual(LOCK_TREATMENT);
+  });
+
+  it("puts a real disabled on all three quantity controls while locked", () => {
+    const { stepper } = renderLine({ locked: true });
+
+    for (const control of stepperControls(stepper)) {
+      expect(control.hasAttribute("disabled")).toBe(true);
+    }
+  });
+
+  it("ignores a click on the remove control while locked, which is the only thing stopping a keyboard activation", () => {
+    const onRemove = vi.fn<() => void>();
+
+    renderLine({ locked: true, onRemove });
+    fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
+
+    expect(onRemove).not.toHaveBeenCalled();
+  });
+
+  it("ignores a quantity change while locked, so a line cannot be repriced mid-submit", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+    const { stepper } = renderLine({ locked: true, onQuantityChange });
+
+    fireEvent.change(quantityBox(stepper), {
+      target: { value: NEW_QUANTITY },
+    });
+    fireEvent.click(screen.getByRole("button", { name: INCREMENT_LABEL }));
+
+    expect(onQuantityChange).not.toHaveBeenCalled();
+  });
+
+  it("reports the removal and the quantity change as usual once the lock is down", () => {
+    const onRemove = vi.fn<() => void>();
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+    const { stepper } = renderLine({
+      locked: false,
+      onRemove,
+      onQuantityChange,
+    });
+
+    fireEvent.change(quantityBox(stepper), {
+      target: { value: NEW_QUANTITY },
+    });
+    fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
+
+    expect(onQuantityChange).toHaveBeenCalledWith(Number(NEW_QUANTITY));
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the title and the line total at full legibility, because only the controls dim", () => {
+    const unlocked = renderLine({ scale: "summary" });
+    const locked = renderLine({ scale: "summary", locked: true });
+    const unlockedTotal = childAt(unlocked.controls, 1, "line total");
+    const lockedTotal = childAt(locked.controls, 1, "line total");
+
+    expect(locked.title.className).toBe(unlocked.title.className);
+    expect(locked.title.textContent).toBe(TITLE);
+    expect(lockedTotal.className).toBe(unlockedTotal.className);
+    expect(lockedTotal.textContent).toBe(TOTAL);
+  });
+});
+
 describe("the consumer className on the row", () => {
   it("merges alongside the preset's grid template rather than replacing it", () => {
     const { row } = renderLine({ className: "mt-6" });
 
     expect(row.classList.contains("mt-6")).toBe(true);
     expect(row.classList.contains("grid-cols-[64px_1fr]")).toBe(true);
+  });
+});
+
+describe("the quantity guard on a line that locks while the buyer is typing in it", () => {
+  const DRAFT_QUANTITY = "5";
+
+  const renderLockable = (onQuantityChange: (quantity: number) => void) => {
+    const view = render(
+      <CartLine {...LINE_PROPS} onQuantityChange={onQuantityChange} />
+    );
+
+    return {
+      ...view,
+      lock: () =>
+        view.rerender(
+          <CartLine
+            {...LINE_PROPS}
+            onQuantityChange={onQuantityChange}
+            locked
+          />
+        ),
+    };
+  };
+
+  it("refuses the commit a blur fires after the lock landed, which is how a mid-flight order would still be mutated", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+    const { lock } = renderLockable(onQuantityChange);
+    const input = screen.getByLabelText(QUANTITY_LABEL);
+
+    fireEvent.change(input, { target: { value: DRAFT_QUANTITY } });
+
+    expect(onQuantityChange).toHaveBeenCalledWith(Number(DRAFT_QUANTITY));
+
+    lock();
+    onQuantityChange.mockClear();
+
+    fireEvent.blur(input);
+
+    expect(onQuantityChange).not.toHaveBeenCalled();
+  });
+
+  it("still commits that blur when the line is not locked, so the guard is the lock and not the blur", () => {
+    const onQuantityChange = vi.fn<(quantity: number) => void>();
+
+    render(<CartLine {...LINE_PROPS} onQuantityChange={onQuantityChange} />);
+
+    const input = screen.getByLabelText(QUANTITY_LABEL);
+
+    fireEvent.change(input, { target: { value: DRAFT_QUANTITY } });
+    onQuantityChange.mockClear();
+    fireEvent.blur(input);
+
+    expect(onQuantityChange).toHaveBeenCalledWith(Number(DRAFT_QUANTITY));
   });
 });

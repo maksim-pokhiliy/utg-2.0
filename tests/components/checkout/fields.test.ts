@@ -1,87 +1,127 @@
 import { describe, expect, it } from "vitest";
 
+import ukDictionary from "@root/app/[lang]/dictionaries/uk.json";
 import {
   AUTOFILL_TOKENS,
+  CHANNEL_LABEL_KEYS,
+  CONTACT_CHANNELS,
+  DEFAULT_CONTACT_CHANNEL,
+  FIELD_ORDER,
   INITIAL_FORM,
   REQUIRED_FIELDS,
+  isContactChannel,
   isRequiredField,
   trimFormValues,
   type CheckoutFieldName,
   type CheckoutFormValues,
 } from "@root/components/checkout/fields";
 
-const OPTIONAL_FIELD: CheckoutFieldName = "additional";
-
-const ALL_FIELD_NAMES: readonly CheckoutFieldName[] = [
-  "first_name",
+const RENDERED_ORDER: readonly CheckoutFieldName[] = [
   "last_name",
+  "first_name",
+  "patronymic",
   "telephone",
   "country",
   "state",
   "city",
   "address",
-  "additional",
+  "comment",
+];
+
+const REQUIRED_IN_RENDERED_ORDER: readonly CheckoutFieldName[] = [
+  "last_name",
+  "first_name",
+  "telephone",
+  "country",
+  "city",
+  "address",
+];
+
+const OPTIONAL_FIELDS: readonly CheckoutFieldName[] = [
+  "patronymic",
+  "state",
+  "comment",
+];
+
+const NON_CHANNEL_VALUES: readonly string[] = [
+  "",
+  " ",
+  "Call",
+  "CALL",
+  "TELEGRAM",
+  "whatsapp",
+  "signal",
+  "call ",
 ];
 
 const PADDED_FORM: CheckoutFormValues = {
-  first_name: "  John  ",
-  last_name: "\tWick\t",
-  telephone: " 555-0100 ",
-  country: "  Ukraine",
-  state: "Lviv Oblast  ",
-  city: "\n Lviv \n",
-  address: "  1 Fairy Town Street  ",
-  additional: "  leave it with the neighbour  ",
+  last_name: "\tШевченко\t",
+  first_name: "  Марія  ",
+  patronymic: "  Іванівна ",
+  telephone: " 067 123 45 67 ",
+  country: "  Україна",
+  state: "Львівська область  ",
+  city: "\n Львів \n",
+  address: "  Вулиця Казкового Міста 1  ",
+  comment: "  залиште у сусідів  ",
 };
 
 const TRIMMED_FORM: CheckoutFormValues = {
-  first_name: "John",
-  last_name: "Wick",
-  telephone: "555-0100",
-  country: "Ukraine",
-  state: "Lviv Oblast",
-  city: "Lviv",
-  address: "1 Fairy Town Street",
-  additional: "leave it with the neighbour",
+  last_name: "Шевченко",
+  first_name: "Марія",
+  patronymic: "Іванівна",
+  telephone: "067 123 45 67",
+  country: "Україна",
+  state: "Львівська область",
+  city: "Львів",
+  address: "Вулиця Казкового Міста 1",
+  comment: "залиште у сусідів",
 };
 
 describe("INITIAL_FORM", () => {
   it("defines every checkout field as an empty string", () => {
     expect(Object.keys(INITIAL_FORM).sort()).toEqual(
-      [...ALL_FIELD_NAMES].sort()
+      [...RENDERED_ORDER].sort()
     );
   });
 
   it("starts every field blank so validation sees a fresh form as missing", () => {
-    expect(Object.values(INITIAL_FORM)).toEqual(ALL_FIELD_NAMES.map(() => ""));
+    expect(Object.values(INITIAL_FORM)).toEqual(RENDERED_ORDER.map(() => ""));
+  });
+});
+
+describe("FIELD_ORDER", () => {
+  it("lists the fields in the order the ratified checkout renders them", () => {
+    expect([...FIELD_ORDER]).toEqual([...RENDERED_ORDER]);
+  });
+
+  it("puts the surname above the given name, the convention Ukrainian forms use", () => {
+    expect(FIELD_ORDER.indexOf("last_name")).toBeLessThan(
+      FIELD_ORDER.indexOf("first_name")
+    );
+  });
+
+  it("covers every INITIAL_FORM key exactly once, so a new field cannot skip the ordering decision", () => {
+    expect([...FIELD_ORDER].sort()).toEqual(Object.keys(INITIAL_FORM).sort());
   });
 });
 
 describe("REQUIRED_FIELDS", () => {
-  it("declares exactly seven required fields", () => {
-    expect(REQUIRED_FIELDS).toHaveLength(7);
+  it("declares exactly six required text fields", () => {
+    expect(REQUIRED_FIELDS).toHaveLength(6);
   });
 
-  it("names the fields the order bot renders in its message, in form order", () => {
-    expect([...REQUIRED_FIELDS]).toEqual([
-      "first_name",
-      "last_name",
-      "telephone",
-      "country",
-      "state",
-      "city",
-      "address",
-    ]);
+  it("names the fields an order cannot go out without, in rendered order", () => {
+    expect([...REQUIRED_FIELDS]).toEqual([...REQUIRED_IN_RENDERED_ORDER]);
   });
 
-  it("omits additional because it is the one optional field", () => {
-    expect(REQUIRED_FIELDS).not.toContain(OPTIONAL_FIELD);
+  it("stops demanding the region, which the rewritten checkout made optional", () => {
+    expect(REQUIRED_FIELDS).not.toContain("state");
   });
 
-  it("covers every INITIAL_FORM key once the optional field is added back", () => {
-    expect([...REQUIRED_FIELDS, OPTIONAL_FIELD].sort()).toEqual(
-      Object.keys(INITIAL_FORM).sort()
-    );
+  it("leaves the patronymic and the comment optional too", () => {
+    expect(REQUIRED_FIELDS).not.toContain("patronymic");
+    expect(REQUIRED_FIELDS).not.toContain("comment");
   });
 
   it("declares no required field that INITIAL_FORM does not define", () => {
@@ -100,13 +140,59 @@ describe("isRequiredField", () => {
     }
   });
 
-  it("answers false for the optional additional field", () => {
-    expect(isRequiredField(OPTIONAL_FIELD)).toBe(false);
+  it("answers false for every field the buyer may leave blank", () => {
+    for (const name of OPTIONAL_FIELDS) {
+      expect(isRequiredField(name), name).toBe(false);
+    }
   });
 
   it("classifies every checkout field name", () => {
-    for (const name of ALL_FIELD_NAMES) {
-      expect(isRequiredField(name), name).toBe(name !== OPTIONAL_FIELD);
+    for (const name of RENDERED_ORDER) {
+      expect(isRequiredField(name), name).toBe(
+        REQUIRED_IN_RENDERED_ORDER.includes(name)
+      );
+    }
+  });
+});
+
+describe("CONTACT_CHANNELS", () => {
+  it("pins the call, telegram and viber wire values in lowercase", () => {
+    expect([...CONTACT_CHANNELS]).toEqual(["call", "telegram", "viber"]);
+  });
+
+  it("preselects the call channel because a phone is required anyway", () => {
+    expect(DEFAULT_CONTACT_CHANNEL).toBe("call");
+    expect([...CONTACT_CHANNELS]).toContain(DEFAULT_CONTACT_CHANNEL);
+  });
+});
+
+describe("isContactChannel", () => {
+  it("accepts every wire value the chips offer", () => {
+    for (const channel of CONTACT_CHANNELS) {
+      expect(isContactChannel(channel), channel).toBe(true);
+    }
+  });
+
+  it("refuses anything the chips never offer, casing included", () => {
+    for (const value of NON_CHANNEL_VALUES) {
+      expect(isContactChannel(value), value).toBe(false);
+    }
+  });
+});
+
+describe("CHANNEL_LABEL_KEYS", () => {
+  it("maps every contact channel, so a new chip cannot ship without a label", () => {
+    expect(Object.keys(CHANNEL_LABEL_KEYS).sort()).toEqual(
+      [...CONTACT_CHANNELS].sort()
+    );
+  });
+
+  it("points every channel at a dictionary key that resolves to real copy", () => {
+    for (const channel of CONTACT_CHANNELS) {
+      const label = ukDictionary.cart[CHANNEL_LABEL_KEYS[channel]];
+
+      expect(label, channel).toBeTypeOf("string");
+      expect(label, channel).not.toBe("");
     }
   });
 });
@@ -114,34 +200,35 @@ describe("isRequiredField", () => {
 describe("AUTOFILL_TOKENS", () => {
   it("maps every checkout field name, so a new field cannot skip the decision", () => {
     expect(Object.keys(AUTOFILL_TOKENS).sort()).toEqual(
-      [...ALL_FIELD_NAMES].sort()
+      [...RENDERED_ORDER].sort()
     );
   });
 
   it("gives each autofillable field its HTML autofill token", () => {
     expect(AUTOFILL_TOKENS).toStrictEqual({
-      first_name: "given-name",
       last_name: "family-name",
-      telephone: undefined,
+      first_name: "given-name",
+      patronymic: "additional-name",
+      telephone: "tel",
       country: "country-name",
       state: "address-level1",
       city: "address-level2",
       address: "street-address",
-      additional: undefined,
+      comment: undefined,
     });
   });
 
-  it("deliberately leaves telephone tokenless because it also accepts a Telegram handle", () => {
-    expect(AUTOFILL_TOKENS.telephone).toBeUndefined();
+  it("tokenises the phone now that the field carries a phone number and nothing else", () => {
+    expect(AUTOFILL_TOKENS.telephone).toBe("tel");
   });
 
-  it("leaves the free-form additional field tokenless", () => {
-    expect(AUTOFILL_TOKENS.additional).toBeUndefined();
+  it("leaves the free-form comment tokenless", () => {
+    expect(AUTOFILL_TOKENS.comment).toBeUndefined();
   });
 });
 
 describe("trimFormValues", () => {
-  it("trims leading and trailing whitespace from all eight fields", () => {
+  it("trims leading and trailing whitespace from all nine fields", () => {
     expect(trimFormValues(PADDED_FORM)).toStrictEqual(TRIMMED_FORM);
   });
 
@@ -152,9 +239,22 @@ describe("trimFormValues", () => {
   });
 
   it("collapses a whitespace-only required value to the empty string validation rejects", () => {
-    const trimmed = trimFormValues({ ...INITIAL_FORM, first_name: "   " });
+    expect(
+      trimFormValues({ ...INITIAL_FORM, first_name: "   " }).first_name
+    ).toBe("");
+  });
 
-    expect(trimmed.first_name).toBe("");
+  it("collapses a whitespace-only optional value to the empty string the payload omits", () => {
+    const trimmed = trimFormValues({
+      ...INITIAL_FORM,
+      patronymic: "  ",
+      state: "\t",
+      comment: "\n ",
+    });
+
+    expect(trimmed.patronymic).toBe("");
+    expect(trimmed.state).toBe("");
+    expect(trimmed.comment).toBe("");
   });
 
   it("leaves an already trimmed form untouched", () => {
