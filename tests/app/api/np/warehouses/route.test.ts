@@ -317,6 +317,46 @@ const PADDED_DENY_ROWS: readonly WarehouseRow[] = [
   buildRow(PADDED_ALLOWED_NUMBER, { DenyToSelect: ALLOWED_FLAG }),
 ];
 
+const WORD_DENIED_NUMBER = "31";
+const WORD_DENIED_FLAG = "true";
+const RENAMED_CATEGORY = "Branch_v2";
+
+const WORD_DENIED_ROWS: WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER),
+  buildRow(WORD_DENIED_NUMBER, { DenyToSelect: WORD_DENIED_FLAG }),
+];
+
+const RENAMED_CATEGORY_ROWS: WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
+];
+
+const CARGO_ONLY_ROWS: WarehouseRow[] = [
+  buildRow(CARGO_NUMBER, { CategoryOfWarehouse: CARGO_CATEGORY }),
+];
+
+const POSTOMAT_QUERY_ROWS: WarehouseRow[] = [
+  buildRow(EXACT_NUMBER, { CategoryOfWarehouse: POSTOMAT_CATEGORY }),
+];
+
+const SHARED_POSTOMAT_LABEL = "Поштомат №1: вул. Хрещатик, 22";
+
+const SHARED_NUMBER_ROWS: WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+  buildRow(CAPTURED_NUMBER, {
+    CategoryOfWarehouse: POSTOMAT_CATEGORY,
+    Description: SHARED_POSTOMAT_LABEL,
+  }),
+];
+
+const LETTERED_NUMBER = "12A";
+const LETTERED_QUERY = "12a";
+
+const LETTERED_NUMBER_ROWS: WarehouseRow[] = [
+  buildRow("77"),
+  buildRow(LETTERED_NUMBER),
+];
+
 const DUPLICATE_NUMBER_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
   buildRow(CAPTURED_NUMBER, { Description: REPEATED_LABEL }),
@@ -965,6 +1005,83 @@ describe("GET /api/np/warehouses", () => {
 
     expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
     expect(readLabels(items)).toEqual([CAPTURED_LABEL]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies a warehouse np marks unselectable with the word true, the spelling a carrier that swaps encodings would send", async () => {
+    const fetchStub = stubSequence([okRows(WORD_DENIED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers 503 when np renames every category it sends, instead of serving an empty list forever", async () => {
+    const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(UNAVAILABLE_STATUS);
+    expect(await response.text()).toBe(UNAVAILABLE_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("still answers 200 with an empty list when every row carries a category np really has but we do not offer", async () => {
+    const fetchStub = stubSequence([okRows(CARGO_ONLY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks np for the locker category alongside a real query, the pair a shopper hunting a locker number sends", async () => {
+    const fetchStub = stubSequence([okRows(POSTOMAT_QUERY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(buildRequest({ ...POSTOMAT_PARAMS, [QUERY_PARAM]: BARE_QUERY }))
+    );
+
+    expect(readMethodProperties(fetchStub, 0)).toEqual({
+      CityRef: CITY_REF,
+      Page: FIRST_PAGE,
+      Limit: String(PAGE_LIMIT),
+      [FIND_BY_STRING_KEY]: BARE_QUERY,
+    });
+    expect(readNumbers(items)).toEqual([EXACT_NUMBER]);
+  });
+
+  it("keeps a branch and a locker that share one number, because np numbers the two categories apart", async () => {
+    const fetchStub = stubSequence([
+      okRows(SHARED_NUMBER_ROWS),
+      okRows(SHARED_NUMBER_ROWS),
+    ]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(readNumbers(branches)).toEqual([CAPTURED_NUMBER]);
+    expect(readNumbers(postomats)).toEqual([CAPTURED_NUMBER]);
+    expect(readLabels(postomats)).toEqual([SHARED_POSTOMAT_LABEL]);
+    expect(fetchStub).toHaveBeenCalledTimes(2);
+  });
+
+  it("ranks a number match without regard to the letter case np spelled it in", async () => {
+    const fetchStub = stubSequence([okRows(LETTERED_NUMBER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(buildRequest(buildQueryParams(LETTERED_QUERY)))
+    );
+
+    expect(readNumbers(items)[0]).toBe(LETTERED_NUMBER);
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 

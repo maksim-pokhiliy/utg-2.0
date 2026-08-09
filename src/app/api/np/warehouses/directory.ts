@@ -18,8 +18,9 @@ const WAREHOUSE_REQUEST_TIMEOUT_MS = 7000;
 const WAREHOUSES_METHOD = "getWarehouses";
 const FIRST_PAGE = "1";
 const WORKING_STATUS = "Working";
-const DENIED_FLAG = "1";
+const DENIED_FLAGS = ["1", "true"];
 const DENIED_CODE = 1;
+const KNOWN_CATEGORIES = ["Branch", "Postomat", "Cargo"];
 const MAX_QUERY_LENGTH = 64;
 const NUMBER_PREFIX = "№";
 const WHITESPACE_PATTERN = /\s+/g;
@@ -53,8 +54,20 @@ export const isDeliveryMethod = (
   value: string | null
 ): value is DeliveryMethod => value === "branch" || value === "postomat";
 
-const isDeniedValue = (value: unknown): boolean =>
-  readString(value) === DENIED_FLAG || value === DENIED_CODE || value === true;
+const isDeniedValue = (value: unknown): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (value === DENIED_CODE) {
+    return true;
+  }
+
+  return DENIED_FLAGS.includes(readString(value).toLowerCase());
+};
+
+const isKnownCategory = (category: string): boolean =>
+  KNOWN_CATEGORIES.includes(category);
 
 const decodeWarehouse = (row: unknown): DecodedWarehouse | null => {
   if (!isRecord(row)) {
@@ -189,6 +202,13 @@ const loadWarehouses = async (
   const decoded = decodeRows(result.rows);
 
   if (result.rows.length > 0 && decoded.length === 0) {
+    return null;
+  }
+
+  if (
+    decoded.length > 0 &&
+    !decoded.some((warehouse) => isKnownCategory(warehouse.category))
+  ) {
     return null;
   }
 

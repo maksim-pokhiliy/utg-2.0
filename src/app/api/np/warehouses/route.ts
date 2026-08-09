@@ -5,6 +5,7 @@ import {
   consumeDirectoryRateLimit,
   resolveClientKey,
 } from "@root/app/api/rate-limit";
+import { stripInvisibles } from "@root/utils/invisibles";
 
 import { isDeliveryMethod, listWarehouses } from "./directory";
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = request.nextUrl;
-  const city = (searchParams.get("city") ?? "").trim();
+  const city = stripInvisibles(searchParams.get("city") ?? "").trim();
   const method = searchParams.get("method");
 
   if (
