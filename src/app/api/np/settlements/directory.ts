@@ -23,10 +23,9 @@ const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
 const UNKNOWN_WAREHOUSE_COUNT = null;
 const DIGITS_PATTERN = /^\d+$/;
-const ALLOWED_FLAGS = ["1", "true"];
 const DENIED_FLAGS = ["0", "false"];
-const ALLOWED_CODE = 1;
 const DENIED_CODE = 0;
+const TRAILING_SEPARATOR = /[\s,]+$/;
 
 export interface SettlementItem {
   ref: string;
@@ -71,34 +70,27 @@ const readCourierAllowed = (value: unknown): boolean => {
     return value;
   }
 
-  if (value === ALLOWED_CODE) {
-    return true;
-  }
-
   if (value === DENIED_CODE) {
     return false;
   }
 
-  const text = readString(value).toLowerCase();
-
-  if (ALLOWED_FLAGS.includes(text)) {
-    return true;
-  }
-
-  return !DENIED_FLAGS.includes(text);
+  return !DENIED_FLAGS.includes(readString(value).toLowerCase());
 };
 
 const splitPresent = (present: string): SettlementLabel => {
   const separatorIndex = present.indexOf(PRESENT_SEPARATOR);
+  const hasRegion = separatorIndex !== -1;
+  const label = capLabel(
+    (hasRegion ? present.slice(0, separatorIndex) : present).replace(
+      TRAILING_SEPARATOR,
+      EMPTY_TEXT
+    )
+  );
+  const region = hasRegion
+    ? capLabel(present.slice(separatorIndex + PRESENT_SEPARATOR.length).trim())
+    : EMPTY_TEXT;
 
-  if (separatorIndex === -1) {
-    return { label: capLabel(present) };
-  }
-
-  return {
-    label: capLabel(present.slice(0, separatorIndex)),
-    region: capLabel(present.slice(separatorIndex + PRESENT_SEPARATOR.length)),
-  };
+  return region === EMPTY_TEXT ? { label } : { label, region };
 };
 
 const readComposedLabel = (

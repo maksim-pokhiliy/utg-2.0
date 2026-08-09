@@ -81,8 +81,6 @@ const NEGATIVE_WAREHOUSE_TEXT = "-4";
 const FRACTIONAL_WAREHOUSE_TEXT = "12.5";
 const FRACTIONAL_WAREHOUSES = 12.5;
 const GARBAGE_WAREHOUSE_TEXT = "багато";
-const OVERFLOWING_JSON_NUMBER = "1e400";
-const RAW_NUMBER_PLACEHOLDER = "__raw_number__";
 
 const ALLOWED_COURIER_TEXT = "1";
 const DENIED_COURIER_TEXT = "0";
@@ -141,7 +139,6 @@ const UNDECODABLE_QUERY = "нез";
 const PROBED_ENCODING_QUERY = "жив";
 const WAREHOUSE_COUNT_QUERY = "скл";
 const COURIER_QUERY = "кур";
-const OVERFLOWING_COUNT_QUERY = "неск";
 const HEADLESS_PRESENT_QUERY = "без";
 const UNNAMED_ROW_QUERY = "ано";
 
@@ -155,6 +152,17 @@ const POP_DIRECTIONAL_ISOLATE = String.fromCharCode(
 );
 const BIDI_INVISIBLE_QUERY = `${ARABIC_LETTER_MARK}${FIRST_STRONG_ISOLATE}${POP_DIRECTIONAL_ISOLATE}`;
 const ISOLATED_KYIV_QUERY = `${FIRST_STRONG_ISOLATE}${KYIV_QUERY}${POP_DIRECTIONAL_ISOLATE}`;
+
+const SETTLEMENT_TIMEOUT_MS = 2500;
+const WAREHOUSE_TIMEOUT_MS = 7000;
+const DANGLING_PRESENT = "Львів, ";
+const DANGLING_LABEL = "Львів";
+const INVISIBLE_REGION_PRESENT = `Київ, ${ZERO_WIDTH_SPACE}`;
+const INVISIBLE_REGION_LABEL = "Київ";
+const SPLIT_LABEL_PRESENT = `м. Ки${ZERO_WIDTH_SPACE}їв, Київська обл.`;
+const SPLIT_LABEL_CLEAN = "м. Київ";
+const SPLIT_REGION_CLEAN = "Київська обл.";
+const GUARD_QUERY = "гва";
 
 const MALFORMED_BODY = "np gateway error page";
 const BROKEN_ADDRESSES = "Addresses came back as text";
@@ -470,16 +478,26 @@ const buildCourierAddress = (isAllowed: unknown): Record<string, unknown> => ({
   AddressDeliveryAllowed: isAllowed,
 });
 
-const buildRawNumberEnvelope = async (jsonNumber: string): Promise<string> => {
-  const envelope = await settlementsResponse([
-    buildCountedAddress(RAW_NUMBER_PLACEHOLDER),
-  ]).text();
+interface TimeoutRecorder {
+  delays: number[];
+  signals: AbortSignal[];
+}
 
-  return envelope.replace(`"${RAW_NUMBER_PLACEHOLDER}"`, jsonNumber);
+const recordTimeoutSignals = (): TimeoutRecorder => {
+  const recorder: TimeoutRecorder = { delays: [], signals: [] };
+  const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
+    const signal = realTimeout(milliseconds);
+
+    recorder.delays.push(milliseconds);
+    recorder.signals.push(signal);
+
+    return signal;
+  });
+
+  return recorder;
 };
-
-const rawEnvelopeResponse = (envelope: string): Response =>
-  new Response(envelope, { status: OK_STATUS, headers: JSON_HEADERS });
 
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -489,6 +507,12 @@ const expectNoUpstreamLeak = (body: string): void => {
   for (const fragment of FORBIDDEN_BODY_FRAGMENTS) {
     expect(body).not.toContain(fragment);
   }
+};
+
+const parseItems = (body: string): readonly unknown[] => {
+  const payload: unknown = JSON.parse(body);
+
+  return isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
 };
 
 const readItems = async (response: Response): Promise<readonly unknown[]> => {
@@ -505,6 +529,17 @@ const readOptionalText = (value: unknown): string | undefined =>
 
 const readLabelLength = (item: unknown): number =>
   isRecord(item) ? (readOptionalText(item.label) ?? EMPTY_TEXT).length : 0;
+
+const buildPresentAddress = (present: string): Record<string, unknown> => ({
+  ...NO_SEPARATOR_ADDRESS,
+  Present: present,
+});
+
+const readLabel = (item: unknown): unknown =>
+  isRecord(item) ? item.label : undefined;
+
+const readRegion = (item: unknown): unknown =>
+  isRecord(item) ? item.region : undefined;
 
 const readWarehouseCount = (item: unknown): unknown =>
   isRecord(item) ? item.warehouseCount : undefined;
@@ -913,20 +948,63 @@ describe("GET /api/np/settlements", () => {
     }
   );
 
-  it("reads a warehouse count whose exponent overflows to infinity as unknown", async () => {
-    const envelope = await buildRawNumberEnvelope(OVERFLOWING_JSON_NUMBER);
+  it("keeps the settlement budget at two and a half seconds, never the warehouse deadline", async () => {
+    const recorder = recordTimeoutSignals();
 
-    expect(envelope).not.toContain(RAW_NUMBER_PLACEHOLDER);
-    expect(envelope).toContain(OVERFLOWING_JSON_NUMBER);
-
-    stubUpstream(() => Promise.resolve(rawEnvelopeResponse(envelope)));
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
 
     const { GET } = await loadRoute();
-    const response = await GET(buildRequest(OVERFLOWING_COUNT_QUERY));
-    const items = await readItems(response);
 
-    expect(response.status).toBe(OK_STATUS);
-    expect(items.map(readWarehouseCount)).toEqual([UNKNOWN_WAREHOUSE_COUNT]);
+    await GET(buildRequest(KYIV_QUERY));
+
+    expect(recorder.delays).toEqual([SETTLEMENT_TIMEOUT_MS]);
+    expect(recorder.delays).not.toContain(WAREHOUSE_TIMEOUT_MS);
+  });
+
+  it("drops a dangling separator instead of publishing a label that ends in a comma", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(DANGLING_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(GUARD_QUERY)));
+
+    expect(items.map(readLabel)).toEqual([DANGLING_LABEL]);
+    expect(items.map(readRegion)).toEqual([undefined]);
+  });
+
+  it("omits a region that is nothing but invisible characters rather than shipping an empty one", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(INVISIBLE_REGION_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(GUARD_QUERY)));
+
+    expect(items.map(readLabel)).toEqual([INVISIBLE_REGION_LABEL]);
+    expect(items.map(readRegion)).toEqual([undefined]);
+  });
+
+  it("strips the invisible characters out of the carrier's own label before a combobox ever renders it", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(SPLIT_LABEL_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const body = await (await GET(buildRequest(GUARD_QUERY))).text();
+    const items = parseItems(body);
+
+    expect(items.map(readLabel)).toEqual([SPLIT_LABEL_CLEAN]);
+    expect(items.map(readRegion)).toEqual([SPLIT_REGION_CLEAN]);
+    expect(body).not.toContain(ZERO_WIDTH_SPACE);
   });
 
   it.each(COURIER_ENCODINGS)(
