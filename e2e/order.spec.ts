@@ -5,22 +5,25 @@ import {
   CHECKOUT_PATRONYMIC,
   FORWARDED_FOR_HEADER,
   HOME_PATH,
-  ORDER_ROUTE_GLOB,
   PRODUCT_PATH,
   SPEC_CLIENT_IPS,
   UK_DICTIONARY,
   UK_PRODUCT,
   addToCartButton,
+  captureOrders,
   cartButton,
   cartDrawer,
   categoryLink,
   checkoutLink,
-  fillCheckoutForm,
+  fillUkCheckoutForm,
   firstNameInput,
+  isRecord,
   orderToast,
   productLink,
   readCartStorage,
+  readOrderSection,
   submitButton,
+  submitCapturedOrder,
   successPanel,
 } from "./support/app";
 
@@ -28,21 +31,13 @@ test.use({
   extraHTTPHeaders: { [FORWARDED_FOR_HEADER]: SPEC_CLIENT_IPS.order },
 });
 
-const OK_STATUS = 200;
-
 const UNCONFIGURED_RELAY_STATUS = 503;
 
 const ORDER_ROUTE_PATH = "/api/place_order";
 
-const JSON_CONTENT_TYPE = "application/json";
-
-const ACCEPTED_BODY = JSON.stringify({ ok: true });
-
 const EMPTY_CART_STORAGE = "[]";
 
 const SINGLE_LINE_COUNT = 1;
-
-const SINGLE_REQUEST_COUNT = 1;
 
 const EMPTY_CART_COUNT = 0;
 
@@ -54,7 +49,7 @@ const UK_LOCALE = "uk";
 
 const PAYLOAD_VERSION = 2;
 
-const GENERIC_DELIVERY_MODE = "generic";
+const CUSTOMER_KEY = "customer";
 
 const PRESELECTED_CONTACT_CHANNEL = "call";
 
@@ -82,8 +77,6 @@ const CUSTOMER_KEYS = [
   "phone",
 ];
 
-const DELIVERY_KEYS = ["address", "city", "country", "mode", "state"];
-
 const CART_LINE_KEYS = [
   "id",
   "image",
@@ -103,32 +96,6 @@ interface ICapturedOrder {
   body: Record<string, unknown>;
   productUrl: string;
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-const readBody = (bodies: readonly unknown[]): Record<string, unknown> => {
-  const [body] = bodies;
-
-  if (!isRecord(body)) {
-    throw new Error("The checkout request carried no JSON object body");
-  }
-
-  return body;
-};
-
-const readSection = (
-  body: Record<string, unknown>,
-  key: string
-): Record<string, unknown> => {
-  const section = body[key];
-
-  if (!isRecord(section)) {
-    throw new Error(`The checkout payload carries no ${key} object`);
-  }
-
-  return section;
-};
 
 const readText = (value: unknown, key: string): string => {
   if (typeof value !== "string") {
@@ -162,24 +129,8 @@ const toBotLine = (line: Record<string, unknown>): IBotCartLine => ({
   productUrl: line.productUrl,
 });
 
-const submitCheckout = async (page: Page): Promise<void> => {
-  await expect(firstNameInput(page)).toBeVisible();
-  await fillCheckoutForm(page);
-  await submitButton(page).click();
-};
-
 const placeAcceptedOrder = async (page: Page): Promise<ICapturedOrder> => {
-  const bodies: unknown[] = [];
-
-  await page.route(ORDER_ROUTE_GLOB, async (route) => {
-    bodies.push(route.request().postDataJSON());
-
-    await route.fulfill({
-      status: OK_STATUS,
-      contentType: JSON_CONTENT_TYPE,
-      body: ACCEPTED_BODY,
-    });
-  });
+  const bodies = await captureOrders(page);
 
   await page.goto(PRODUCT_PATH);
 
@@ -189,13 +140,11 @@ const placeAcceptedOrder = async (page: Page): Promise<ICapturedOrder> => {
   await expect(cartButton(page, SINGLE_LINE_COUNT)).toBeVisible();
 
   await page.goto(CHECKOUT_PATH);
-  await submitCheckout(page);
 
-  await expect(successPanel(page)).toBeVisible();
+  await expect(firstNameInput(page)).toBeVisible();
+  await fillUkCheckoutForm(page);
 
-  expect(bodies).toHaveLength(SINGLE_REQUEST_COUNT);
-
-  return { body: readBody(bodies), productUrl };
+  return { body: await submitCapturedOrder(page, bodies), productUrl };
 };
 
 test.describe("the order path", () => {
@@ -214,11 +163,14 @@ test.describe("the order path", () => {
     await checkoutLink(page).click();
     await expect(page).toHaveURL(new RegExp(`${CHECKOUT_PATH}$`));
 
+    await expect(firstNameInput(page)).toBeVisible();
+    await fillUkCheckoutForm(page);
+
     const orderResponse = page.waitForResponse((response) =>
       response.url().includes(ORDER_ROUTE_PATH)
     );
 
-    await submitCheckout(page);
+    await submitButton(page).click();
 
     expect((await orderResponse).status()).toBe(UNCONFIGURED_RELAY_STATUS);
 
@@ -243,7 +195,7 @@ test.describe("the order path", () => {
       UUID_V4_PATTERN
     );
 
-    const customer = readSection(body, "customer");
+    const customer = readOrderSection(body, CUSTOMER_KEY);
 
     expect(Object.keys(customer).sort()).toEqual(CUSTOMER_KEYS);
     expect(customer.last_name).toBe(UK_DICTIONARY.cart.last_name_placeholder);
@@ -267,22 +219,5 @@ test.describe("the order path", () => {
 
     await expect(cartButton(page, EMPTY_CART_COUNT)).toBeVisible();
     expect(await readCartStorage(page)).toBe(EMPTY_CART_STORAGE);
-  });
-
-  test('sends delivery.mode "generic" under locale "uk" and no delivery.source — neither field may be inferred from the other, and generic ships under uk by design until the carrier modes land', async ({
-    page,
-  }) => {
-    const { body } = await placeAcceptedOrder(page);
-
-    const delivery = readSection(body, "delivery");
-
-    expect(body.locale).toBe(UK_LOCALE);
-    expect(delivery.mode).toBe(GENERIC_DELIVERY_MODE);
-    expect(delivery.source).toBeUndefined();
-    expect(Object.keys(delivery).sort()).toEqual(DELIVERY_KEYS);
-    expect(delivery.country).toBe(UK_DICTIONARY.cart.country_placeholder);
-    expect(delivery.state).toBe(UK_DICTIONARY.cart.state_placeholder);
-    expect(delivery.city).toBe(UK_DICTIONARY.cart.city_placeholder);
-    expect(delivery.address).toBe(UK_DICTIONARY.cart.address_placeholder);
   });
 });

@@ -6,15 +6,26 @@ import { useId, useRef, type KeyboardEvent, type ReactElement } from "react";
 import { Field } from "../field/field";
 
 const chip = cva(
-  "inline-flex items-center justify-center min-h-11 px-4 border-2 border-ink cursor-pointer font-mono font-medium text-[0.8125rem] leading-none tracking-[var(--caps-tracking)] uppercase transition-colors duration-200 ease-[var(--ease)] disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none",
+  "inline-flex items-center justify-center min-h-11 px-4 border-2 border-ink cursor-pointer font-mono font-medium text-[0.8125rem] leading-none tracking-[var(--caps-tracking)] uppercase transition-colors duration-200 ease-[var(--ease)] disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none aria-disabled:opacity-55 aria-disabled:cursor-not-allowed",
   {
     variants: {
       selected: {
         true: "bg-ink text-paper",
-        false: "bg-paper text-ink hover:bg-ink hover:text-paper",
+        false: "bg-paper text-ink",
+      },
+      unavailable: {
+        true: "",
+        false: "",
       },
     },
-    defaultVariants: { selected: false },
+    compoundVariants: [
+      {
+        selected: false,
+        unavailable: false,
+        class: "hover:bg-ink hover:text-paper",
+      },
+    ],
+    defaultVariants: { selected: false, unavailable: false },
   }
 );
 
@@ -40,6 +51,7 @@ function nextIndex(key: string, index: number, count: number): number | null {
 export interface ChoiceChipOption {
   readonly id: string;
   readonly label: string;
+  readonly disabled?: boolean;
 }
 
 interface ChoiceChipsProps {
@@ -47,6 +59,7 @@ interface ChoiceChipsProps {
   value: string;
   onChange: (id: string) => void;
   options: readonly ChoiceChipOption[];
+  helper?: string;
   required?: boolean;
   disabled?: boolean;
   className?: string;
@@ -57,14 +70,39 @@ export function ChoiceChips({
   value,
   onChange,
   options,
+  helper,
   required = false,
   disabled = false,
   className,
 }: ChoiceChipsProps): ReactElement {
   const captionId = useId();
+  const helperId = `${captionId}-helper`;
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = options.findIndex((option) => option.id === value);
-  const tabbableIndex = selectedIndex >= 0 ? selectedIndex : 0;
+  const firstEnabledIndex = options.findIndex(
+    (option) => option.disabled !== true
+  );
+  const tabbableIndex =
+    selectedIndex >= 0 ? selectedIndex : Math.max(firstEnabledIndex, 0);
+  const hasHelper = helper !== undefined && helper !== "";
+
+  const nextEnabledIndex = (key: string, index: number): number | null => {
+    let candidate = nextIndex(key, index, options.length);
+
+    for (let step = 0; step < options.length; step += 1) {
+      if (candidate === null || options[candidate].disabled !== true) {
+        return candidate;
+      }
+
+      candidate = nextIndex(
+        key === "Home" ? "ArrowRight" : key === "End" ? "ArrowLeft" : key,
+        candidate,
+        options.length
+      );
+    }
+
+    return null;
+  };
 
   const handleKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
@@ -75,7 +113,7 @@ export function ChoiceChips({
     if (isModified || event.defaultPrevented) {
       return;
     }
-    const next = nextIndex(event.key, index, options.length);
+    const next = nextEnabledIndex(event.key, index);
     if (next === null) {
       return;
     }
@@ -91,27 +129,44 @@ export function ChoiceChips({
       role="radiogroup"
       required={required}
       disabled={disabled}
+      helper={helper}
+      helperId={helperId}
       className={className}
     >
       <div className="flex flex-wrap gap-2">
-        {options.map((option, index) => (
-          <button
-            key={option.id}
-            ref={(node) => {
-              chipRefs.current[index] = node;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={index === selectedIndex}
-            disabled={disabled}
-            tabIndex={index === tabbableIndex ? 0 : -1}
-            onClick={() => onChange(option.id)}
-            onKeyDown={(event) => handleKeyDown(event, index)}
-            className={chip({ selected: index === selectedIndex })}
-          >
-            {option.label}
-          </button>
-        ))}
+        {options.map((option, index) => {
+          const isUnavailable = option.disabled === true;
+
+          return (
+            <button
+              key={option.id}
+              ref={(node) => {
+                chipRefs.current[index] = node;
+              }}
+              type="button"
+              role="radio"
+              aria-checked={index === selectedIndex}
+              aria-disabled={isUnavailable || undefined}
+              aria-describedby={
+                isUnavailable && hasHelper ? helperId : undefined
+              }
+              disabled={disabled}
+              tabIndex={index === tabbableIndex ? 0 : -1}
+              onClick={() => {
+                if (!isUnavailable) {
+                  onChange(option.id);
+                }
+              }}
+              onKeyDown={(event) => handleKeyDown(event, index)}
+              className={chip({
+                selected: index === selectedIndex,
+                unavailable: isUnavailable,
+              })}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </Field>
   );

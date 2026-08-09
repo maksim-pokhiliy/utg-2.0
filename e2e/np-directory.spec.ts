@@ -27,6 +27,8 @@ const CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
 
 const WAREHOUSE_QUERY = `${WAREHOUSES_PATH}?city=${CITY_REF}&method=branch`;
 
+const EMPTY_WAREHOUSE_QUERY = `${WAREHOUSE_QUERY}&q=`;
+
 const INVALID_WAREHOUSE_QUERY = `${WAREHOUSES_PATH}?city=&method=nonsense`;
 
 test.describe("delivery directory routes without a carrier key", () => {
@@ -41,6 +43,17 @@ test.describe("delivery directory routes without a carrier key", () => {
 
   test("answers 503 for a warehouse lookup", async ({ request }) => {
     const response = await request.get(WAREHOUSE_QUERY);
+    const body = await response.text();
+
+    expect(response.status()).toBe(UNAVAILABLE_STATUS);
+    expect(body).toBe(UNAVAILABLE_BODY);
+    expect(body).not.toContain(CARRIER_HOST);
+  });
+
+  test("answers 503 for the empty warehouse query the control opens with", async ({
+    request,
+  }) => {
+    const response = await request.get(EMPTY_WAREHOUSE_QUERY);
     const body = await response.text();
 
     expect(response.status()).toBe(UNAVAILABLE_STATUS);

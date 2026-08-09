@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { InputHTMLAttributes, ReactElement } from "react";
+import type { ComponentPropsWithRef, ReactElement } from "react";
 
 import { cn } from "../../lib/cn";
 
@@ -18,7 +18,7 @@ export const input = cva(
 
 export type InputInvalid = NonNullable<VariantProps<typeof input>["invalid"]>;
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends ComponentPropsWithRef<"input"> {
   invalid?: boolean;
 }
 

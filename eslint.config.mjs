@@ -60,6 +60,7 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     "initiatives/**",
+    ".claude/**",
     "playwright-report/**",
     "test-results/**",
     "blob-report/**",

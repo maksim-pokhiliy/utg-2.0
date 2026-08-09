@@ -1,6 +1,14 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { useState, type ReactElement } from "react";
-import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { CheckoutForm } from "@root/components/checkout/CheckoutForm";
 import type { CheckoutFieldName } from "@root/components/checkout/fields";
@@ -27,6 +35,8 @@ type FetchInit = Parameters<typeof fetch>[1];
 
 type I18nOptions = NonNullable<Parameters<typeof renderWithI18n>[1]>;
 
+type OrderReply = () => Promise<Response>;
+
 interface CapturedRequest {
   url: FetchInput;
   init: FetchInit;
@@ -36,11 +46,25 @@ interface HarnessProps {
   onPlaced: () => void;
 }
 
+const ORDER_ROUTE = "/api/place_order";
+
+const DIRECTORY_PREFIX = "/api/np/";
+
+const DEBOUNCE_MS = 250;
+
+const TOAST_MOUNT_MS = 0;
+
 const OK_STATUS = 200;
 
 const SERVICE_UNAVAILABLE_STATUS = 503;
 
 const REQUIRED_MARKER = " *";
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+const OPTION_SELECTOR = '[role="option"]';
+
+const NETWORK_FAILURE = "network down";
 
 const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -55,6 +79,18 @@ const MALFORMED_PHONE = "12345";
 
 const COMMENT = "Подзвоніть після 18:00";
 
+const SETTLEMENT = {
+  ref: "lviv-ref",
+  label: "Львів",
+  region: "Львівська обл.",
+  warehouseCount: 312,
+  isCourierAllowed: true,
+};
+
+const SETTLEMENT_QUERY = "Льв";
+
+const EXPECTED_DELIVERY_CITY = `${SETTLEMENT.label}, ${SETTLEMENT.region}`;
+
 const VALUES: Record<CheckoutFieldName, string> = {
   last_name: "Шевченко",
   first_name: "Марія",
@@ -64,10 +100,40 @@ const VALUES: Record<CheckoutFieldName, string> = {
   state: "Львівська область",
   city: "Львів",
   address: "Вулиця Казкового Міста 1",
+  np_city: SETTLEMENT.label,
+  np_warehouse: "Відділення №5: вул. Хрещатик, 1",
+  street: "Вулиця Казкового Міста",
+  building: "1",
+  apartment: "7",
   comment: COMMENT,
 };
 
-const REQUIRED_FIELD_NAMES: readonly CheckoutFieldName[] = [
+const LABEL_KEYS = {
+  last_name: "last_name",
+  first_name: "first_name",
+  patronymic: "patronymic",
+  telephone: "telephone",
+  country: "country",
+  state: "state",
+  city: "city",
+  address: "address",
+  np_city: "city",
+  np_warehouse: "np_branch",
+  street: "street",
+  building: "building",
+  apartment: "apartment",
+  comment: "comment",
+} as const satisfies Record<CheckoutFieldName, keyof Dictionary["cart"]>;
+
+const UK_REQUIRED_FIELD_NAMES: readonly CheckoutFieldName[] = [
+  "last_name",
+  "first_name",
+  "telephone",
+  "np_city",
+  "np_warehouse",
+];
+
+const EN_REQUIRED_FIELD_NAMES: readonly CheckoutFieldName[] = [
   "last_name",
   "first_name",
   "telephone",
@@ -76,10 +142,19 @@ const REQUIRED_FIELD_NAMES: readonly CheckoutFieldName[] = [
   "address",
 ];
 
-const OPTIONAL_FIELD_NAMES: readonly CheckoutFieldName[] = [
+const UK_OPTIONAL_FIELD_NAMES: readonly CheckoutFieldName[] = [
   "patronymic",
+  "comment",
+];
+
+const EN_OPTIONAL_FIELD_NAMES: readonly CheckoutFieldName[] = [
   "state",
   "comment",
+];
+
+const OPTIONAL_FIELD_NAMES: readonly CheckoutFieldName[] = [
+  ...UK_OPTIONAL_FIELD_NAMES,
+  ...EN_OPTIONAL_FIELD_NAMES,
 ];
 
 const UK_FIELD_NAMES: readonly CheckoutFieldName[] = [
@@ -87,10 +162,8 @@ const UK_FIELD_NAMES: readonly CheckoutFieldName[] = [
   "first_name",
   "patronymic",
   "telephone",
-  "country",
-  "state",
-  "city",
-  "address",
+  "np_city",
+  "np_warehouse",
   "comment",
 ];
 
@@ -129,8 +202,38 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const respondWith = (status: number): Response =>
   new Response(null, { status });
 
+const settlementsResponse = (): Response =>
+  new Response(JSON.stringify({ items: [SETTLEMENT] }), {
+    status: OK_STATUS,
+    headers: JSON_HEADERS,
+  });
+
+const acceptOrder: OrderReply = () => Promise.resolve(respondWith(OK_STATUS));
+
+const refuseOrder: OrderReply = () =>
+  Promise.resolve(respondWith(SERVICE_UNAVAILABLE_STATUS));
+
+const failOrder: OrderReply = () => Promise.reject(new Error(NETWORK_FAILURE));
+
+let orderReplies: OrderReply[] = [acceptOrder];
+
+const answerOrderWith = (...replies: readonly OrderReply[]): void => {
+  orderReplies = [...replies];
+};
+
+const takeOrderReply = (): OrderReply => {
+  const reply =
+    orderReplies.length > 1 ? orderReplies.shift() : orderReplies[0];
+
+  return reply ?? acceptOrder;
+};
+
 const createFetchMock = (): FetchMock =>
-  vi.fn<typeof fetch>(() => Promise.resolve(respondWith(OK_STATUS)));
+  vi.fn<typeof fetch>((input) =>
+    String(input).startsWith(DIRECTORY_PREFIX)
+      ? Promise.resolve(settlementsResponse())
+      : takeOrderReply()()
+  );
 
 let fetchMock = createFetchMock();
 
@@ -153,12 +256,16 @@ function PendingHarness({
 const renderForm = (options: I18nOptions = {}) =>
   renderWithI18n(<PendingHarness onPlaced={onPlaced} />, options);
 
+const renderEnglishForm = () =>
+  renderForm({ locale: "en", dictionary: EN_DICTIONARY });
+
 const requiredLabel = (label: string): string => `${label}${REQUIRED_MARKER}`;
 
-const labelFor = (name: CheckoutFieldName, dictionary: Dictionary): string =>
-  OPTIONAL_FIELD_NAMES.includes(name)
-    ? dictionary.cart[name]
-    : requiredLabel(dictionary.cart[name]);
+const labelFor = (name: CheckoutFieldName, dictionary: Dictionary): string => {
+  const label = dictionary.cart[LABEL_KEYS[name]];
+
+  return OPTIONAL_FIELD_NAMES.includes(name) ? label : requiredLabel(label);
+};
 
 const fieldFor = (
   name: CheckoutFieldName,
@@ -173,14 +280,55 @@ const typeInto = (
   fireEvent.change(fieldFor(name, dictionary), { target: { value } });
 };
 
-const fillRequiredFields = (
-  dictionary: Dictionary = UK_DICTIONARY,
+const settle = async (): Promise<void> => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+  });
+};
+
+const flushToast = async (): Promise<void> => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(TOAST_MOUNT_MS);
+  });
+};
+
+const chooseSettlement = async (): Promise<void> => {
+  const city = fieldFor("np_city");
+
+  act(() => {
+    city.focus();
+  });
+  fireEvent.change(city, { target: { value: SETTLEMENT_QUERY } });
+  await settle();
+
+  const row = document
+    .getElementById("np_city-listbox")
+    ?.querySelector(OPTION_SELECTOR);
+
+  if (row === null || row === undefined) {
+    throw new Error("The settlement list offered no row to pick");
+  }
+
+  fireEvent.mouseDown(row);
+};
+
+const fillUkRequiredFields = async (
   phone: string = TYPED_UK_PHONE
+): Promise<void> => {
+  typeInto("last_name", withPadding(VALUES.last_name));
+  typeInto("first_name", withPadding(VALUES.first_name));
+  typeInto("telephone", withPadding(phone));
+  await chooseSettlement();
+  typeInto("np_warehouse", withPadding(VALUES.np_warehouse));
+};
+
+const fillEnRequiredFields = (
+  phone: string = TYPED_INTERNATIONAL_PHONE
 ): void => {
-  for (const name of REQUIRED_FIELD_NAMES) {
+  for (const name of EN_REQUIRED_FIELD_NAMES) {
     const value = name === "telephone" ? phone : VALUES[name];
 
-    typeInto(name, withPadding(value), dictionary);
+    typeInto(name, withPadding(value), EN_DICTIONARY);
   }
 };
 
@@ -223,10 +371,13 @@ const channelGroup = (): HTMLElement =>
       accessibleName.startsWith(UK_DICTIONARY.cart.contact_channel),
   });
 
-const channelChips = (): HTMLElement[] => screen.getAllByRole("radio");
+const channelChips = (): HTMLElement[] =>
+  within(channelGroup()).getAllByRole("radio");
 
 const channelChip = (label: string): HTMLElement =>
-  screen.getByRole("radio", { name: label });
+  within(channelGroup()).getByRole("radio", { name: label });
+
+const everyChip = (): HTMLElement[] => screen.getAllByRole("radio");
 
 const isDisabled = (element: Element): boolean =>
   element.hasAttribute("disabled");
@@ -241,34 +392,38 @@ const submit = async (
 
 const placeOrder = async (): Promise<void> => {
   renderForm();
-  fillRequiredFields();
+  await fillUkRequiredFields();
   await submit();
 };
 
-const deferNextResponse = (): ((response: Response) => void) => {
-  let settle: (response: Response) => void = () => undefined;
+const deferNextOrder = (): ((response: Response) => void) => {
+  let settleOrder: (response: Response) => void = () => undefined;
 
-  fetchMock.mockReturnValue(
-    new Promise<Response>((resolve) => {
-      settle = resolve;
-    })
+  answerOrderWith(
+    () =>
+      new Promise<Response>((resolve) => {
+        settleOrder = resolve;
+      })
   );
 
   return (response) => {
-    settle(response);
+    settleOrder(response);
   };
 };
 
+const orderCalls = (): CapturedRequest[] =>
+  fetchMock.mock.calls
+    .filter(([input]) => String(input) === ORDER_ROUTE)
+    .map(([url, init]) => ({ url, init }));
+
 const readRequest = (index = 0): CapturedRequest => {
-  const call = fetchMock.mock.calls.at(index);
+  const call = orderCalls().at(index);
 
   if (call === undefined) {
-    throw new Error(`The checkout form issued no request number ${index + 1}`);
+    throw new Error(`The checkout form issued no order number ${index + 1}`);
   }
 
-  const [url, init] = call;
-
-  return { url, init };
+  return call;
 };
 
 const readPayload = (index = 0): Record<string, unknown> => {
@@ -324,37 +479,59 @@ const readCartLines = (): Record<string, unknown>[] => {
   });
 };
 
+Element.prototype.scrollIntoView = function scrollIntoView(): void {};
+
 beforeEach(() => {
+  vi.useFakeTimers();
   useCartStore.setState({ items: [...CART_LINES] });
+  answerOrderWith(acceptOrder);
   fetchMock = createFetchMock();
   onPlaced = vi.fn<() => void>();
   vi.stubGlobal("fetch", fetchMock);
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("CheckoutForm validation", () => {
-  it("issues no request when an empty form is submitted", async () => {
+  it("issues no order when an empty form is submitted", async () => {
     renderForm();
 
     await submit();
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(orderCalls()).toHaveLength(0);
     expect(onPlaced).not.toHaveBeenCalled();
   });
 
-  it("reports an error on each of the six required fields and on none of the three optional ones", async () => {
+  it("reports an error on each of the five required uk fields and on neither of the two optional ones", async () => {
     renderForm();
 
     await submit();
 
     expect(alertTexts()).toEqual(
-      REQUIRED_FIELD_NAMES.map(() => UK_DICTIONARY.cart.required)
+      UK_REQUIRED_FIELD_NAMES.map(() => UK_DICTIONARY.cart.required)
     );
 
-    for (const name of OPTIONAL_FIELD_NAMES) {
+    for (const name of UK_OPTIONAL_FIELD_NAMES) {
       expect(errorFor(name), name).toBeNull();
       expect(fieldFor(name).getAttribute("aria-invalid"), name).not.toBe(
         "true"
       );
+    }
+  });
+
+  it("reports an error on each of the six required en fields and on neither of the two optional ones", async () => {
+    renderEnglishForm();
+
+    await submit(EN_DICTIONARY);
+
+    expect(alertTexts()).toEqual(
+      EN_REQUIRED_FIELD_NAMES.map(() => EN_DICTIONARY.cart.required)
+    );
+
+    for (const name of EN_OPTIONAL_FIELD_NAMES) {
+      expect(errorFor(name), name).toBeNull();
     }
   });
 
@@ -379,16 +556,16 @@ describe("CheckoutForm validation", () => {
     expect(errorFor("last_name")).toBe(UK_DICTIONARY.cart.required);
   });
 
-  it("treats a whitespace-only required value as missing", async () => {
+  it("treats a whitespace-only settlement as missing, however the directory filled it before", async () => {
     renderForm();
-    fillRequiredFields();
-    typeInto("city", "   ");
+    await fillUkRequiredFields();
+    typeInto("np_city", "   ");
 
     await submit();
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(errorFor("city")).toBe(UK_DICTIONARY.cart.required);
-    expect(document.activeElement).toBe(fieldFor("city"));
+    expect(orderCalls()).toHaveLength(0);
+    expect(errorFor("np_city")).toBe(UK_DICTIONARY.cart.required);
+    expect(document.activeElement).toBe(fieldFor("np_city"));
   });
 
   it("calls an empty phone required, because nothing was typed there yet", async () => {
@@ -401,7 +578,7 @@ describe("CheckoutForm validation", () => {
 
   it("calls a filled but malformed phone badly formatted and never required, so the shopper is not told to fill a field they filled", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     typeInto("telephone", MALFORMED_PHONE);
 
     await submit();
@@ -411,14 +588,14 @@ describe("CheckoutForm validation", () => {
     expect(document.activeElement).toBe(fieldFor("telephone"));
   });
 
-  it("issues no request when the phone is the only malformed value", async () => {
+  it("issues no order when the phone is the only malformed value", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     typeInto("telephone", MALFORMED_PHONE);
 
     await submit();
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(orderCalls()).toHaveLength(0);
     expect(onPlaced).not.toHaveBeenCalled();
   });
 });
@@ -431,7 +608,7 @@ describe("CheckoutForm recipient and contact fields", () => {
   });
 
   it("renders no patronymic field under en, where the name has no such part", () => {
-    renderForm({ locale: "en", dictionary: EN_DICTIONARY });
+    renderEnglishForm();
 
     expect(
       screen.queryByLabelText(labelFor("patronymic", EN_DICTIONARY))
@@ -443,7 +620,7 @@ describe("CheckoutForm recipient and contact fields", () => {
 
   it("sends the trimmed patronymic the shopper filled in", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     typeInto("patronymic", withPadding(VALUES.patronymic));
 
     await submit();
@@ -472,11 +649,15 @@ describe("CheckoutForm recipient and contact fields", () => {
 
     expect(group.getAttribute("aria-required")).toBe("true");
     expect(channelChips()).toHaveLength(3);
-    expect(screen.getAllByRole("radio", { checked: true })).toHaveLength(1);
+    expect(within(group).getAllByRole("radio", { checked: true })).toHaveLength(
+      1
+    );
 
     fireEvent.click(channelChip(UK_DICTIONARY.cart.channel_telegram));
 
-    expect(screen.getAllByRole("radio", { checked: true })).toHaveLength(1);
+    expect(within(group).getAllByRole("radio", { checked: true })).toHaveLength(
+      1
+    );
     expect(
       channelChip(UK_DICTIONARY.cart.channel_telegram).getAttribute(
         "aria-checked"
@@ -492,7 +673,7 @@ describe("CheckoutForm recipient and contact fields", () => {
 
   it("sends the channel the shopper picked instead of the default", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     fireEvent.click(channelChip(UK_DICTIONARY.cart.channel_telegram));
 
     await submit();
@@ -535,11 +716,22 @@ describe("CheckoutForm order payload — the v2 envelope the relay forwards", ()
     });
   });
 
-  it("declares the delivery mode generic under the uk locale, because U5a knows no carrier directory yet", async () => {
-    renderForm({ locale: "uk" });
-    fillRequiredFields();
+  it("declares the branch mode under uk, now that the carrier directory answers the form", async () => {
+    await placeOrder();
 
-    await submit();
+    expect(readGroup("delivery")).toEqual({
+      mode: "np_branch",
+      source: "manual",
+      city: EXPECTED_DELIVERY_CITY,
+      warehouse: VALUES.np_warehouse,
+    });
+  });
+
+  it("declares the delivery mode generic under en, the locale the carrier does not serve", async () => {
+    renderEnglishForm();
+    fillEnRequiredFields();
+
+    await submit(EN_DICTIONARY);
 
     expect(readGroup("delivery")).toEqual({
       mode: "generic",
@@ -549,19 +741,19 @@ describe("CheckoutForm order payload — the v2 envelope the relay forwards", ()
     });
   });
 
-  it("sends the trimmed region when the shopper filled it in", async () => {
-    renderForm();
-    fillRequiredFields();
-    typeInto("state", withPadding(VALUES.state));
+  it("sends the trimmed region when the en shopper filled it in", async () => {
+    renderEnglishForm();
+    fillEnRequiredFields();
+    typeInto("state", withPadding(VALUES.state), EN_DICTIONARY);
 
-    await submit();
+    await submit(EN_DICTIONARY);
 
     expect(readGroup("delivery").state).toBe(VALUES.state);
   });
 
   it("sends the trimmed comment the shopper typed", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     typeInto("comment", withPadding(COMMENT));
 
     await submit();
@@ -641,7 +833,7 @@ describe("CheckoutForm order payload — the v2 envelope the relay forwards", ()
       dictionary: EN_DICTIONARY,
       money: USD_MONEY,
     });
-    fillRequiredFields(EN_DICTIONARY, TYPED_INTERNATIONAL_PHONE);
+    fillEnRequiredFields();
 
     await submit(EN_DICTIONARY);
 
@@ -659,7 +851,7 @@ describe("CheckoutForm order payload — the v2 envelope the relay forwards", ()
       dictionary: EN_DICTIONARY,
       money: UAH_MONEY,
     });
-    fillRequiredFields(EN_DICTIONARY, TYPED_INTERNATIONAL_PHONE);
+    fillEnRequiredFields();
 
     await submit(EN_DICTIONARY);
 
@@ -675,7 +867,7 @@ describe("CheckoutForm request", () => {
   it("posts to the order route without a trailing slash", async () => {
     await placeOrder();
 
-    expect(readRequest().url).toBe("/api/place_order");
+    expect(readRequest().url).toBe(ORDER_ROUTE);
   });
 
   it("posts the payload as JSON", async () => {
@@ -684,29 +876,29 @@ describe("CheckoutForm request", () => {
     const { init } = readRequest();
 
     expect(init?.method).toBe("POST");
-    expect(init?.headers).toEqual({ "Content-Type": "application/json" });
+    expect(init?.headers).toEqual(JSON_HEADERS);
   });
 
   it("reports success to the caller once when the relay accepts the order", async () => {
     await placeOrder();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(orderCalls()).toHaveLength(1);
     expect(onPlaced).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("CheckoutForm failure path", () => {
   it("does not report success when the relay is unconfigured and answers 503", async () => {
-    fetchMock.mockResolvedValue(respondWith(SERVICE_UNAVAILABLE_STATUS));
+    answerOrderWith(refuseOrder);
 
     await placeOrder();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(orderCalls()).toHaveLength(1);
     expect(onPlaced).not.toHaveBeenCalled();
   });
 
   it("leaves the cart untouched when the relay answers 503", async () => {
-    fetchMock.mockResolvedValue(respondWith(SERVICE_UNAVAILABLE_STATUS));
+    answerOrderWith(refuseOrder);
 
     await placeOrder();
 
@@ -714,7 +906,7 @@ describe("CheckoutForm failure path", () => {
   });
 
   it("does not report success when the request itself fails", async () => {
-    fetchMock.mockRejectedValue(new Error("network down"));
+    answerOrderWith(failOrder);
 
     await placeOrder();
 
@@ -723,23 +915,25 @@ describe("CheckoutForm failure path", () => {
   });
 
   it("raises the order error toast when the relay answers 503", async () => {
-    fetchMock.mockResolvedValue(respondWith(SERVICE_UNAVAILABLE_STATUS));
+    answerOrderWith(refuseOrder);
 
     await placeOrder();
+    await flushToast();
 
-    const toast = await screen.findByText(UK_DICTIONARY.cart.order_error);
-
-    expect(toast.textContent).toBe(UK_DICTIONARY.cart.order_error);
+    expect(screen.getByText(UK_DICTIONARY.cart.order_error).textContent).toBe(
+      UK_DICTIONARY.cart.order_error
+    );
   });
 
   it("raises the order error toast when the request itself fails", async () => {
-    fetchMock.mockRejectedValue(new Error("network down"));
+    answerOrderWith(failOrder);
 
     await placeOrder();
+    await flushToast();
 
-    const toast = await screen.findByText(UK_DICTIONARY.cart.order_error);
-
-    expect(toast.textContent).toBe(UK_DICTIONARY.cart.order_error);
+    expect(screen.getByText(UK_DICTIONARY.cart.order_error).textContent).toBe(
+      UK_DICTIONARY.cart.order_error
+    );
   });
 });
 
@@ -751,26 +945,25 @@ describe("CheckoutForm idempotency key", () => {
   });
 
   it("repeats the same key when the shopper retries after a refusal, so a retry never reads as a second order", async () => {
-    fetchMock.mockResolvedValueOnce(respondWith(SERVICE_UNAVAILABLE_STATUS));
-    fetchMock.mockRejectedValueOnce(new Error("network down"));
+    answerOrderWith(refuseOrder, failOrder);
 
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     await submit();
     await submit();
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(orderCalls()).toHaveLength(2);
     expect(onPlaced).not.toHaveBeenCalled();
     expect(readKey(1)).toBe(readKey(0));
   });
 
   it("mints a fresh key for the next order once one succeeded, so a real second order is never swallowed", async () => {
     renderForm();
-    fillRequiredFields();
+    await fillUkRequiredFields();
     await submit();
     await submit();
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(orderCalls()).toHaveLength(2);
     expect(onPlaced).toHaveBeenCalledTimes(2);
     expect(readKey(1)).toMatch(UUID_V4);
     expect(readKey(1)).not.toBe(readKey(0));
@@ -778,8 +971,8 @@ describe("CheckoutForm idempotency key", () => {
 
   it("places the order anyway when the platform offers no crypto source, dropping only the hint", async () => {
     renderForm();
+    await fillUkRequiredFields();
     vi.stubGlobal("crypto", undefined);
-    fillRequiredFields();
 
     await submit();
 
@@ -790,50 +983,56 @@ describe("CheckoutForm idempotency key", () => {
 
 describe("CheckoutForm in-flight guard", () => {
   it("disables the submit control and ignores a second submit while the request is in flight", async () => {
-    const settle = deferNextResponse();
     const { container } = renderForm();
 
-    fillRequiredFields();
+    await fillUkRequiredFields();
+
+    const settleOrder = deferNextOrder();
+
     await submit();
 
     expect(submitButton().disabled).toBe(true);
 
     fireEvent.submit(getForm(container));
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(orderCalls()).toHaveLength(1);
 
     await act(async () => {
-      settle(respondWith(OK_STATUS));
+      settleOrder(respondWith(OK_STATUS));
     });
 
     expect(submitButton().disabled).toBe(false);
     expect(onPlaced).toHaveBeenCalledTimes(1);
   });
 
-  it("disables every field and every contact chip while the request is in flight, and releases them when it settles", async () => {
-    const settle = deferNextResponse();
-
+  it("disables every field and every chip of both groups while the request is in flight, and releases them when it settles", async () => {
     renderForm();
-    fillRequiredFields();
+
+    await fillUkRequiredFields();
+
+    const settleOrder = deferNextOrder();
+
     await submit();
 
     for (const name of UK_FIELD_NAMES) {
       expect(isDisabled(fieldFor(name)), name).toBe(true);
     }
 
-    for (const chip of channelChips()) {
+    expect(everyChip()).toHaveLength(6);
+
+    for (const chip of everyChip()) {
       expect(isDisabled(chip), chip.textContent ?? "").toBe(true);
     }
 
     await act(async () => {
-      settle(respondWith(OK_STATUS));
+      settleOrder(respondWith(OK_STATUS));
     });
 
     for (const name of UK_FIELD_NAMES) {
       expect(isDisabled(fieldFor(name)), name).toBe(false);
     }
 
-    for (const chip of channelChips()) {
+    for (const chip of everyChip()) {
       expect(isDisabled(chip), chip.textContent ?? "").toBe(false);
     }
   });

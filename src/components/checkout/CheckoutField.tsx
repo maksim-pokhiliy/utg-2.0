@@ -5,11 +5,7 @@ import type { ReactElement } from "react";
 import { Field, Input } from "@root/design-system";
 import { useDictionary, type Dictionary } from "@root/i18n";
 
-import {
-  AUTOFILL_TOKENS,
-  isRequiredField,
-  type CheckoutFieldName,
-} from "./fields";
+import { AUTOFILL_TOKENS, type CheckoutFieldName } from "./fields";
 import type { CheckoutFieldError } from "./validation";
 
 const ERROR_KEYS = {
@@ -20,40 +16,44 @@ const ERROR_KEYS = {
 interface CheckoutFieldProps {
   label: string;
   name: CheckoutFieldName;
+  id?: string;
   type?: "text" | "tel";
   value: string;
   placeholder?: string;
   error?: CheckoutFieldError;
   disabled?: boolean;
+  isRequired?: boolean;
   onValueChange: (name: CheckoutFieldName, value: string) => void;
 }
 
 export function CheckoutField({
   label,
   name,
+  id,
   type,
   value,
   placeholder,
   error,
   disabled,
+  isRequired = false,
   onValueChange,
 }: CheckoutFieldProps): ReactElement {
   const dictionary = useDictionary();
 
-  const isRequired = isRequiredField(name);
+  const fieldId = id ?? name;
   const isInvalid = error !== undefined;
 
   return (
     <Field
       label={label}
-      htmlFor={name}
+      htmlFor={fieldId}
       required={isRequired}
       error={
         error === undefined ? undefined : dictionary.cart[ERROR_KEYS[error]]
       }
     >
       <Input
-        id={name}
+        id={fieldId}
         name={name}
         type={type}
         inputMode={type === "tel" ? "tel" : undefined}
@@ -65,7 +65,7 @@ export function CheckoutField({
         invalid={isInvalid}
         required={isRequired}
         aria-invalid={isInvalid}
-        aria-describedby={isInvalid ? `${name}-error` : undefined}
+        aria-describedby={isInvalid ? `${fieldId}-error` : undefined}
       />
     </Field>
   );

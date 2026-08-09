@@ -18,6 +18,7 @@ import {
   SheetTitle,
   Typography,
 } from "@root/design-system";
+import { cartQuantityLabel, cartRemoveLabel } from "@root/utils/cartLabels";
 import { formatPrice } from "@root/utils/formatPrice";
 import {
   useCartStore,
@@ -158,8 +159,8 @@ export default function CartDrawer(): ReactElement {
                     setQuantity(item.id, quantity)
                   }
                   onRemove={() => handleRemoveRequest(item)}
-                  quantityLabel={`${dictionary.shared.quantity}: ${item.title}`}
-                  removeLabel={`${dictionary.cart.remove_confirm}: ${item.title}`}
+                  quantityLabel={cartQuantityLabel(dictionary, item.title)}
+                  removeLabel={cartRemoveLabel(dictionary, item.title)}
                 />
               ))}
             </div>
