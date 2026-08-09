@@ -1,8 +1,7 @@
 import type { Locale } from "@root/data";
+import { stripInvisibles } from "@root/utils/invisibles";
 
 const SEPARATORS = /[\s()\-‐-―]/g;
-
-const INVISIBLES = /\p{Cf}/gu;
 
 const UK_NATIONAL = /^0(\d{9})$/;
 
@@ -15,7 +14,7 @@ const EN_INTERNATIONAL = /^\+(\d{8,15})$/;
 const UK_PREFIX = "+380";
 
 const stripSeparators = (raw: string): string =>
-  raw.replace(INVISIBLES, "").replace(SEPARATORS, "");
+  stripInvisibles(raw).replace(SEPARATORS, "");
 
 const normalizeUkrainian = (compact: string): string | null => {
   const match =

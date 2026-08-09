@@ -59,6 +59,40 @@ const FIRST_PAGE = "1";
 const PRESENT_SEPARATOR = ", ";
 const EMPTY_TEXT = "";
 
+const UNKNOWN_WAREHOUSE_COUNT = null;
+const ALLOWED_COURIER = true;
+const DENIED_COURIER = false;
+const FAIL_OPEN_COURIER = true;
+const ABSENT_DELIVERY_FACTS = {
+  warehouseCount: UNKNOWN_WAREHOUSE_COUNT,
+  isCourierAllowed: FAIL_OPEN_COURIER,
+};
+
+const CAPTURED_KYIV_WAREHOUSES = 6231;
+const CAPTURED_KYIVETS_WAREHOUSES = 2;
+const ZERO_WAREHOUSES = 0;
+const ZERO_WAREHOUSE_TEXT = "0";
+const PROBED_WAREHOUSE_TEXT = "12";
+const PROBED_WAREHOUSE_COUNT = 12;
+const PADDED_WAREHOUSE_TEXT = " 7 ";
+const PADDED_WAREHOUSE_COUNT = 7;
+const NEGATIVE_WAREHOUSES = -4;
+const NEGATIVE_WAREHOUSE_TEXT = "-4";
+const FRACTIONAL_WAREHOUSE_TEXT = "12.5";
+const FRACTIONAL_WAREHOUSES = 12.5;
+const GARBAGE_WAREHOUSE_TEXT = "багато";
+
+const ALLOWED_COURIER_TEXT = "1";
+const DENIED_COURIER_TEXT = "0";
+const PADDED_ALLOWED_COURIER_TEXT = " 1 ";
+const PADDED_DENIED_COURIER_TEXT = " 0 ";
+const ALLOWED_COURIER_CODE = 1;
+const DENIED_COURIER_CODE = 0;
+const STRAY_COURIER_CODE = 7;
+const GARBAGE_COURIER_TEXT = "можливо";
+const FALSE_COURIER_TEXT = "false";
+const TRUE_COURIER_TEXT = "true";
+
 const MAX_QUERY_LENGTH = 64;
 const OVERLONG_QUERY_LENGTH = 300;
 const OVERLONG_QUERY = "к".repeat(OVERLONG_QUERY_LENGTH);
@@ -102,6 +136,33 @@ const EMPTY_DATA_QUERY = "пор";
 const OVERLONG_LABEL_QUERY = "дов";
 const OVERLONG_REF_QUERY = "реф";
 const UNDECODABLE_QUERY = "нез";
+const PROBED_ENCODING_QUERY = "жив";
+const WAREHOUSE_COUNT_QUERY = "скл";
+const COURIER_QUERY = "кур";
+const HEADLESS_PRESENT_QUERY = "без";
+const UNNAMED_ROW_QUERY = "ано";
+
+const ARABIC_LETTER_MARK_CODE = 1564;
+const FIRST_STRONG_ISOLATE_CODE = 8296;
+const POP_DIRECTIONAL_ISOLATE_CODE = 8297;
+const ARABIC_LETTER_MARK = String.fromCharCode(ARABIC_LETTER_MARK_CODE);
+const FIRST_STRONG_ISOLATE = String.fromCharCode(FIRST_STRONG_ISOLATE_CODE);
+const POP_DIRECTIONAL_ISOLATE = String.fromCharCode(
+  POP_DIRECTIONAL_ISOLATE_CODE
+);
+const BIDI_INVISIBLE_QUERY = `${ARABIC_LETTER_MARK}${FIRST_STRONG_ISOLATE}${POP_DIRECTIONAL_ISOLATE}`;
+const ISOLATED_KYIV_QUERY = `${FIRST_STRONG_ISOLATE}${KYIV_QUERY}${POP_DIRECTIONAL_ISOLATE}`;
+
+const SETTLEMENT_TIMEOUT_MS = 2500;
+const WAREHOUSE_TIMEOUT_MS = 7000;
+const DANGLING_PRESENT = "Львів, ";
+const DANGLING_LABEL = "Львів";
+const INVISIBLE_REGION_PRESENT = `Київ, ${ZERO_WIDTH_SPACE}`;
+const INVISIBLE_REGION_LABEL = "Київ";
+const SPLIT_LABEL_PRESENT = `м. Ки${ZERO_WIDTH_SPACE}їв, Київська обл.`;
+const SPLIT_LABEL_CLEAN = "м. Київ";
+const SPLIT_REGION_CLEAN = "Київська обл.";
+const GUARD_QUERY = "гва";
 
 const MALFORMED_BODY = "np gateway error page";
 const BROKEN_ADDRESSES = "Addresses came back as text";
@@ -127,7 +188,13 @@ const KYIVETS_PRESENT = "с. Київець, Миколаївський р-н, �
 const KYIVETS_LABEL = "с. Київець";
 const KYIVETS_REGION = "Миколаївський р-н, Львівська обл.";
 
+const KYIV_MAIN_DESCRIPTION = "Київ";
+const KYIV_AREA = "Київська";
+const HEADLESS_PRESENT = `${PRESENT_SEPARATOR}${KYIV_REGION}`;
+
 const CHERNIHIV_PRESENT = "Чернігів";
+const CHERNIHIV_MAIN_DESCRIPTION = "Чернігів";
+const CHERNIHIV_AREA = "Чернігівська";
 const DUBOVE_MAIN_DESCRIPTION = "Дубове";
 const DUBOVE_AREA = "Закарпатська";
 const TYSA_MAIN_DESCRIPTION = "Тиса";
@@ -136,15 +203,28 @@ const OVERLONG_DELIVERY_CITY = "db5c88d0-391c-11dd-90d9-001a92567626";
 const REF_KEY = "ref";
 const LABEL_KEY = "label";
 const REGION_KEY = "region";
-const REGIONLESS_ITEM_KEYS: readonly string[] = [LABEL_KEY, REF_KEY];
-const REGIONED_ITEM_KEYS: readonly string[] = [LABEL_KEY, REF_KEY, REGION_KEY];
+const WAREHOUSE_COUNT_KEY = "warehouseCount";
+const COURIER_KEY = "isCourierAllowed";
+const REGIONLESS_ITEM_KEYS: readonly string[] = [
+  COURIER_KEY,
+  LABEL_KEY,
+  REF_KEY,
+  WAREHOUSE_COUNT_KEY,
+];
+const REGIONED_ITEM_KEYS: readonly string[] = [
+  COURIER_KEY,
+  LABEL_KEY,
+  REF_KEY,
+  REGION_KEY,
+  WAREHOUSE_COUNT_KEY,
+];
 
 const CAPTURED_ADDRESSES: readonly unknown[] = [
   {
     Present: KYIV_PRESENT,
-    Warehouses: 6231,
-    MainDescription: "Київ",
-    Area: "Київська",
+    Warehouses: CAPTURED_KYIV_WAREHOUSES,
+    MainDescription: KYIV_MAIN_DESCRIPTION,
+    Area: KYIV_AREA,
     Region: "",
     SettlementTypeCode: "м.",
     Ref: KYIV_SETTLEMENT_REF,
@@ -158,7 +238,7 @@ const CAPTURED_ADDRESSES: readonly unknown[] = [
   },
   {
     Present: KYIVETS_PRESENT,
-    Warehouses: 2,
+    Warehouses: CAPTURED_KYIVETS_WAREHOUSES,
     MainDescription: "Київець",
     Area: "Львівська",
     Region: "Миколаївський",
@@ -177,15 +257,47 @@ const CAPTURED_ADDRESSES: readonly unknown[] = [
 const CAPTURED_PRESENTS: readonly string[] = [KYIV_PRESENT, KYIVETS_PRESENT];
 
 const CAPTURED_ITEMS: readonly unknown[] = [
-  { ref: KYIV_DELIVERY_CITY, label: KYIV_LABEL, region: KYIV_REGION },
-  { ref: KYIVETS_DELIVERY_CITY, label: KYIVETS_LABEL, region: KYIVETS_REGION },
+  {
+    ref: KYIV_DELIVERY_CITY,
+    label: KYIV_LABEL,
+    region: KYIV_REGION,
+    warehouseCount: CAPTURED_KYIV_WAREHOUSES,
+    isCourierAllowed: ALLOWED_COURIER,
+  },
+  {
+    ref: KYIVETS_DELIVERY_CITY,
+    label: KYIVETS_LABEL,
+    region: KYIVETS_REGION,
+    warehouseCount: CAPTURED_KYIVETS_WAREHOUSES,
+    isCourierAllowed: ALLOWED_COURIER,
+  },
 ];
 
 const NO_SEPARATOR_ADDRESS = {
   Present: CHERNIHIV_PRESENT,
-  MainDescription: "Чернігів",
-  Area: "Чернігівська",
+  MainDescription: CHERNIHIV_MAIN_DESCRIPTION,
+  Area: CHERNIHIV_AREA,
   DeliveryCity: CHERNIHIV_DELIVERY_CITY,
+};
+
+const PROBED_ENCODING_ADDRESS = {
+  ...NO_SEPARATOR_ADDRESS,
+  Warehouses: PROBED_WAREHOUSE_TEXT,
+  AddressDeliveryAllowed: DENIED_COURIER_TEXT,
+};
+
+const HEADLESS_PRESENT_ADDRESS = {
+  Present: HEADLESS_PRESENT,
+  MainDescription: KYIV_MAIN_DESCRIPTION,
+  Area: KYIV_AREA,
+  DeliveryCity: KYIV_DELIVERY_CITY,
+};
+
+const UNNAMED_HEADLESS_ADDRESS = {
+  Present: HEADLESS_PRESENT,
+  MainDescription: EMPTY_TEXT,
+  Area: KYIV_AREA,
+  DeliveryCity: SUMY_DELIVERY_CITY,
 };
 
 const FALLBACK_ADDRESS = {
@@ -204,8 +316,8 @@ const AREALESS_FALLBACK_ADDRESS = {
 
 const REFLESS_ADDRESS = {
   Present: KYIV_PRESENT,
-  MainDescription: "Київ",
-  Area: "Київська",
+  MainDescription: KYIV_MAIN_DESCRIPTION,
+  Area: KYIV_AREA,
   DeliveryCity: EMPTY_TEXT,
 };
 
@@ -242,14 +354,59 @@ const OVERLONG_ADDRESS = {
 
 const OVERLONG_REF_ADDRESS = {
   Present: CHERNIHIV_PRESENT,
-  MainDescription: "Чернігів",
-  Area: "Чернігівська",
+  MainDescription: CHERNIHIV_MAIN_DESCRIPTION,
+  Area: CHERNIHIV_AREA,
   DeliveryCity: OVERLONG_REF,
 };
 
 const UNDECODABLE_ADDRESSES: readonly unknown[] = [
   { ...NO_SEPARATOR_ADDRESS, DeliveryCity: 6231 },
   { ...FALLBACK_ADDRESS, DeliveryCity: 6232 },
+];
+
+const KNOWN_WAREHOUSE_COUNTS: readonly [string, unknown, number][] = [
+  ["a number", CAPTURED_KYIV_WAREHOUSES, CAPTURED_KYIV_WAREHOUSES],
+  ["a zero number", ZERO_WAREHOUSES, ZERO_WAREHOUSES],
+  ["a numeric string", PROBED_WAREHOUSE_TEXT, PROBED_WAREHOUSE_COUNT],
+  ["a zero string", ZERO_WAREHOUSE_TEXT, ZERO_WAREHOUSES],
+  ["a padded numeric string", PADDED_WAREHOUSE_TEXT, PADDED_WAREHOUSE_COUNT],
+];
+
+const UNKNOWN_WAREHOUSE_COUNTS: readonly [string, unknown][] = [
+  ["a negative number", NEGATIVE_WAREHOUSES],
+  ["a negative numeric string", NEGATIVE_WAREHOUSE_TEXT],
+  ["a fractional string", FRACTIONAL_WAREHOUSE_TEXT],
+  ["a fractional number", FRACTIONAL_WAREHOUSES],
+  ["a word", GARBAGE_WAREHOUSE_TEXT],
+  ["an empty string", EMPTY_TEXT],
+  ["a boolean", true],
+  ["a null", null],
+  ["an object", {}],
+  ["an array", []],
+  ["an absent field", undefined],
+];
+
+const COURIER_ENCODINGS: readonly [string, unknown, boolean][] = [
+  ["the boolean true", true, ALLOWED_COURIER],
+  ["the boolean false", false, DENIED_COURIER],
+  ["the number one", ALLOWED_COURIER_CODE, ALLOWED_COURIER],
+  ["the number zero", DENIED_COURIER_CODE, DENIED_COURIER],
+  ["the string one", ALLOWED_COURIER_TEXT, ALLOWED_COURIER],
+  ["the string zero", DENIED_COURIER_TEXT, DENIED_COURIER],
+  ["a padded string one", PADDED_ALLOWED_COURIER_TEXT, ALLOWED_COURIER],
+  ["a padded string zero", PADDED_DENIED_COURIER_TEXT, DENIED_COURIER],
+  ["the string false", FALSE_COURIER_TEXT, DENIED_COURIER],
+  ["the string true", TRUE_COURIER_TEXT, ALLOWED_COURIER],
+];
+
+const UNREADABLE_COURIER_FLAGS: readonly [string, unknown][] = [
+  ["an absent field", undefined],
+  ["a null", null],
+  ["an empty string", EMPTY_TEXT],
+  ["a number that is neither one nor zero", STRAY_COURIER_CODE],
+  ["a word", GARBAGE_COURIER_TEXT],
+  ["an object", {}],
+  ["an array", []],
 ];
 
 interface NestingCase {
@@ -311,6 +468,37 @@ const buildAddresses = (count: number): readonly unknown[] =>
     DeliveryCity: `db5c88a${index}-391c-11dd-90d9-001a92567626`,
   }));
 
+const buildCountedAddress = (warehouses: unknown): Record<string, unknown> => ({
+  ...NO_SEPARATOR_ADDRESS,
+  Warehouses: warehouses,
+});
+
+const buildCourierAddress = (isAllowed: unknown): Record<string, unknown> => ({
+  ...NO_SEPARATOR_ADDRESS,
+  AddressDeliveryAllowed: isAllowed,
+});
+
+interface TimeoutRecorder {
+  delays: number[];
+  signals: AbortSignal[];
+}
+
+const recordTimeoutSignals = (): TimeoutRecorder => {
+  const recorder: TimeoutRecorder = { delays: [], signals: [] };
+  const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
+    const signal = realTimeout(milliseconds);
+
+    recorder.delays.push(milliseconds);
+    recorder.signals.push(signal);
+
+    return signal;
+  });
+
+  return recorder;
+};
+
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 };
@@ -319,6 +507,12 @@ const expectNoUpstreamLeak = (body: string): void => {
   for (const fragment of FORBIDDEN_BODY_FRAGMENTS) {
     expect(body).not.toContain(fragment);
   }
+};
+
+const parseItems = (body: string): readonly unknown[] => {
+  const payload: unknown = JSON.parse(body);
+
+  return isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
 };
 
 const readItems = async (response: Response): Promise<readonly unknown[]> => {
@@ -335,6 +529,23 @@ const readOptionalText = (value: unknown): string | undefined =>
 
 const readLabelLength = (item: unknown): number =>
   isRecord(item) ? (readOptionalText(item.label) ?? EMPTY_TEXT).length : 0;
+
+const buildPresentAddress = (present: string): Record<string, unknown> => ({
+  ...NO_SEPARATOR_ADDRESS,
+  Present: present,
+});
+
+const readLabel = (item: unknown): unknown =>
+  isRecord(item) ? item.label : undefined;
+
+const readRegion = (item: unknown): unknown =>
+  isRecord(item) ? item.region : undefined;
+
+const readWarehouseCount = (item: unknown): unknown =>
+  isRecord(item) ? item.warehouseCount : undefined;
+
+const readCourierFlag = (item: unknown): unknown =>
+  isRecord(item) ? item.isCourierAllowed : undefined;
 
 const composePresent = (item: unknown): string => {
   if (!isRecord(item)) {
@@ -549,7 +760,11 @@ describe("GET /api/np/settlements", () => {
     const items = await readItems(await GET(buildRequest(KYIV_QUERY)));
 
     expect(items).toStrictEqual([
-      { ref: CHERNIHIV_DELIVERY_CITY, label: CHERNIHIV_PRESENT },
+      {
+        ref: CHERNIHIV_DELIVERY_CITY,
+        label: CHERNIHIV_PRESENT,
+        ...ABSENT_DELIVERY_FACTS,
+      },
     ]);
     expect(readItemKeys(items[0])).toEqual(REGIONLESS_ITEM_KEYS);
   });
@@ -567,9 +782,69 @@ describe("GET /api/np/settlements", () => {
         ref: DUBOVE_DELIVERY_CITY,
         label: DUBOVE_MAIN_DESCRIPTION,
         region: DUBOVE_AREA,
+        ...ABSENT_DELIVERY_FACTS,
       },
-      { ref: TYSA_DELIVERY_CITY, label: TYSA_MAIN_DESCRIPTION },
+      {
+        ref: TYSA_DELIVERY_CITY,
+        label: TYSA_MAIN_DESCRIPTION,
+        ...ABSENT_DELIVERY_FACTS,
+      },
     ]);
+  });
+
+  it("falls back to the main description when the present string splits to an empty label", async () => {
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse([HEADLESS_PRESENT_ADDRESS]))
+    );
+
+    const { GET } = await loadRoute();
+    const response = await GET(buildRequest(HEADLESS_PRESENT_QUERY));
+    const items = await readItems(response);
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(items).toStrictEqual([
+      {
+        ref: KYIV_DELIVERY_CITY,
+        label: KYIV_MAIN_DESCRIPTION,
+        region: KYIV_AREA,
+        ...ABSENT_DELIVERY_FACTS,
+      },
+    ]);
+    expect(items.map(readLabelLength)).not.toContain(EMPTY_TEXT.length);
+  });
+
+  it("drops a row that splits to an empty label with no main description to fall back on", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([UNNAMED_HEADLESS_ADDRESS, NO_SEPARATOR_ADDRESS])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(UNNAMED_ROW_QUERY)));
+
+    expect(items).toStrictEqual([
+      {
+        ref: CHERNIHIV_DELIVERY_CITY,
+        label: CHERNIHIV_PRESENT,
+        ...ABSENT_DELIVERY_FACTS,
+      },
+    ]);
+  });
+
+  it("answers 503 when every row splits to an empty label and none can be named", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse([UNNAMED_HEADLESS_ADDRESS]))
+    );
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(UNNAMED_ROW_QUERY));
+    const body = await response.text();
+
+    expect(response.status).toBe(UNAVAILABLE_STATUS);
+    expect(body).toBe(UNAVAILABLE_BODY);
+    expectNoUpstreamLeak(body);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
   it("caps an overlong label and region so one bad row cannot pin the cache", async () => {
@@ -587,6 +862,7 @@ describe("GET /api/np/settlements", () => {
         ref: OVERLONG_DELIVERY_CITY,
         label: CAPPED_LABEL,
         region: CAPPED_LABEL,
+        ...ABSENT_DELIVERY_FACTS,
       },
     ]);
     expect(items.map(readLabelLength)).toEqual([LABEL_CAP]);
@@ -599,7 +875,11 @@ describe("GET /api/np/settlements", () => {
     const items = await readItems(await GET(buildRequest(DROPPED_QUERY)));
 
     expect(items).toStrictEqual([
-      { ref: CHERNIHIV_DELIVERY_CITY, label: CHERNIHIV_PRESENT },
+      {
+        ref: CHERNIHIV_DELIVERY_CITY,
+        label: CHERNIHIV_PRESENT,
+        ...ABSENT_DELIVERY_FACTS,
+      },
     ]);
   });
 
@@ -614,6 +894,157 @@ describe("GET /api/np/settlements", () => {
       REGIONED_ITEM_KEYS,
       REGIONLESS_ITEM_KEYS,
     ]);
+  });
+
+  it("reads the string-encoded delivery facts the live probe reported, not only the numbers the captured fixture carries", async () => {
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse([PROBED_ENCODING_ADDRESS]))
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(
+      await GET(buildRequest(PROBED_ENCODING_QUERY))
+    );
+
+    expect(items).toStrictEqual([
+      {
+        ref: CHERNIHIV_DELIVERY_CITY,
+        label: CHERNIHIV_PRESENT,
+        warehouseCount: PROBED_WAREHOUSE_COUNT,
+        isCourierAllowed: DENIED_COURIER,
+      },
+    ]);
+  });
+
+  it.each(KNOWN_WAREHOUSE_COUNTS)(
+    "reads %s as the warehouse count the picker will show",
+    async (_label, raw, count) => {
+      stubUpstream(() =>
+        Promise.resolve(settlementsResponse([buildCountedAddress(raw)]))
+      );
+
+      const { GET } = await loadRoute();
+      const items = await readItems(
+        await GET(buildRequest(WAREHOUSE_COUNT_QUERY))
+      );
+
+      expect(items.map(readWarehouseCount)).toEqual([count]);
+    }
+  );
+
+  it.each(UNKNOWN_WAREHOUSE_COUNTS)(
+    "reads %s as an unknown warehouse count rather than inventing a number",
+    async (_label, raw) => {
+      stubUpstream(() =>
+        Promise.resolve(settlementsResponse([buildCountedAddress(raw)]))
+      );
+
+      const { GET } = await loadRoute();
+      const items = await readItems(
+        await GET(buildRequest(WAREHOUSE_COUNT_QUERY))
+      );
+
+      expect(items.map(readWarehouseCount)).toEqual([UNKNOWN_WAREHOUSE_COUNT]);
+    }
+  );
+
+  it("keeps the settlement budget at two and a half seconds, never the warehouse deadline", async () => {
+    const recorder = recordTimeoutSignals();
+
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(KYIV_QUERY));
+
+    expect(recorder.delays).toEqual([SETTLEMENT_TIMEOUT_MS]);
+    expect(recorder.delays).not.toContain(WAREHOUSE_TIMEOUT_MS);
+  });
+
+  it("drops a dangling separator instead of publishing a label that ends in a comma", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(DANGLING_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(GUARD_QUERY)));
+
+    expect(items.map(readLabel)).toEqual([DANGLING_LABEL]);
+    expect(items.map(readRegion)).toEqual([undefined]);
+  });
+
+  it("omits a region that is nothing but invisible characters rather than shipping an empty one", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(INVISIBLE_REGION_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(GUARD_QUERY)));
+
+    expect(items.map(readLabel)).toEqual([INVISIBLE_REGION_LABEL]);
+    expect(items.map(readRegion)).toEqual([undefined]);
+  });
+
+  it("strips the invisible characters out of the carrier's own label before a combobox ever renders it", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        settlementsResponse([buildPresentAddress(SPLIT_LABEL_PRESENT)])
+      )
+    );
+
+    const { GET } = await loadRoute();
+    const body = await (await GET(buildRequest(GUARD_QUERY))).text();
+    const items = parseItems(body);
+
+    expect(items.map(readLabel)).toEqual([SPLIT_LABEL_CLEAN]);
+    expect(items.map(readRegion)).toEqual([SPLIT_REGION_CLEAN]);
+    expect(body).not.toContain(ZERO_WIDTH_SPACE);
+  });
+
+  it.each(COURIER_ENCODINGS)(
+    "reads %s as the courier flag it encodes",
+    async (_label, raw, isAllowed) => {
+      stubUpstream(() =>
+        Promise.resolve(settlementsResponse([buildCourierAddress(raw)]))
+      );
+
+      const { GET } = await loadRoute();
+      const items = await readItems(await GET(buildRequest(COURIER_QUERY)));
+
+      expect(items.map(readCourierFlag)).toEqual([isAllowed]);
+    }
+  );
+
+  it.each(UNREADABLE_COURIER_FLAGS)(
+    "falls open to an allowed courier when the flag arrives as %s, because an unparsed flag must never hide a delivery method",
+    async (_label, raw) => {
+      stubUpstream(() =>
+        Promise.resolve(settlementsResponse([buildCourierAddress(raw)]))
+      );
+
+      const { GET } = await loadRoute();
+      const items = await readItems(await GET(buildRequest(COURIER_QUERY)));
+
+      expect(items.map(readCourierFlag)).toEqual([FAIL_OPEN_COURIER]);
+    }
+  );
+
+  it("keeps the courier flag allowed for a row that never mentions courier delivery at all", async () => {
+    stubUpstream(() =>
+      Promise.resolve(settlementsResponse([NO_SEPARATOR_ADDRESS]))
+    );
+
+    const { GET } = await loadRoute();
+    const items = await readItems(await GET(buildRequest(COURIER_QUERY)));
+
+    expect(items.map(readCourierFlag)).toEqual([FAIL_OPEN_COURIER]);
+    expect(items.map(readWarehouseCount)).toEqual([UNKNOWN_WAREHOUSE_COUNT]);
   });
 
   it("caps the answer at ten settlements when np returns more", async () => {
@@ -681,6 +1112,31 @@ describe("GET /api/np/settlements", () => {
     expect(readSentCityName(fetchStub)).toBe(NORMALIZED_KYIV_QUERY);
   });
 
+  it("answers an empty list without touching the network for the bidi controls the retired hand-list let through", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BIDI_INVISIBLE_QUERY));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).not.toHaveBeenCalled();
+  });
+
+  it("strips a bidi isolate pair off a real query before it reaches np", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(settlementsResponse(CAPTURED_ADDRESSES))
+    );
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(ISOLATED_KYIV_QUERY));
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readSentCityName(fetchStub)).toBe(NORMALIZED_KYIV_QUERY);
+  });
+
   it("caps an overlong np delivery city ref to sixty-four characters", async () => {
     stubUpstream(() =>
       Promise.resolve(settlementsResponse([OVERLONG_REF_ADDRESS]))
@@ -690,7 +1146,7 @@ describe("GET /api/np/settlements", () => {
     const items = await readItems(await GET(buildRequest(OVERLONG_REF_QUERY)));
 
     expect(items).toStrictEqual([
-      { ref: CAPPED_REF, label: CHERNIHIV_PRESENT },
+      { ref: CAPPED_REF, label: CHERNIHIV_PRESENT, ...ABSENT_DELIVERY_FACTS },
     ]);
   });
 

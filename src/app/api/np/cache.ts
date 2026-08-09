@@ -15,15 +15,8 @@ type CacheEntries<T> = Map<string, CacheEntry<T>>;
 type CacheLoader<T> = () => Promise<T | null>;
 
 export interface DirectoryCache<T> {
-  isLoaded: (key: string) => boolean;
   resolve: (key: string, load: CacheLoader<T>) => Promise<T | null>;
 }
-
-const hasLiveEntry = <T>(entries: CacheEntries<T>, key: string): boolean => {
-  const entry = entries.get(key);
-
-  return entry !== undefined && entry.expiresAt > Date.now();
-};
 
 const readEntry = <T>(
   entries: CacheEntries<T>,
@@ -122,9 +115,6 @@ export const createDirectoryCache = <T>(
     });
   };
 
-  const isLoaded = (key: string): boolean =>
-    hasLiveEntry(entries, key) || inFlight.has(key);
-
   const resolve = async (
     key: string,
     load: CacheLoader<T>
@@ -144,5 +134,5 @@ export const createDirectoryCache = <T>(
     });
   };
 
-  return { isLoaded, resolve };
+  return { resolve };
 };

@@ -2,6 +2,9 @@ import { fileURLToPath } from "node:url";
 
 import { configDefaults, defineConfig } from "vitest/config";
 
+const SERVER_ONLY_SERVER_BUILD =
+  "./node_modules/next/dist/compiled/server-only/empty.js";
+
 const NODE_INCLUDE = ["tests/**/*.{test,spec}.{ts,tsx}"];
 const NODE_EXCLUDE = ["tests/**/*.dom.{test,spec}.{ts,tsx}"];
 const DOM_INCLUDE = ["tests/**/*.dom.{test,spec}.{ts,tsx}"];
@@ -20,6 +23,13 @@ export default defineConfig({
     projects: [
       {
         extends: true,
+        resolve: {
+          alias: {
+            "server-only": fileURLToPath(
+              new URL(SERVER_ONLY_SERVER_BUILD, import.meta.url)
+            ),
+          },
+        },
         test: {
           name: "node",
           environment: "node",

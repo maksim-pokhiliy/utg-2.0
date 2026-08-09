@@ -1,3 +1,7 @@
+import "server-only";
+
+import { stripInvisibles } from "@root/utils/invisibles";
+
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_MODEL_NAME = "Address";
 const NP_REQUEST_TIMEOUT_MS = 2500;
@@ -16,7 +20,7 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 export const readString = (value: unknown): string =>
-  typeof value === "string" ? value.trim() : "";
+  typeof value === "string" ? stripInvisibles(value).trim() : "";
 
 export const capLabel = (text: string): string =>
   text.slice(0, MAX_LABEL_LENGTH);
