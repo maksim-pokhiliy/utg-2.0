@@ -1,3 +1,5 @@
+import "server-only";
+
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_MODEL_NAME = "Address";
 const NP_REQUEST_TIMEOUT_MS = 2500;

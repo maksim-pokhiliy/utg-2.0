@@ -1,3 +1,5 @@
+import { stripInvisibles } from "@root/utils/invisibles";
+
 import { createDirectoryCache } from "../cache";
 import {
   callNpDirectory,
@@ -16,15 +18,22 @@ const MAX_QUERY_LENGTH = 64;
 const PRESENT_SEPARATOR = ", ";
 const SETTLEMENTS_METHOD = "searchSettlements";
 const FIRST_PAGE = "1";
-const INVISIBLE_PATTERN = /[\u00AD\u200B-\u200F\u2060-\u2064\uFEFF]/g;
 const WHITESPACE_PATTERN = /\s+/g;
 const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
+const UNKNOWN_WAREHOUSE_COUNT = null;
+const DIGITS_PATTERN = /^\d+$/;
+const ALLOWED_FLAGS = ["1", "true"];
+const DENIED_FLAGS = ["0", "false"];
+const ALLOWED_CODE = 1;
+const DENIED_CODE = 0;
 
 export interface SettlementItem {
   ref: string;
   label: string;
   region?: string;
+  warehouseCount: number | null;
+  isCourierAllowed: boolean;
 }
 
 interface SettlementLabel {
@@ -39,12 +48,45 @@ const cache = createDirectoryCache<readonly SettlementItem[]>({
 });
 
 const normalizeQuery = (rawQuery: string | null): string =>
-  (rawQuery ?? EMPTY_TEXT)
-    .replace(INVISIBLE_PATTERN, EMPTY_TEXT)
+  stripInvisibles(rawQuery ?? EMPTY_TEXT)
     .trim()
     .toLowerCase()
     .replace(WHITESPACE_PATTERN, SINGLE_SPACE)
     .slice(0, MAX_QUERY_LENGTH);
+
+const readWarehouseCount = (value: unknown): number | null => {
+  if (typeof value === "number") {
+    return Number.isInteger(value) && value >= 0
+      ? value
+      : UNKNOWN_WAREHOUSE_COUNT;
+  }
+
+  const text = readString(value);
+
+  return DIGITS_PATTERN.test(text) ? Number(text) : UNKNOWN_WAREHOUSE_COUNT;
+};
+
+const readCourierAllowed = (value: unknown): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (value === ALLOWED_CODE) {
+    return true;
+  }
+
+  if (value === DENIED_CODE) {
+    return false;
+  }
+
+  const text = readString(value).toLowerCase();
+
+  if (ALLOWED_FLAGS.includes(text)) {
+    return true;
+  }
+
+  return !DENIED_FLAGS.includes(text);
+};
 
 const splitPresent = (present: string): SettlementLabel => {
   const separatorIndex = present.indexOf(PRESENT_SEPARATOR);
@@ -59,6 +101,27 @@ const splitPresent = (present: string): SettlementLabel => {
   };
 };
 
+const readComposedLabel = (
+  row: Record<string, unknown>
+): SettlementLabel | null => {
+  const present = readString(row.Present);
+  const split = present === EMPTY_TEXT ? null : splitPresent(present);
+
+  if (split !== null && split.label !== EMPTY_TEXT) {
+    return split;
+  }
+
+  const label = capLabel(readString(row.MainDescription));
+
+  if (label === EMPTY_TEXT) {
+    return null;
+  }
+
+  const region = capLabel(readString(row.Area));
+
+  return region === EMPTY_TEXT ? { label } : { label, region };
+};
+
 const toSettlement = (row: unknown): SettlementItem | null => {
   if (!isRecord(row)) {
     return null;
@@ -70,21 +133,18 @@ const toSettlement = (row: unknown): SettlementItem | null => {
     return null;
   }
 
-  const present = readString(row.Present);
+  const composed = readComposedLabel(row);
 
-  if (present !== EMPTY_TEXT) {
-    return { ref, ...splitPresent(present) };
-  }
-
-  const label = capLabel(readString(row.MainDescription));
-
-  if (label === EMPTY_TEXT) {
+  if (composed === null) {
     return null;
   }
 
-  const region = capLabel(readString(row.Area));
-
-  return region === EMPTY_TEXT ? { ref, label } : { ref, label, region };
+  return {
+    ref,
+    ...composed,
+    warehouseCount: readWarehouseCount(row.Warehouses),
+    isCourierAllowed: readCourierAllowed(row.AddressDeliveryAllowed),
+  };
 };
 
 const readAddresses = (rows: readonly unknown[]): readonly unknown[] => {
