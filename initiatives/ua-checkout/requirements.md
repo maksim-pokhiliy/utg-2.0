@@ -103,27 +103,37 @@ response fields there when implementing (UAC-2).
   Values are string-encoded (`Number` `"1"`, `DenyToSelect` `"0"|"1"`, categories
   `"Branch"|"Postomat"`, `WarehouseStatus === "Working"`), and NP answers HTTP 200
   even on `success: false` — `response.ok` alone proves nothing (D-8).
-- **Our proxy** (`/api/np/*`, exact routes decided in U4): key server-side only;
-  per-city warehouse list fetched page-merged and cached server-side (TTL ~24h per
-  NP's own guidance; settlements search cached short, e.g. minutes, keyed by query);
-  responses minimized to what the UI needs (display string, number, category) — no
-  raw NP dumps to the client; same per-IP limiter posture as `place_order`
-  (fail-open); filter out `DenyToSelect`/non-selectable warehouses; postomat-vs-
-  branch filtering by `CategoryOfWarehouse` server-side via a `method` query param
-  (D-7).
-- **Failure budget**: settlement calls get ~2.5s; the per-city warehouse page-merge
-  gets a 7s deadline + a 10-page hard cap (D-8: Kyiv ≈ 3000 warehouses over 6–7
-  sequential 500-row pages — a 2.5s whole-merge budget would deny the largest
-  cities autocomplete forever; paid once per city per 24h; a partial merge is
-  refused and never cached). Any failure flips the dependent fields to fallback
-  free-text with a hint — never a blocked form, never a spinner-forever. No
-  retries that delay the buyer.
-- **Warehouse search UX** (amended by D-7; originally client-side): filtering by
-  number or substring happens at OUR proxy, inside OUR cached per-city list, with
-  the response capped (~30 rows; settlements ~10). Both original rationales hold —
-  no per-keystroke NP calls (the cache serves) and no dependence on unverified NP
-  server-side filters (the filter is our code) — while a big-city list (Kyiv ~3000
-  warehouses) never reaches the client (UAC-5 row budget).
+- **MEASURED LIVE 2026-08-08 with the operator's key (D-14) — this supersedes the
+  estimates below it.** Kyiv reports **12 298** warehouse points in its own
+  `Warehouses` count, not the ~3000 D-8 estimated: ~25 pages of 500 against a 10-page
+  cap, so the whole-city page-merge was never completable. Unpaced, NP rate-limits page
+  2 immediately (`success: false`, `errors: ["To many requests"]`, `info: ["Try again
+  after 0.5 seconds"]`, HTTP 200); paced at 600ms pages 1–8 all succeed and page 9 dies
+  on OUR 7s deadline, not on NP's limit. **`FindByString` works**: one page, 0.9–3.2s,
+  «Хрещатик» → 2 branches, «43» → 9 of 361 raw rows, «Оболонський» → 3.
+  `searchSettlements` rows also carry `AddressDeliveryAllowed` (`"1"`/`"0"`, and it
+  genuinely varies — courier is not offered everywhere) and `Warehouses` (a count;
+  settlements with `0` exist and must not be offered a branch or a locker).
+- **Our proxy** (`/api/np/*`): key server-side only; responses minimized to what the UI
+  needs — no raw NP dumps to the client; same per-IP limiter posture as `place_order`
+  (fail-open); `DenyToSelect`/non-selectable warehouses filtered out; postomat-vs-branch
+  filtering by `CategoryOfWarehouse` server-side via a `method` query param (D-7).
+  **The warehouse SEARCH delegates to the carrier via `FindByString` (D-14)** — one
+  page per query, no page-merge, no 24h whole-city corpus. Caching moves to
+  `(city, method, query)` with a short TTL; settlement searches stay minutes-cached.
+  D-7 is unchanged in substance: the category filter, the row cap and every failure
+  decision remain OUR code — what we delegate is the search, not the policy.
+- **Failure budget**: settlement calls ~2.5s; a warehouse query gets the single-page
+  budget (NP was measured at 0.9–3.2s, so the existing 7s deadline is generous rather
+  than tight). Any failure flips the dependent fields to fallback free-text with a hint —
+  never a blocked form, never a spinner-forever. No retries that delay the buyer.
+- **Warehouse search UX** (D-7, amended by D-14): the proxy still caps the response
+  (~30 rows; settlements ~10) and still owns the category filter, but the substring
+  match itself is NP's. The original rationale "no dependence on unverified NP
+  server-side filters" was falsified by measurement, and the other original rationale —
+  keeping a 12 000-row city list away from the client — is served better by never
+  fetching it at all. An empty query returns the first capped page so the control is
+  never empty on open.
 
 ## 5. Payload contract v2 (resolves D-3)
 

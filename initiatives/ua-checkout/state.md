@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-08 (U5a shipped and prod-smoked — the payload is v2 end to end;
-U5b is next and it opens with two known defects to fix before any UI)
+**Updated:** 2026-08-08 (U5b running — a pre-step probe overturned UAC-13's prescribed
+fix and reshaped the step; D-14 ratified)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -16,7 +16,7 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
 | U5a | Contacts + copy + editable summary; payload flips to v2   | ✅ done — PR #21 `9099402`, prod-smoked end to end through the live shop route | PR #21 · D-13 · journal 2026-08-08 |
-| U5b | Delivery: method chips, NP comboboxes, courier fields     | ⬜ **NEXT** — opens with UAC-13 + UAC-15 before any UI | plan.md · D-9 · requirements §1/§4 · UAC-13/15/16/17 |
+| U5b | Delivery: method chips, NP comboboxes, courier fields     | 🟡 running — the warehouse proxy is rewritten first (D-14) | `step-u5b-delivery-prompt.md` · D-14 · requirements §1/§4 |
 | U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
@@ -31,10 +31,14 @@ the review outcome are D-13.
 **U5b is next, and it does NOT open with UI.** Two things must land before a single
 combobox exists, both found by probing rather than by reading:
 
-1. **UAC-13** — the NP warehouse page-merge is broken against the live carrier API. Kyiv
-   page 1 succeeds, page 2 comes back `"To many requests"`, and the proxy collapses it to
-   503. Every multi-page city silently loses the directory. No test in this repo can ever
-   catch it, because fixtures do not rate-limit.
+1. **UAC-13 — and its prescribed fix was WRONG, corrected by a second probe (D-14).**
+   Pacing at 600ms does clear NP's rate limit, but Kyiv reports **12 298** warehouse
+   points — ~25 pages against a 10-page cap — and page 9 dies on OUR 7s deadline, not
+   NP's limit. D-8's "Kyiv ≈ 3000" estimate was low by 4×, so the whole-city merge was
+   never completable at any budget. The real fix is architectural: delegate the search to
+   the carrier via `FindByString` (measured: one page, 0.9–3.2s) and delete the merge and
+   the 24h city cache. Twice in two days now, probing before speccing has CHANGED a step
+   rather than confirmed it.
 2. **UAC-15** — `CheckoutForm.tsx` is already 315 LOC against a 300 bar, and U5b adds the
    whole delivery-method surface to that same file. Extract first; it is a rewrite after.
 

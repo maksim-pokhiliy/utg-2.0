@@ -454,3 +454,44 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   prefixes (§3 amended — a stale prefix list rejects a valid volunteer's number, which
   costs a real order, while a landline costs nothing).
 - **Links.** PR #21; requirements §2/§3/§5/§6/§9; D-1, D-9, D-11, D-12; UAC-14…UAC-17.
+
+### D-14 — U5b contour: the warehouse search delegates to the carrier
+
+- **Status:** RATIFIED (user, 2026-08-08 — "подтверждаю контур").
+- **Evidence first, because it overturns a ledgered fix.** UAC-13 recorded the Kyiv
+  page-merge failure and prescribed "pace or retry inside the existing 7s budget".
+  A live probe with the operator's key, run BEFORE this step was specced (D-12), shows
+  that prescription is wrong: pacing at 600ms does clear NP's rate limit — pages 1–8 all
+  succeed where page 2 previously failed — but **Kyiv reports 12 298 warehouse points**,
+  about 25 pages against a 10-page cap, and page 9 dies on OUR deadline rather than NP's
+  limit. The merge is not slow, it is impossible: D-8's "Kyiv ≈ 3000 warehouses" estimate
+  was low by 4×. Meanwhile `FindByString` answers in one page in 0.9–3.2s.
+- **Decision.**
+  1. **The warehouse proxy stops owning the corpus.** Delete the page-merge and the ~24h
+     whole-city cache; delegate the substring match to NP via `FindByString`; cache by
+     `(city, method, query)` with a short TTL.
+  2. **D-7 stands and is not weakened.** The category filter, the row cap, the
+     `DenyToSelect` refusal and every failure decision stay in our code. What moves to
+     the carrier is the SEARCH, not the policy. The original D-7 rationale "no dependence
+     on unverified NP server-side filters" is retired — the filter is now verified — and
+     the other rationale, keeping a huge city list off the client, is served better by
+     never fetching it.
+  3. **The settlements proxy surfaces two more fields**: the `Warehouses` count and
+     `AddressDeliveryAllowed`. Without them the UI cannot honestly say which delivery
+     methods exist in the chosen settlement, and both genuinely vary in live data.
+  4. **UAC-15 lands before any delivery UI.** `CheckoutForm.tsx` is 315 LOC against a
+     300 bar and U5b adds a whole delivery surface to it; extracting first costs nothing,
+     extracting after is a rewrite.
+  5. **Product rulings** (recommended in the contour, ratified with it; owner may veto
+     either at the browser gate): an empty warehouse query returns the first capped page
+     rather than requiring two characters, so a buyer who does not know their branch
+     number never meets an empty control; and a method the carrier does not offer in that
+     settlement renders DISABLED WITH A SHORT REASON rather than hidden — a missing chip
+     reads as a bug, a disabled one with a line of text reads as a fact about the city.
+- **Rationale.** This is the second time in two days that probing an external system
+  before writing the prompt changed the step rather than confirming it (the first was
+  B4's falsified width premise). The cost of the probe was minutes; the cost of speccing
+  the ledgered fix would have been a full round producing a proxy that still cannot serve
+  Kyiv, discovered at the browser gate or, worse, in production.
+- **Links.** UAC-13 (corrected in place); requirements §4 (amended with the measurements);
+  D-7, D-8, D-12; journal 2026-08-08.
