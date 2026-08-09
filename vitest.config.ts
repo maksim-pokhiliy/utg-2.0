@@ -14,9 +14,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@root": fileURLToPath(new URL("./src", import.meta.url)),
-      "server-only": fileURLToPath(
-        new URL(SERVER_ONLY_SERVER_BUILD, import.meta.url)
-      ),
     },
   },
   esbuild: {
@@ -26,6 +23,13 @@ export default defineConfig({
     projects: [
       {
         extends: true,
+        resolve: {
+          alias: {
+            "server-only": fileURLToPath(
+              new URL(SERVER_ONLY_SERVER_BUILD, import.meta.url)
+            ),
+          },
+        },
         test: {
           name: "node",
           environment: "node",

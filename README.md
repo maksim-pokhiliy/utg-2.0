@@ -144,7 +144,7 @@ delivery methods a place actually has: Нова Пошта reports settlements w
 genuinely is not offered everywhere.
 
 The warehouse search is the carrier's, not ours. We used to page through a whole city and filter the merged list in
-process, which cannot work: Киïв alone reports over twelve thousand pickup points, so the merge never completed and the
+process, which cannot work: Київ alone reports over twelve thousand pickup points, so the merge never completed and the
 biggest cities silently lost their directory. Now one query goes to the carrier's own search and comes back in a single
 page. What stays ours is the policy — the branch/поштомат split, the refusal to offer a point the carrier marks closed or
 unselectable, and the row caps. Answers are cached in process for five minutes, keyed per settlement query and per
