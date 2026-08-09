@@ -32,9 +32,6 @@ const QUERY_PARAM = "q";
 const CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
 const SHOUTED_CITY_REF = CITY_REF.toUpperCase();
 const SECOND_CITY_REF = "db5c88f5-391c-11dd-90d9-001a92567626";
-const CITY_INDEX_WIDTH = 3;
-const CITY_INDEX_PAD = "0";
-const CITY_REF_PREFIX = CITY_REF.slice(0, CITY_REF.length - CITY_INDEX_WIDTH);
 const BRANCH_METHOD = "branch";
 const POSTOMAT_METHOD = "postomat";
 const UNKNOWN_METHOD = "garbage";
@@ -42,38 +39,28 @@ const MAX_CITY_REF_LENGTH = 64;
 const BLANK_CITY = "   ";
 const OVERLONG_CITY = "c".repeat(MAX_CITY_REF_LENGTH + 1);
 
-const PAGE_SIZE = 500;
-const MAX_PAGES = 10;
+const FIRST_PAGE = "1";
+const PAGE_LIMIT = 500;
 const ROW_LIMIT = 30;
-const BULK_ROW_COUNT = 60;
-const CAP_OVERFLOW_ROW_COUNT = 119;
-const LAST_PAGE_ROW_COUNT = 3;
-const MERGE_TIMEOUT_MS = 7000;
-const MERGE_SIGNAL_COUNT = 1;
-const FAILED_MERGE_CALL_COUNT = 2;
-const REPEATED_BRANCH_COUNT = 11;
-const REPEATED_PAGE_CALL_COUNT = 3;
-const UNDECODABLE_ROW_COUNT = 4;
-const MAX_CONCURRENT_MERGES = 4;
-const CONCURRENT_CITY_COUNT = 5;
-const REFUSED_MERGE_COUNT = CONCURRENT_CITY_COUNT - MAX_CONCURRENT_MERGES;
-const WAREHOUSE_CACHE_TTL_MS = 86_400_000;
-const WAREHOUSE_TTL_MERGE_COUNT = 2;
-const SEPARATE_CITY_MERGE_COUNT = 2;
-const CACHE_MAX_CITIES = 150;
-const CACHED_CITY_COUNT = CACHE_MAX_CITIES + 1;
-const EVICTION_RELOAD_COUNT = CACHED_CITY_COUNT + 1;
-const EVICTED_CITY_INDEX = 0;
-const RETAINED_CITY_INDEX = 1;
-const LABEL_CAP = 256;
-const IDENTIFIER_CAP = 64;
-const OVERLONG_LABEL_LENGTH = 900;
-const OVERLONG_NUMBER_LENGTH = 300;
-const TAB_CHAR_CODE = 9;
-const NEWLINE_CHAR_CODE = 10;
-const DIRECTORY_MAX_REQUESTS = 60;
-const MIN_RETRY_AFTER_SECONDS = 1;
-const MAX_RETRY_AFTER_SECONDS = 60;
+const FIND_BY_STRING_KEY = "FindByString";
+const REQUEST_TIMEOUT_MS = 7000;
+const CLIENT_DEFAULT_TIMEOUT_MS = 2500;
+
+const WAREHOUSE_CACHE_TTL_MS = 300_000;
+const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
+const CACHE_MAX_ENTRIES = 500;
+const CACHED_QUERY_COUNT = CACHE_MAX_ENTRIES + 1;
+const EVICTION_RELOAD_COUNT = CACHED_QUERY_COUNT + 1;
+const EVICTED_QUERY_INDEX = 0;
+const RETAINED_QUERY_INDEX = 1;
+const INDEXED_QUERY_PREFIX = "q";
+const TTL_RELOAD_COUNT = 2;
+const NEGATIVE_TTL_RETRY_COUNT = 2;
+const SEPARATE_METHOD_CALL_COUNT = 2;
+const SEPARATE_QUERY_CALL_COUNT = 2;
+const SEPARATE_CITY_CALL_COUNT = 2;
+const EMPTY_ANSWER_RELOAD_COUNT = 2;
+const CONCURRENT_REQUEST_COUNT = 2;
 
 const OK_STATUS = 200;
 const INVALID_REQUEST_STATUS = 400;
@@ -84,6 +71,11 @@ const UNAVAILABLE_STATUS = 503;
 const TOO_MANY_REQUESTS_BODY = '{"error":"Too many requests"}';
 const INVALID_REQUEST_BODY = '{"error":"Invalid request"}';
 const UNAVAILABLE_BODY = '{"error":"Directory service is unavailable"}';
+const EMPTY_ITEMS_BODY = '{"items":[]}';
+
+const DIRECTORY_MAX_REQUESTS = 60;
+const MIN_RETRY_AFTER_SECONDS = 1;
+const MAX_RETRY_AFTER_SECONDS = 60;
 
 const FORCE_DYNAMIC = "force-dynamic";
 const ITEM_KEYS = ["label", "number"];
@@ -106,8 +98,24 @@ const DENIED_CODE = 1;
 const DENIED_DECISION = true;
 const TYPE_OF_WAREHOUSE_REF = "9a68df70-0267-42a8-bb5c-37f427e36ee4";
 
+const LABEL_CAP = 256;
+const IDENTIFIER_CAP = 64;
+const OVERLONG_LABEL_LENGTH = 900;
+const OVERLONG_NUMBER_LENGTH = 300;
+const TAB_CHAR_CODE = 9;
+const NEWLINE_CHAR_CODE = 10;
+const ZERO_WIDTH_SPACE_CODE = 8203;
+const ZERO_WIDTH_SPACE = String.fromCharCode(ZERO_WIDTH_SPACE_CODE);
+
+const EMPTY_TEXT = "";
+const BULK_ROW_COUNT = 60;
+const CAP_OVERFLOW_ROW_COUNT = 119;
+const CROWDED_ROW_COUNT = 40;
+const NUMERIC_NUMBER = 1;
+
 const CAPTURED_NUMBER = "1";
 const CAPTURED_LABEL = "Відділення №1: вул. Пирогівський шлях, 135";
+const REPEATED_LABEL = "Відділення №1: вул. Інша, 7";
 const POSTOMAT_NUMBER = "2";
 const DENIED_NUMBER = "3";
 const CLOSED_NUMBER = "4";
@@ -129,25 +137,9 @@ const WRAPPED_DENIED_FLAG = `${String.fromCharCode(
 
 const OVERLONG_NUMBER = "9".repeat(OVERLONG_NUMBER_LENGTH);
 const CAPPED_NUMBER = "9".repeat(IDENTIFIER_CAP);
-
-const STREET_NUMBER = "41";
-const OTHER_STREET_NUMBER = "42";
-const FAR_STREET_NUMBER = "43";
-const STREET_LABEL = "Відділення №41: вул. Хрещатик, 22";
-const OTHER_STREET_LABEL = "Відділення №42: вул. Січових Стрільців, 8";
-const FAR_STREET_LABEL = "Відділення №43: просп. Науки, 3";
-const STREET_QUERY = "хрещатик";
-const SHOUTED_STREET_QUERY = "ХРЕЩАТИК";
-
 const OVERLONG_LABEL_NUMBER = "77";
 const OVERLONG_LABEL = "в".repeat(OVERLONG_LABEL_LENGTH);
 const CAPPED_LABEL = "в".repeat(LABEL_CAP);
-
-const CAP_OVERFLOW_QUERY = "1";
-const CAP_OVERFLOW_FIRST_NUMBER = "1";
-
-const SECOND_CITY_NUMBER = "301";
-const SECOND_CITY_LABEL = "Відділення №301: вул. Соборності, 4";
 
 const EXACT_NUMBER = "12";
 const PREFIXED_NUMBER = "120";
@@ -155,10 +147,55 @@ const ADDRESS_NUMBER = "3";
 const EXACT_LABEL = "Відділення №12: вул. Соборна, 5";
 const PREFIXED_LABEL = "Відділення №120: вул. Миру, 1";
 const ADDRESS_LABEL = "Відділення №3: вул. 12-го Квітня, 7";
-const BARE_QUERY = "12";
-const NUMBER_SIGN_QUERY = "№12";
-const EMPTY_QUERY = "";
 const RANKED_NUMBERS = [EXACT_NUMBER, PREFIXED_NUMBER, ADDRESS_NUMBER];
+
+const STREET_NUMBER = "41";
+const OTHER_STREET_NUMBER = "42";
+const FAR_STREET_NUMBER = "43";
+const STREET_LABEL = "Відділення №41: вул. Хрещатик, 22";
+const OTHER_STREET_LABEL = "Відділення №42: вул. Січових Стрільців, 8";
+const FAR_STREET_LABEL = "Відділення №43: просп. Науки, 3";
+const UNFILTERED_NUMBERS = [
+  STREET_NUMBER,
+  OTHER_STREET_NUMBER,
+  FAR_STREET_NUMBER,
+];
+
+const SECOND_CITY_NUMBER = "301";
+const SECOND_CITY_LABEL = "Відділення №301: вул. Соборності, 4";
+
+const MAX_QUERY_LENGTH = 64;
+const OVERLONG_QUERY_LENGTH = 300;
+const NUMBER_SIGN = "№";
+const BARE_QUERY = "12";
+const SIGNED_QUERY = `${NUMBER_SIGN}${BARE_QUERY}`;
+const SPACED_SIGNED_QUERY = `${NUMBER_SIGN} ${BARE_QUERY}`;
+const DOUBLE_SIGNED_QUERY = `${NUMBER_SIGN}${SIGNED_QUERY}`;
+const STREET_QUERY = "хрещатик";
+const SHOUTED_STREET_QUERY = STREET_QUERY.toUpperCase();
+const SPLIT_STREET_QUERY = `хре${ZERO_WIDTH_SPACE}щатик`;
+const PADDED_STREET_QUERY = "  вул.   Хрещатик  ";
+const COLLAPSED_STREET_QUERY = "вул. Хрещатик";
+const OVERLONG_QUERY = "х".repeat(OVERLONG_QUERY_LENGTH);
+const SLICED_QUERY = "х".repeat(MAX_QUERY_LENGTH);
+const EMPTY_QUERY = "";
+const BLANK_QUERY = "   ";
+const CAP_OVERFLOW_QUERY = "1";
+const CAP_OVERFLOW_FIRST_NUMBER = "1";
+const CROWDED_QUERY = "вул";
+
+const GATEWAY_TEXT = "np gateway error page";
+const RATE_LIMITED_ENVELOPE = {
+  success: false,
+  data: [],
+  errors: [],
+  errorCodes: [],
+};
+const NON_ARRAY_DATA_ENVELOPE = { success: true, data: {} };
+const NON_OBJECT_ROW = "не об'єкт";
+const TIMEOUT_ERROR_NAME = "TimeoutError";
+const TIMEOUT_ERROR_MESSAGE = "The operation was aborted due to timeout";
+const NETWORK_ERROR_MESSAGE = "fetch failed";
 
 interface WarehouseRow {
   Description?: string;
@@ -169,9 +206,15 @@ interface WarehouseRow {
   TypeOfWarehouse: string;
 }
 
-type PageResponder = () => Response;
+interface NormalizationCase {
+  raw: string;
+  sent: string;
+}
 
-type RouteHandler = (request: NextRequest) => Promise<Response>;
+interface TimeoutRecorder {
+  delays: number[];
+  signals: AbortSignal[];
+}
 
 interface ResponseGate {
   respond: () => Promise<Response>;
@@ -181,7 +224,7 @@ interface ResponseGate {
 const loadRoute = () => import("@root/app/api/np/warehouses/route");
 
 const readText = (value: unknown): string =>
-  typeof value === "string" ? value : "";
+  typeof value === "string" ? value : EMPTY_TEXT;
 
 const buildRow = (
   number: string,
@@ -230,23 +273,7 @@ const buildDescendingNumbers = (from: number, count: number): string[] => {
   return numbers;
 };
 
-const buildAscendingNumbers = (from: number, count: number): string[] => {
-  const numbers: string[] = [];
-
-  for (let offset = 0; offset < count; offset += 1) {
-    numbers.push(String(from + offset));
-  }
-
-  return numbers;
-};
-
-const FIRST_PAGE_ROWS = buildAscendingPage(PAGE_SIZE, 1);
-const LAST_PAGE_ROWS = buildAscendingPage(LAST_PAGE_ROW_COUNT, PAGE_SIZE + 1, {
-  CategoryOfWarehouse: POSTOMAT_CATEGORY,
-});
-const LAST_PAGE_NUMBERS = LAST_PAGE_ROWS.map((row) => row.Number);
-const DESCENDING_ROWS = buildDescendingPage(BULK_ROW_COUNT);
-const CAP_OVERFLOW_ROWS = buildDescendingPage(CAP_OVERFLOW_ROW_COUNT);
+const EMPTY_ROWS: readonly WarehouseRow[] = [];
 
 const MIXED_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
@@ -257,12 +284,24 @@ const MIXED_ROWS: readonly WarehouseRow[] = [
   buildRow(NAMELESS_NUMBER, { Description: undefined }),
 ];
 
-const EMPTY_ROWS: readonly WarehouseRow[] = [];
+const POLICY_REJECTED_ROWS: readonly WarehouseRow[] = [
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: POSTOMAT_CATEGORY }),
+  buildRow(DENIED_NUMBER, { DenyToSelect: DENIED_FLAG }),
+  buildRow(CLOSED_NUMBER, { WarehouseStatus: CLOSED_STATUS }),
+  buildRow(CARGO_NUMBER, { CategoryOfWarehouse: CARGO_CATEGORY }),
+];
 
-const RANKING_ROWS: readonly WarehouseRow[] = [
-  buildRow(EXACT_NUMBER, { Description: EXACT_LABEL }),
-  buildRow(ADDRESS_NUMBER, { Description: ADDRESS_LABEL }),
-  buildRow(PREFIXED_NUMBER, { Description: PREFIXED_LABEL }),
+const CROWDED_DENIED_ROWS: readonly WarehouseRow[] = buildAscendingPage(
+  CROWDED_ROW_COUNT,
+  1,
+  { DenyToSelect: DENIED_FLAG }
+);
+
+const UNDECODABLE_ROWS: readonly unknown[] = [
+  NON_OBJECT_ROW,
+  { ...buildRow(CAPTURED_NUMBER), Number: NUMERIC_NUMBER },
+  buildRow(POSTOMAT_NUMBER, { Description: EMPTY_TEXT }),
+  { ...buildRow(DENIED_NUMBER), Number: EMPTY_TEXT },
 ];
 
 const DENY_FLAVOUR_ROWS: readonly WarehouseRow[] = [
@@ -278,38 +317,44 @@ const PADDED_DENY_ROWS: readonly WarehouseRow[] = [
   buildRow(PADDED_ALLOWED_NUMBER, { DenyToSelect: ALLOWED_FLAG }),
 ];
 
+const DUPLICATE_NUMBER_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+  buildRow(CAPTURED_NUMBER, { Description: REPEATED_LABEL }),
+];
+
 const OVERLONG_NUMBER_ROWS: readonly WarehouseRow[] = [
   buildRow(OVERLONG_NUMBER),
-];
-
-const REPEATED_PAGE_ROWS: readonly WarehouseRow[] = [
-  ...buildAscendingPage(REPEATED_BRANCH_COUNT, 1),
-  ...buildAscendingPage(
-    PAGE_SIZE - REPEATED_BRANCH_COUNT,
-    REPEATED_BRANCH_COUNT + 1,
-    { CategoryOfWarehouse: CARGO_CATEGORY }
-  ),
-];
-
-const REPEATED_BRANCH_NUMBERS = buildAscendingNumbers(1, REPEATED_BRANCH_COUNT);
-
-const UNDECODABLE_ROWS: readonly unknown[] = buildAscendingPage(
-  UNDECODABLE_ROW_COUNT,
-  1
-).map((row, index) => ({ ...row, Number: index + 1 }));
-
-const ADDRESS_FILTER_ROWS: readonly WarehouseRow[] = [
-  buildRow(STREET_NUMBER, { Description: STREET_LABEL }),
-  buildRow(OTHER_STREET_NUMBER, { Description: OTHER_STREET_LABEL }),
-  buildRow(FAR_STREET_NUMBER, { Description: FAR_STREET_LABEL }),
 ];
 
 const OVERLONG_LABEL_ROWS: readonly WarehouseRow[] = [
   buildRow(OVERLONG_LABEL_NUMBER, { Description: OVERLONG_LABEL }),
 ];
 
+const RANKING_ROWS: readonly WarehouseRow[] = [
+  buildRow(ADDRESS_NUMBER, { Description: ADDRESS_LABEL }),
+  buildRow(PREFIXED_NUMBER, { Description: PREFIXED_LABEL }),
+  buildRow(EXACT_NUMBER, { Description: EXACT_LABEL }),
+];
+
+const ADDRESS_ROWS: readonly WarehouseRow[] = [
+  buildRow(STREET_NUMBER, { Description: STREET_LABEL }),
+  buildRow(OTHER_STREET_NUMBER, { Description: OTHER_STREET_LABEL }),
+  buildRow(FAR_STREET_NUMBER, { Description: FAR_STREET_LABEL }),
+];
+
 const SECOND_CITY_ROWS: readonly WarehouseRow[] = [
   buildRow(SECOND_CITY_NUMBER, { Description: SECOND_CITY_LABEL }),
+];
+
+const DESCENDING_ROWS = buildDescendingPage(BULK_ROW_COUNT);
+const CAP_OVERFLOW_ROWS = buildDescendingPage(CAP_OVERFLOW_ROW_COUNT);
+
+const NORMALIZATION_CASES: readonly NormalizationCase[] = [
+  { raw: SPLIT_STREET_QUERY, sent: STREET_QUERY },
+  { raw: PADDED_STREET_QUERY, sent: COLLAPSED_STREET_QUERY },
+  { raw: SPACED_SIGNED_QUERY, sent: BARE_QUERY },
+  { raw: DOUBLE_SIGNED_QUERY, sent: SIGNED_QUERY },
+  { raw: OVERLONG_QUERY, sent: SLICED_QUERY },
 ];
 
 const BRANCH_PARAMS = {
@@ -337,6 +382,41 @@ const INVALID_PARAMS: readonly Record<string, string>[] = [
   { [CITY_PARAM]: CITY_REF, [METHOD_PARAM]: UNKNOWN_METHOD },
 ];
 
+const npResponse = (rows: readonly unknown[]): Response =>
+  jsonResponse({ success: true, data: rows }, OK_STATUS);
+
+const okRows =
+  (rows: readonly unknown[]): FetchStub =>
+  () =>
+    Promise.resolve(npResponse(rows));
+
+const NOT_OK_FAILURE: FetchStub = () =>
+  Promise.resolve(new Response(null, { status: BAD_GATEWAY_STATUS }));
+
+const SUCCESS_FALSE_FAILURE: FetchStub = () =>
+  Promise.resolve(jsonResponse(RATE_LIMITED_ENVELOPE, OK_STATUS));
+
+const NON_RECORD_FAILURE: FetchStub = () =>
+  Promise.resolve(jsonResponse(GATEWAY_TEXT, OK_STATUS));
+
+const NON_ARRAY_DATA_FAILURE: FetchStub = () =>
+  Promise.resolve(jsonResponse(NON_ARRAY_DATA_ENVELOPE, OK_STATUS));
+
+const TIMEOUT_FAILURE: FetchStub = () =>
+  Promise.reject(new DOMException(TIMEOUT_ERROR_MESSAGE, TIMEOUT_ERROR_NAME));
+
+const NETWORK_FAILURE: FetchStub = () =>
+  Promise.reject(new TypeError(NETWORK_ERROR_MESSAGE));
+
+const UPSTREAM_FAILURES: readonly FetchStub[] = [
+  NOT_OK_FAILURE,
+  SUCCESS_FALSE_FAILURE,
+  NON_RECORD_FAILURE,
+  NON_ARRAY_DATA_FAILURE,
+  TIMEOUT_FAILURE,
+  NETWORK_FAILURE,
+];
+
 const buildRequestUrl = (params: Record<string, string>): string =>
   `${ROUTE_URL}?${new URLSearchParams(params).toString()}`;
 
@@ -348,40 +428,95 @@ const buildRequest = (params: Record<string, string>): NextRequest =>
 const buildAnonymousRequest = (params: Record<string, string>): NextRequest =>
   new NextRequest(buildRequestUrl(params));
 
-const buildCityParams = (index: number): Record<string, string> => ({
+const buildQueryParams = (query: string): Record<string, string> => ({
   ...BRANCH_PARAMS,
-  [CITY_PARAM]: `${CITY_REF_PREFIX}${String(index).padStart(
-    CITY_INDEX_WIDTH,
-    CITY_INDEX_PAD
-  )}`,
+  [QUERY_PARAM]: query,
 });
 
-const startCityMerges = (
-  handler: RouteHandler,
-  cityCount: number
-): Promise<Response>[] => {
-  const pending: Promise<Response>[] = [];
+const buildIndexedQuery = (index: number): string =>
+  `${INDEXED_QUERY_PREFIX}${index}`;
 
-  for (let index = 0; index < cityCount; index += 1) {
-    pending.push(handler(buildRequest(buildCityParams(index))));
-  }
+const buildMethodProperties = (
+  cityRef: string = CITY_REF
+): Record<string, string> => ({
+  CityRef: cityRef,
+  Page: FIRST_PAGE,
+  Limit: String(PAGE_LIMIT),
+});
 
-  return pending;
+const buildSearchProperties = (
+  query: string,
+  cityRef: string = CITY_REF
+): Record<string, string> => ({
+  ...buildMethodProperties(cityRef),
+  [FIND_BY_STRING_KEY]: query,
+});
+
+const buildEnvelope = (methodProperties: Record<string, string>): unknown => ({
+  apiKey: FAKE_API_KEY,
+  modelName: NP_MODEL_NAME,
+  calledMethod: NP_METHOD,
+  methodProperties,
+});
+
+const stubSequence = (responders: readonly FetchStub[]): Mock<FetchStub> => {
+  let callIndex = 0;
+
+  return stubUpstream((input, init) => {
+    const responder = responders[Math.min(callIndex, responders.length - 1)];
+
+    callIndex += 1;
+
+    return responder(input, init);
+  });
 };
 
-const countStatus = (statuses: readonly number[], status: number): number =>
-  statuses.filter((candidate) => candidate === status).length;
+const readBodyEnvelope = (init: RequestInit | undefined): unknown => {
+  const body = init?.body;
 
-const npResponse = (rows: readonly unknown[]): Response =>
-  jsonResponse({ success: true, data: rows }, OK_STATUS);
+  return typeof body === "string" ? JSON.parse(body) : null;
+};
 
-const okPage =
-  (rows: readonly unknown[]): PageResponder =>
-  () =>
-    npResponse(rows);
+const readEnvelope = (fetchStub: Mock<FetchStub>, callIndex: number): unknown =>
+  readBodyEnvelope(fetchStub.mock.calls[callIndex][1]);
 
-const failedPage = (): PageResponder => () =>
-  new Response(null, { status: BAD_GATEWAY_STATUS });
+const readMethodProperties = (
+  fetchStub: Mock<FetchStub>,
+  callIndex: number
+): Record<string, unknown> => {
+  const envelope = readEnvelope(fetchStub, callIndex);
+
+  if (!isRecord(envelope) || !isRecord(envelope.methodProperties)) {
+    return {};
+  }
+
+  return envelope.methodProperties;
+};
+
+const readFindByString = (
+  fetchStub: Mock<FetchStub>,
+  callIndex: number
+): string =>
+  readText(readMethodProperties(fetchStub, callIndex)[FIND_BY_STRING_KEY]);
+
+const readRequestedCity = (init: RequestInit | undefined): string => {
+  const envelope = readBodyEnvelope(init);
+
+  if (!isRecord(envelope) || !isRecord(envelope.methodProperties)) {
+    return EMPTY_TEXT;
+  }
+
+  return readText(envelope.methodProperties.CityRef);
+};
+
+const stubCityRows = (
+  rowsByCity: ReadonlyMap<string, readonly unknown[]>
+): Mock<FetchStub> =>
+  stubUpstream((_input, init) =>
+    Promise.resolve(
+      npResponse(rowsByCity.get(readRequestedCity(init)) ?? EMPTY_ROWS)
+    )
+  );
 
 const createResponseGate = (rows: readonly unknown[]): ResponseGate => {
   let open: () => void = () => undefined;
@@ -398,64 +533,30 @@ const createResponseGate = (rows: readonly unknown[]): ResponseGate => {
   };
 };
 
-const stubHeldPages = (gate: ResponseGate): Mock<FetchStub> =>
-  stubUpstream(gate.respond);
-
-const stubPages = (responders: readonly PageResponder[]): Mock<FetchStub> => {
-  let callIndex = 0;
-
-  return stubUpstream(() => {
-    const responder = responders[Math.min(callIndex, responders.length - 1)];
-
-    callIndex += 1;
-
-    return Promise.resolve(responder());
-  });
-};
-
-const readBodyEnvelope = (init: RequestInit | undefined): unknown => {
-  const body = init?.body;
-
-  return typeof body === "string" ? JSON.parse(body) : null;
-};
-
-const readEnvelope = (fetchStub: Mock<FetchStub>, callIndex: number): unknown =>
-  readBodyEnvelope(fetchStub.mock.calls[callIndex][1]);
-
-const readRequestedCity = (init: RequestInit | undefined): string => {
-  const envelope = readBodyEnvelope(init);
-
-  if (!isRecord(envelope) || !isRecord(envelope.methodProperties)) {
-    return "";
-  }
-
-  return readText(envelope.methodProperties.CityRef);
-};
-
-const stubCityPages = (
-  rowsByCity: ReadonlyMap<string, readonly unknown[]>
-): Mock<FetchStub> =>
-  stubUpstream((_input, init) =>
-    Promise.resolve(
-      npResponse(rowsByCity.get(readRequestedCity(init)) ?? EMPTY_ROWS)
-    )
-  );
-
-const buildEnvelope = (page: number, cityRef: string = CITY_REF): unknown => ({
-  apiKey: FAKE_API_KEY,
-  modelName: NP_MODEL_NAME,
-  calledMethod: NP_METHOD,
-  methodProperties: {
-    CityRef: cityRef,
-    Page: String(page),
-    Limit: String(PAGE_SIZE),
-  },
-});
-
 const readSignal = (
   fetchStub: Mock<FetchStub>,
   callIndex: number
 ): AbortSignal | null | undefined => fetchStub.mock.calls[callIndex][1]?.signal;
+
+const recordTimeoutSignals = (): TimeoutRecorder => {
+  const recorder: TimeoutRecorder = { delays: [], signals: [] };
+  const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+
+  vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
+    const signal = realTimeout(milliseconds);
+
+    recorder.delays.push(milliseconds);
+    recorder.signals.push(signal);
+
+    return signal;
+  });
+
+  return recorder;
+};
+
+const silenceErrorLog = (): void => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+};
 
 const parseItems = (body: string): readonly unknown[] => {
   const payload: unknown = JSON.parse(body);
@@ -473,10 +574,10 @@ const readItems = async (response: Response): Promise<readonly unknown[]> =>
   parseItems(await response.text());
 
 const readNumbers = (items: readonly unknown[]): string[] =>
-  items.map((item) => (isRecord(item) ? readText(item.number) : ""));
+  items.map((item) => (isRecord(item) ? readText(item.number) : EMPTY_TEXT));
 
 const readLabels = (items: readonly unknown[]): string[] =>
-  items.map((item) => (isRecord(item) ? readText(item.label) : ""));
+  items.map((item) => (isRecord(item) ? readText(item.label) : EMPTY_TEXT));
 
 const readItemKeys = (item: unknown): string[] =>
   isRecord(item) ? Object.keys(item).sort() : [];
@@ -500,8 +601,14 @@ afterEach(() => {
 });
 
 describe("GET /api/np/warehouses", () => {
+  it("is declared dynamic so a build can never bake its answer", async () => {
+    const { dynamic } = await loadRoute();
+
+    expect(dynamic).toBe(FORCE_DYNAMIC);
+  });
+
   it("answers 400 without touching the network for every invalid city or method", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
     const statuses: number[] = [];
@@ -526,7 +633,7 @@ describe("GET /api/np/warehouses", () => {
   it("answers 503 without touching the network when the api key is absent", async () => {
     vi.stubEnv(NP_API_KEY_NAME, undefined);
 
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
     const response = await GET(buildRequest(BRANCH_PARAMS));
@@ -536,191 +643,460 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).not.toHaveBeenCalled();
   });
 
-  it("answers 503 and remembers the failure briefly when a page of the merge fails", async () => {
-    const fetchStub = stubPages([
-      okPage(FIRST_PAGE_ROWS),
-      failedPage(),
-      okPage(MIXED_ROWS),
-    ]);
+  it("answers one identical 503 for every other upstream failure flavour, from a bad status to a network throw", async () => {
+    silenceErrorLog();
+
+    const fetchStub = stubSequence(UPSTREAM_FAILURES);
     const { GET } = await loadRoute();
 
-    const failed = await GET(buildRequest(BRANCH_PARAMS));
-    const retried = await GET(buildRequest(BRANCH_PARAMS));
+    const statuses: number[] = [];
+    const bodies: string[] = [];
 
-    expect(failed.status).toBe(UNAVAILABLE_STATUS);
-    expect(await failed.text()).toBe(UNAVAILABLE_BODY);
-    expect(retried.status).toBe(UNAVAILABLE_STATUS);
-    expect(await retried.text()).toBe(UNAVAILABLE_BODY);
-    expect(fetchStub).toHaveBeenCalledTimes(FAILED_MERGE_CALL_COUNT);
+    for (let index = 0; index < UPSTREAM_FAILURES.length; index += 1) {
+      const response = await GET(
+        buildRequest(buildQueryParams(buildIndexedQuery(index)))
+      );
+
+      statuses.push(response.status);
+      bodies.push(await response.text());
+    }
+
+    expect(statuses).toEqual(
+      Array(UPSTREAM_FAILURES.length).fill(UNAVAILABLE_STATUS)
+    );
+    expect(bodies).toEqual(
+      Array(UPSTREAM_FAILURES.length).fill(UNAVAILABLE_BODY)
+    );
+    expect(fetchStub).toHaveBeenCalledTimes(UPSTREAM_FAILURES.length);
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
-  it("keeps no cache entry for a city np answers with nothing usable", async () => {
-    const fetchStub = stubPages([okPage(EMPTY_ROWS), okPage(MIXED_ROWS)]);
+  it("answers 503 when np reports success false at http 200, the shape its own rate limit takes", async () => {
+    const fetchStub = stubSequence([SUCCESS_FALSE_FAILURE]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+    const body = await response.text();
+
+    expect(response.status).toBe(UNAVAILABLE_STATUS);
+    expect(body).toBe(UNAVAILABLE_BODY);
+    expectNoInternals(body);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("answers 503 when np sends rows it can structurally decode none of", async () => {
+    const fetchStub = stubSequence([okRows(UNDECODABLE_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+    const body = await response.text();
+
+    expect(response.status).toBe(UNAVAILABLE_STATUS);
+    expect(body).toBe(UNAVAILABLE_BODY);
+    expectNoInternals(body);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers 200 with an empty list when policy strikes out every structurally sound row", async () => {
+    const fetchStub = stubSequence([okRows(POLICY_REJECTED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("never answers 503 when a query matches many rows of which none is selectable", async () => {
+    const fetchStub = stubSequence([okRows(CROWDED_DENIED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(buildQueryParams(CROWDED_QUERY)));
+
+    expect(response.status).not.toBe(UNAVAILABLE_STATUS);
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers 200 with an empty list when np finds no warehouse at all", async () => {
+    const fetchStub = stubSequence([okRows(EMPTY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps no cache entry for an empty answer so the next request asks np again", async () => {
+    const fetchStub = stubSequence([
+      okRows(POLICY_REJECTED_ROWS),
+      okRows(MIXED_ROWS),
+    ]);
     const { GET } = await loadRoute();
 
     const empty = await GET(buildRequest(BRANCH_PARAMS));
-    const emptyItems = await readItems(empty);
-    const refilled = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const refilled = await GET(buildRequest(BRANCH_PARAMS));
 
     expect(empty.status).toBe(OK_STATUS);
-    expect(emptyItems).toEqual([]);
-    expect(readNumbers(refilled)).toEqual([CAPTURED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(2);
-    expect(readEnvelope(fetchStub, 1)).toEqual(buildEnvelope(1));
+    expect(await readItems(empty)).toEqual([]);
+    expect(readNumbers(await readItems(refilled))).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(EMPTY_ANSWER_RELOAD_COUNT);
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
-  it("collapses two concurrent cold requests into one upstream merge", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+  it("answers 503 and remembers the failure for thirty seconds before it asks np again", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE_TIME);
+
+    const fetchStub = stubSequence([NOT_OK_FAILURE, okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
-    const [branches, postomats] = await Promise.all([
-      GET(buildRequest(BRANCH_PARAMS)),
-      GET(buildRequest(POSTOMAT_PARAMS)),
-    ]);
+    const failed = await GET(buildRequest(BRANCH_PARAMS));
 
-    expect(readNumbers(await readItems(branches))).toEqual([CAPTURED_NUMBER]);
-    expect(readNumbers(await readItems(postomats))).toEqual([POSTOMAT_NUMBER]);
+    expect(failed.status).toBe(UNAVAILABLE_STATUS);
+    expect(await failed.text()).toBe(UNAVAILABLE_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
 
-  it("merges the pages of one city under a single deadline and stops at the short page", async () => {
-    const timeoutSignals = vi.spyOn(AbortSignal, "timeout");
-    const fetchStub = stubPages([
-      okPage(FIRST_PAGE_ROWS),
-      okPage(LAST_PAGE_ROWS),
-    ]);
-    const { GET } = await loadRoute();
+    vi.setSystemTime(BASE_TIME + WAREHOUSE_NEGATIVE_CACHE_TTL_MS - 1);
 
-    const response = await GET(buildRequest(POSTOMAT_PARAMS));
-    const items = await readItems(response);
+    const remembered = await GET(buildRequest(BRANCH_PARAMS));
 
-    expect(response.status).toBe(OK_STATUS);
-    expect(readNumbers(items)).toEqual(LAST_PAGE_NUMBERS);
-    expect(fetchStub).toHaveBeenCalledTimes(2);
-    expect(readEnvelope(fetchStub, 0)).toEqual(buildEnvelope(1));
-    expect(readEnvelope(fetchStub, 1)).toEqual(buildEnvelope(2));
-    expect(readSignal(fetchStub, 0)).toBeInstanceOf(AbortSignal);
-    expect(readSignal(fetchStub, 0)).toBe(readSignal(fetchStub, 1));
-    expect(timeoutSignals).toHaveBeenCalledTimes(MERGE_SIGNAL_COUNT);
-    expect(timeoutSignals).toHaveBeenCalledWith(MERGE_TIMEOUT_MS);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("refuses the merge at the page cap instead of serving a truncated city", async () => {
-    const fetchStub = stubPages([okPage(FIRST_PAGE_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const response = await GET(buildRequest(BRANCH_PARAMS));
-
-    expect(response.status).toBe(UNAVAILABLE_STATUS);
-    expect(await response.text()).toBe(UNAVAILABLE_BODY);
-    expect(fetchStub).toHaveBeenCalledTimes(MAX_PAGES);
-    expect(readEnvelope(fetchStub, MAX_PAGES - 1)).toEqual(
-      buildEnvelope(MAX_PAGES)
-    );
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("counts a repeated page once when np ignores the page parameter", async () => {
-    const fetchStub = stubPages([
-      okPage(REPEATED_PAGE_ROWS),
-      okPage(REPEATED_PAGE_ROWS),
-      okPage(EMPTY_ROWS),
-    ]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(items)).toEqual(REPEATED_BRANCH_NUMBERS);
-    expect(fetchStub).toHaveBeenCalledTimes(REPEATED_PAGE_CALL_COUNT);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("answers 503 when a page arrives full of rows it can decode none of", async () => {
-    const fetchStub = stubPages([okPage(UNDECODABLE_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const response = await GET(buildRequest(BRANCH_PARAMS));
-
-    expect(response.status).toBe(UNAVAILABLE_STATUS);
-    expect(await response.text()).toBe(UNAVAILABLE_BODY);
+    expect(remembered.status).toBe(UNAVAILABLE_STATUS);
+    expect(await remembered.text()).toBe(UNAVAILABLE_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
 
-  it("refuses a fifth concurrent city merge instead of fanning out", async () => {
-    const gate = createResponseGate(MIXED_ROWS);
-    const fetchStub = stubHeldPages(gate);
-    const { GET } = await loadRoute();
+    vi.setSystemTime(BASE_TIME + WAREHOUSE_NEGATIVE_CACHE_TTL_MS);
 
-    const pending = startCityMerges(GET, CONCURRENT_CITY_COUNT);
-
-    gate.release();
-
-    const statuses = (await Promise.all(pending)).map(
-      (response) => response.status
-    );
-
-    expect(countStatus(statuses, OK_STATUS)).toBe(MAX_CONCURRENT_MERGES);
-    expect(countStatus(statuses, UNAVAILABLE_STATUS)).toBe(REFUSED_MERGE_COUNT);
-    expect(fetchStub).toHaveBeenCalledTimes(MAX_CONCURRENT_MERGES);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("serves a city it has already merged while the concurrency cap is saturated", async () => {
-    const warmFetch = stubPages([okPage(MIXED_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const warmed = await GET(buildRequest(BRANCH_PARAMS));
-
-    expect(warmed.status).toBe(OK_STATUS);
-    expect(warmFetch).toHaveBeenCalledTimes(1);
-
-    const gate = createResponseGate(MIXED_ROWS);
-    const heldFetch = stubHeldPages(gate);
-    const pending = startCityMerges(GET, MAX_CONCURRENT_MERGES);
-
-    const served = await GET(buildRequest(BRANCH_PARAMS));
-    const items = await readItems(served);
-
-    gate.release();
-    await Promise.all(pending);
-
-    expect(served.status).toBe(OK_STATUS);
-    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
-    expect(heldFetch).toHaveBeenCalledTimes(MAX_CONCURRENT_MERGES);
-    expectUpstreamOnly(heldFetch.mock.calls, NP_API_URL);
-  });
-
-  it("forgets a city it refused at the concurrency cap instead of remembering a failure", async () => {
-    const gate = createResponseGate(MIXED_ROWS);
-    const heldFetch = stubHeldPages(gate);
-    const { GET } = await loadRoute();
-
-    const pending = startCityMerges(GET, MAX_CONCURRENT_MERGES);
-    const refused = await GET(buildRequest(BRANCH_PARAMS));
-
-    gate.release();
-    await Promise.all(pending);
-
-    expect(refused.status).toBe(UNAVAILABLE_STATUS);
-    expect(await refused.text()).toBe(UNAVAILABLE_BODY);
-    expect(heldFetch).toHaveBeenCalledTimes(MAX_CONCURRENT_MERGES);
-
-    const retryFetch = stubPages([okPage(MIXED_ROWS)]);
     const retried = await GET(buildRequest(BRANCH_PARAMS));
 
     expect(retried.status).toBe(OK_STATUS);
     expect(readNumbers(await readItems(retried))).toEqual([CAPTURED_NUMBER]);
-    expect(retryFetch).toHaveBeenCalledTimes(1);
-    expect(readEnvelope(retryFetch, 0)).toEqual(buildEnvelope(1));
-    expectUpstreamOnly(retryFetch.mock.calls, NP_API_URL);
+    expect(fetchStub).toHaveBeenCalledTimes(NEGATIVE_TTL_RETRY_COUNT);
   });
 
-  it("merges every city on its own and never serves one city's warehouses for another", async () => {
-    const fetchStub = stubCityPages(
+  it("asks np for one capped page of the city and sends no FindByString at all when the query is empty", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const absent = await GET(buildRequest(BRANCH_PARAMS));
+    const blank = await GET(buildRequest(buildQueryParams(BLANK_QUERY)));
+
+    expect(absent.status).toBe(OK_STATUS);
+    expect(blank.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readEnvelope(fetchStub, 0)).toEqual(
+      buildEnvelope(buildMethodProperties())
+    );
+    expect(readMethodProperties(fetchStub, 0)).not.toHaveProperty(
+      FIND_BY_STRING_KEY
+    );
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("delegates the substring search to np by sending the normalized query as FindByString", async () => {
+    const fetchStub = stubSequence([okRows(ADDRESS_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(buildQueryParams(STREET_QUERY)));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readEnvelope(fetchStub, 0)).toEqual(
+      buildEnvelope(buildSearchProperties(STREET_QUERY))
+    );
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("hands fetch its own seven second signal so the client's two and a half second default is never inherited again", async () => {
+    const recorder = recordTimeoutSignals();
+
+    let abortedOnEntry = true;
+
+    const fetchStub = stubUpstream((_input, init) => {
+      abortedOnEntry = init?.signal?.aborted ?? true;
+
+      return Promise.resolve(npResponse(MIXED_ROWS));
+    });
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+    const signal = readSignal(fetchStub, 0);
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(abortedOnEntry).toBe(false);
+    expect(recorder.delays).toEqual([REQUEST_TIMEOUT_MS]);
+    expect(recorder.delays).not.toContain(CLIENT_DEFAULT_TIMEOUT_MS);
+    expect(signal).toBe(recorder.signals[0]);
+  });
+
+  it("normalizes the query before it reaches np without ever touching its letter case", async () => {
+    const fetchStub = stubSequence([okRows(ADDRESS_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const sent: string[] = [];
+
+    for (const [index, testCase] of NORMALIZATION_CASES.entries()) {
+      const response = await GET(buildRequest(buildQueryParams(testCase.raw)));
+
+      expect(response.status).toBe(OK_STATUS);
+      sent.push(readFindByString(fetchStub, index));
+    }
+
+    expect(sent).toEqual(NORMALIZATION_CASES.map((testCase) => testCase.sent));
+    expect(fetchStub).toHaveBeenCalledTimes(NORMALIZATION_CASES.length);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("sends a shouted query upstream shouted and keeps it apart from its lowercase spelling", async () => {
+    const fetchStub = stubSequence([okRows(ADDRESS_ROWS)]);
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest(buildQueryParams(SHOUTED_STREET_QUERY)));
+    await GET(buildRequest(buildQueryParams(STREET_QUERY)));
+
+    expect(readFindByString(fetchStub, 0)).toBe(SHOUTED_STREET_QUERY);
+    expect(readFindByString(fetchStub, 1)).toBe(STREET_QUERY);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
+  });
+
+  it("ranks an exact number match first, then the number prefixes, then whatever np sent", async () => {
+    const fetchStub = stubSequence([okRows(RANKING_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const signed = await readItems(
+      await GET(buildRequest(buildQueryParams(SIGNED_QUERY)))
+    );
+    const bare = await readItems(
+      await GET(buildRequest(buildQueryParams(BARE_QUERY)))
+    );
+
+    expect(readNumbers(signed)).toEqual(RANKED_NUMBERS);
+    expect(readNumbers(bare)).toEqual(RANKED_NUMBERS);
+    expect(readFindByString(fetchStub, 0)).toBe(BARE_QUERY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a warehouse whose address does not carry the query because np already did the matching", async () => {
+    const fetchStub = stubSequence([okRows(ADDRESS_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(buildRequest(buildQueryParams(STREET_QUERY)))
+    );
+
+    expect(readNumbers(items)).toEqual(UNFILTERED_NUMBERS);
+    expect(readLabels(items)).toContain(OTHER_STREET_LABEL);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("browses the first thirty rows in upstream order when there is no query", async () => {
+    const fetchStub = stubSequence([okRows(DESCENDING_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const blank = await readItems(
+      await GET(buildRequest(buildQueryParams(EMPTY_QUERY)))
+    );
+    const absent = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(blank).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(blank)).toEqual(
+      buildDescendingNumbers(BULK_ROW_COUNT, ROW_LIMIT)
+    );
+    expect(readNumbers(absent)).toEqual(readNumbers(blank));
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an exact number match first when the prefix matches overflow the cap", async () => {
+    const fetchStub = stubSequence([okRows(CAP_OVERFLOW_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(buildRequest(buildQueryParams(CAP_OVERFLOW_QUERY)))
+    );
+
+    expect(items).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(items)[0]).toBe(CAP_OVERFLOW_FIRST_NUMBER);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops the rows np marks unusable and keeps the description verbatim", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
+    expect(readLabels(items)).toEqual([CAPTURED_LABEL]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("denies a warehouse np marks unselectable as a number or a boolean, not only as a string", async () => {
+    const fetchStub = stubSequence([okRows(DENY_FLAVOUR_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([STRING_ALLOWED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies an unselectable warehouse whose flag carries surrounding whitespace", async () => {
+    const fetchStub = stubSequence([okRows(PADDED_DENY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([PADDED_ALLOWED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the first of two warehouses np sends under one number", async () => {
+    const fetchStub = stubSequence([okRows(DUPLICATE_NUMBER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
+    expect(readLabels(items)).toEqual([CAPTURED_LABEL]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("caps an overlong np warehouse number to sixty-four characters", async () => {
+    const fetchStub = stubSequence([okRows(OVERLONG_NUMBER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPPED_NUMBER]);
+    expect(readNumbers(items)[0]).toHaveLength(IDENTIFIER_CAP);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("caps an overlong np description so one bad row cannot pin the cache", async () => {
+    const fetchStub = stubSequence([okRows(OVERLONG_LABEL_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readLabels(items)).toEqual([CAPPED_LABEL]);
+    expect(readLabels(items)[0]).toHaveLength(LABEL_CAP);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("emits nothing but the number and label of every warehouse", async () => {
+    stubSequence([okRows(DESCENDING_ROWS)]);
+
+    const { GET } = await loadRoute();
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+    const body = await response.text();
+    const items = parseItems(body);
+
+    expect(items).toHaveLength(ROW_LIMIT);
+
+    for (const item of items) {
+      expect(readItemKeys(item)).toEqual(ITEM_KEYS);
+    }
+
+    expectNoInternals(body);
+  });
+
+  it("asks np once per method and never serves a postomat as a branch", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(readNumbers(branches)).toEqual([CAPTURED_NUMBER]);
+    expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_METHOD_CALL_COUNT);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("serves a repeated triple from the cache and asks np again for a new query", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const first = await GET(buildRequest(BRANCH_PARAMS));
+    const repeated = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(await first.text()).toBe(await repeated.text());
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+
+    const searched = await GET(buildRequest(buildQueryParams(BARE_QUERY)));
+
+    expect(searched.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
+  });
+
+  it("collapses two concurrent requests for one triple into a single upstream call", async () => {
+    const gate = createResponseGate(MIXED_ROWS);
+    const fetchStub = stubUpstream(gate.respond);
+    const { GET } = await loadRoute();
+
+    const pending = [
+      GET(buildRequest(BRANCH_PARAMS)),
+      GET(buildRequest(BRANCH_PARAMS)),
+    ];
+
+    gate.release();
+
+    const responses = await Promise.all(pending);
+    const numbers = await Promise.all(
+      responses.map(async (response) => readNumbers(await readItems(response)))
+    );
+
+    expect(responses).toHaveLength(CONCURRENT_REQUEST_COUNT);
+    expect(numbers).toEqual(
+      Array(CONCURRENT_REQUEST_COUNT).fill([CAPTURED_NUMBER])
+    );
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
+  });
+
+  it("shares one answer across the letter case of a city ref", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const lowercased = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const shouted = await readItems(
+      await GET(buildRequest(SHOUTED_BRANCH_PARAMS))
+    );
+
+    expect(readNumbers(lowercased)).toEqual([CAPTURED_NUMBER]);
+    expect(readNumbers(shouted)).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readEnvelope(fetchStub, 0)).toEqual(
+      buildEnvelope(buildMethodProperties())
+    );
+  });
+
+  it("sends the lowercased city ref upstream when the shouted spelling arrives first", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const shouted = await readItems(
+      await GET(buildRequest(SHOUTED_BRANCH_PARAMS))
+    );
+    const lowercased = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(shouted)).toEqual([CAPTURED_NUMBER]);
+    expect(readNumbers(lowercased)).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(readEnvelope(fetchStub, 0)).toEqual(
+      buildEnvelope(buildMethodProperties())
+    );
+  });
+
+  it("asks np for every city on its own and never serves one city's warehouses for another", async () => {
+    const fetchStub = stubCityRows(
       new Map([
         [CITY_REF, MIXED_ROWS],
         [SECOND_CITY_REF, SECOND_CITY_ROWS],
@@ -735,21 +1111,19 @@ describe("GET /api/np/warehouses", () => {
     expect(readNumbers(first)).toEqual([CAPTURED_NUMBER]);
     expect(readNumbers(second)).toEqual([SECOND_CITY_NUMBER]);
     expect(readLabels(second)).toEqual([SECOND_CITY_LABEL]);
-    expect(readNumbers(second)).not.toContain(CAPTURED_NUMBER);
     expect(readNumbers(rewarmed)).toEqual([CAPTURED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_CITY_MERGE_COUNT);
-    expect(readEnvelope(fetchStub, 0)).toEqual(buildEnvelope(1));
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_CITY_CALL_COUNT);
     expect(readEnvelope(fetchStub, 1)).toEqual(
-      buildEnvelope(1, SECOND_CITY_REF)
+      buildEnvelope(buildMethodProperties(SECOND_CITY_REF))
     );
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
-  it("keeps a merged city for twenty-four hours and re-merges the moment that day elapses", async () => {
+  it("keeps an answer for five minutes and asks np again the moment they elapse", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(BASE_TIME);
 
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
     await GET(buildRequest(BRANCH_PARAMS));
@@ -768,221 +1142,42 @@ describe("GET /api/np/warehouses", () => {
 
     expect(readNumbers(await readItems(warm))).toEqual([CAPTURED_NUMBER]);
     expect(readNumbers(await readItems(stale))).toEqual([CAPTURED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(WAREHOUSE_TTL_MERGE_COUNT);
+    expect(fetchStub).toHaveBeenCalledTimes(TTL_RELOAD_COUNT);
   });
 
-  it("remembers one hundred and fifty cities and drops the least recent when the next arrives", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+  it("remembers five hundred triples and drops the least recent when the next arrives", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
-    for (let index = 0; index < CACHED_CITY_COUNT; index += 1) {
-      const filled = await GET(buildAnonymousRequest(buildCityParams(index)));
+    for (let index = 0; index < CACHED_QUERY_COUNT; index += 1) {
+      const filled = await GET(
+        buildAnonymousRequest(buildQueryParams(buildIndexedQuery(index)))
+      );
 
       expect(filled.status).toBe(OK_STATUS);
     }
 
-    expect(fetchStub).toHaveBeenCalledTimes(CACHED_CITY_COUNT);
+    expect(fetchStub).toHaveBeenCalledTimes(CACHED_QUERY_COUNT);
 
-    await GET(buildAnonymousRequest(buildCityParams(RETAINED_CITY_INDEX)));
+    await GET(
+      buildAnonymousRequest(
+        buildQueryParams(buildIndexedQuery(RETAINED_QUERY_INDEX))
+      )
+    );
 
-    expect(fetchStub).toHaveBeenCalledTimes(CACHED_CITY_COUNT);
+    expect(fetchStub).toHaveBeenCalledTimes(CACHED_QUERY_COUNT);
 
-    await GET(buildAnonymousRequest(buildCityParams(EVICTED_CITY_INDEX)));
+    await GET(
+      buildAnonymousRequest(
+        buildQueryParams(buildIndexedQuery(EVICTED_QUERY_INDEX))
+      )
+    );
 
     expect(fetchStub).toHaveBeenCalledTimes(EVICTION_RELOAD_COUNT);
   });
 
-  it("drops the rows np marks unusable and keeps the description verbatim", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
-    expect(readLabels(items)).toEqual([CAPTURED_LABEL]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("denies a warehouse np marks unselectable as a number or a boolean, not only as a string", async () => {
-    const fetchStub = stubPages([okPage(DENY_FLAVOUR_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(items)).toEqual([STRING_ALLOWED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("denies an unselectable warehouse whose flag carries surrounding whitespace", async () => {
-    const fetchStub = stubPages([okPage(PADDED_DENY_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(items)).toEqual([PADDED_ALLOWED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-    expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("caps an overlong np warehouse number to sixty-four characters", async () => {
-    const fetchStub = stubPages([okPage(OVERLONG_NUMBER_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(items)).toEqual([CAPPED_NUMBER]);
-    expect(readNumbers(items)[0]).toHaveLength(IDENTIFIER_CAP);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("caps an overlong np description so one bad row cannot pin the cache", async () => {
-    const fetchStub = stubPages([okPage(OVERLONG_LABEL_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readLabels(items)).toEqual([CAPPED_LABEL]);
-    expect(readLabels(items)[0]).toHaveLength(LABEL_CAP);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("shares one merge across the letter case of a city ref", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const lowercased = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-    const shouted = await readItems(
-      await GET(buildRequest(SHOUTED_BRANCH_PARAMS))
-    );
-
-    expect(readNumbers(lowercased)).toEqual([CAPTURED_NUMBER]);
-    expect(readNumbers(shouted)).toEqual([CAPTURED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-    expect(readEnvelope(fetchStub, 0)).toEqual(buildEnvelope(1));
-  });
-
-  it("sends the lowercased city ref upstream when the shouted spelling arrives first", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const shouted = await readItems(
-      await GET(buildRequest(SHOUTED_BRANCH_PARAMS))
-    );
-    const lowercased = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(readNumbers(shouted)).toEqual([CAPTURED_NUMBER]);
-    expect(readNumbers(lowercased)).toEqual([CAPTURED_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-    expect(readEnvelope(fetchStub, 0)).toEqual(buildEnvelope(1));
-  });
-
-  it("keeps the two methods apart and answers a warm city without touching np", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
-    const searched = await readItems(
-      await GET(
-        buildRequest({ ...POSTOMAT_PARAMS, [QUERY_PARAM]: POSTOMAT_NUMBER })
-      )
-    );
-
-    expect(readNumbers(branches)).toEqual([CAPTURED_NUMBER]);
-    expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
-    expect(readNumbers(searched)).toEqual([POSTOMAT_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("ranks number matches ahead of address matches and reads a number sign as no sign", async () => {
-    const fetchStub = stubPages([okPage(RANKING_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const signed = await readItems(
-      await GET(
-        buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: NUMBER_SIGN_QUERY })
-      )
-    );
-    const bare = await readItems(
-      await GET(buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: BARE_QUERY }))
-    );
-
-    expect(readNumbers(signed)).toEqual(RANKED_NUMBERS);
-    expect(readNumbers(bare)).toEqual(RANKED_NUMBERS);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps an exact number match first when the prefix matches overflow the cap", async () => {
-    const fetchStub = stubPages([okPage(CAP_OVERFLOW_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const items = await readItems(
-      await GET(
-        buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: CAP_OVERFLOW_QUERY })
-      )
-    );
-
-    expect(items).toHaveLength(ROW_LIMIT);
-    expect(readNumbers(items)[0]).toBe(CAP_OVERFLOW_FIRST_NUMBER);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps only the warehouses whose address carries the query, in either case", async () => {
-    const fetchStub = stubPages([okPage(ADDRESS_FILTER_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const lowercased = await readItems(
-      await GET(buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: STREET_QUERY }))
-    );
-    const shouted = await readItems(
-      await GET(
-        buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: SHOUTED_STREET_QUERY })
-      )
-    );
-
-    expect(readNumbers(lowercased)).toEqual([STREET_NUMBER]);
-    expect(readNumbers(shouted)).toEqual([STREET_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("browses the first thirty rows in upstream order when there is no query", async () => {
-    const fetchStub = stubPages([okPage(DESCENDING_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const blank = await readItems(
-      await GET(buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: EMPTY_QUERY }))
-    );
-    const absent = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
-
-    expect(blank).toHaveLength(ROW_LIMIT);
-    expect(readNumbers(blank)).toEqual(
-      buildDescendingNumbers(BULK_ROW_COUNT, ROW_LIMIT)
-    );
-    expect(readNumbers(absent)).toEqual(readNumbers(blank));
-    expect(fetchStub).toHaveBeenCalledTimes(1);
-  });
-
-  it("emits nothing but the number and label of every warehouse", async () => {
-    stubPages([okPage(DESCENDING_ROWS)]);
-    const { GET } = await loadRoute();
-
-    const response = await GET(buildRequest(BRANCH_PARAMS));
-    const body = await response.text();
-    const items = parseItems(body);
-
-    expect(items).toHaveLength(ROW_LIMIT);
-
-    for (const item of items) {
-      expect(readItemKeys(item)).toEqual(ITEM_KEYS);
-    }
-
-    expectNoInternals(body);
-  });
-
   it("answers 429 with a Retry-After header on the sixty-first request from one client", async () => {
-    const fetchStub = stubPages([okPage(MIXED_ROWS)]);
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
     const statuses: number[] = [];
@@ -1003,11 +1198,5 @@ describe("GET /api/np/warehouses", () => {
     expect(retryAfter).toBeLessThanOrEqual(MAX_RETRY_AFTER_SECONDS);
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
-  });
-
-  it("is declared dynamic so a build can never bake its answer", async () => {
-    const { dynamic } = await loadRoute();
-
-    expect(dynamic).toBe(FORCE_DYNAMIC);
   });
 });

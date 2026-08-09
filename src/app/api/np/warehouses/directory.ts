@@ -1,3 +1,5 @@
+import { stripInvisibles } from "@root/utils/invisibles";
+
 import { createDirectoryCache } from "../cache";
 import {
   callNpDirectory,
@@ -7,28 +9,34 @@ import {
   readString,
 } from "../client";
 
-const WAREHOUSE_CACHE_TTL_MS = 86_400_000;
+const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
-const WAREHOUSE_CACHE_MAX_CITIES = 150;
+const WAREHOUSE_CACHE_MAX_ENTRIES = 500;
 const WAREHOUSE_ROW_LIMIT = 30;
 const WAREHOUSE_PAGE_SIZE = 500;
-const WAREHOUSE_MAX_PAGES = 10;
-const WAREHOUSE_MERGE_TIMEOUT_MS = 7000;
-const WAREHOUSE_MAX_CONCURRENT_MERGES = 4;
+const WAREHOUSE_REQUEST_TIMEOUT_MS = 7000;
+const WAREHOUSES_METHOD = "getWarehouses";
+const FIRST_PAGE = "1";
 const WORKING_STATUS = "Working";
 const DENIED_FLAG = "1";
 const DENIED_CODE = 1;
 const MAX_QUERY_LENGTH = 64;
 const NUMBER_PREFIX = "№";
+const WHITESPACE_PATTERN = /\s+/g;
+const SINGLE_SPACE = " ";
+const EMPTY_TEXT = "";
+const CACHE_KEY_SEPARATOR = "|";
 
 export type DeliveryMethod = "branch" | "postomat";
 
 type WarehouseCategory = "Branch" | "Postomat";
 
-interface CachedWarehouse {
+interface DecodedWarehouse {
   number: string;
   label: string;
-  category: WarehouseCategory;
+  category: string;
+  isWorking: boolean;
+  isDenied: boolean;
 }
 
 export interface WarehouseItem {
@@ -41,19 +49,14 @@ const METHOD_CATEGORIES = {
   postomat: "Postomat",
 } as const satisfies Record<DeliveryMethod, WarehouseCategory>;
 
-let activeMerges = 0;
-
 export const isDeliveryMethod = (
   value: string | null
 ): value is DeliveryMethod => value === "branch" || value === "postomat";
 
-const isWarehouseCategory = (value: string): value is WarehouseCategory =>
-  value === "Branch" || value === "Postomat";
-
 const isDeniedValue = (value: unknown): boolean =>
   readString(value) === DENIED_FLAG || value === DENIED_CODE || value === true;
 
-const toWarehouse = (row: unknown): CachedWarehouse | null => {
+const decodeWarehouse = (row: unknown): DecodedWarehouse | null => {
   if (!isRecord(row)) {
     return null;
   }
@@ -61,156 +64,143 @@ const toWarehouse = (row: unknown): CachedWarehouse | null => {
   const label = capLabel(readString(row.Description));
   const number = capIdentifier(readString(row.Number));
 
-  if (label === "" || number === "") {
+  if (label === EMPTY_TEXT || number === EMPTY_TEXT) {
     return null;
   }
 
-  if (readString(row.WarehouseStatus) !== WORKING_STATUS) {
-    return null;
-  }
-
-  if (isDeniedValue(row.DenyToSelect)) {
-    return null;
-  }
-
-  const category = readString(row.CategoryOfWarehouse);
-
-  if (!isWarehouseCategory(category)) {
-    return null;
-  }
-
-  return { number, label, category };
+  return {
+    number,
+    label,
+    category: readString(row.CategoryOfWarehouse),
+    isWorking: readString(row.WarehouseStatus) === WORKING_STATUS,
+    isDenied: isDeniedValue(row.DenyToSelect),
+  };
 };
 
-const decodeWarehouses = (
-  rows: readonly unknown[],
-  seenNumbers: Set<string>
-): CachedWarehouse[] => {
-  const decoded: CachedWarehouse[] = [];
+const decodeRows = (rows: readonly unknown[]): readonly DecodedWarehouse[] =>
+  rows
+    .map(decodeWarehouse)
+    .filter((warehouse): warehouse is DecodedWarehouse => warehouse !== null);
 
-  for (const row of rows) {
-    const warehouse = toWarehouse(row);
+const isSelectable = (
+  warehouse: DecodedWarehouse,
+  category: WarehouseCategory
+): boolean =>
+  warehouse.isWorking && !warehouse.isDenied && warehouse.category === category;
 
-    if (warehouse === null || seenNumbers.has(warehouse.number)) {
-      continue;
+const dedupeByNumber = (
+  warehouses: readonly DecodedWarehouse[]
+): readonly DecodedWarehouse[] => {
+  const seenNumbers = new Set<string>();
+
+  return warehouses.filter((warehouse) => {
+    if (seenNumbers.has(warehouse.number)) {
+      return false;
     }
 
     seenNumbers.add(warehouse.number);
-    decoded.push(warehouse);
-  }
 
-  return decoded;
+    return true;
+  });
 };
-
-const loadPage = async (
-  cityRef: string,
-  page: number,
-  signal: AbortSignal
-): Promise<readonly unknown[] | null> => {
-  const result = await callNpDirectory(
-    "getWarehouses",
-    {
-      CityRef: cityRef,
-      Page: String(page),
-      Limit: String(WAREHOUSE_PAGE_SIZE),
-    },
-    signal
-  );
-
-  return result.isSuccess ? result.rows : null;
-};
-
-const mergeCityPages = async (
-  cityRef: string
-): Promise<readonly CachedWarehouse[] | null> => {
-  const signal = AbortSignal.timeout(WAREHOUSE_MERGE_TIMEOUT_MS);
-  const seenNumbers = new Set<string>();
-  const merged: CachedWarehouse[] = [];
-  let upstreamRowCount = 0;
-
-  for (let page = 1; page <= WAREHOUSE_MAX_PAGES; page += 1) {
-    const rows = await loadPage(cityRef, page, signal);
-
-    if (rows === null) {
-      return null;
-    }
-
-    upstreamRowCount += rows.length;
-    merged.push(...decodeWarehouses(rows, seenNumbers));
-
-    if (rows.length < WAREHOUSE_PAGE_SIZE) {
-      return upstreamRowCount > 0 && merged.length === 0 ? null : merged;
-    }
-  }
-
-  return null;
-};
-
-const loadCityWarehouses = async (
-  cityRef: string
-): Promise<readonly CachedWarehouse[] | null> => {
-  activeMerges += 1;
-
-  try {
-    return await mergeCityPages(cityRef);
-  } finally {
-    activeMerges -= 1;
-  }
-};
-
-const cache = createDirectoryCache<readonly CachedWarehouse[]>({
-  ttlMs: WAREHOUSE_CACHE_TTL_MS,
-  negativeTtlMs: WAREHOUSE_NEGATIVE_CACHE_TTL_MS,
-  maxEntries: WAREHOUSE_CACHE_MAX_CITIES,
-  isCacheable: (warehouses) => warehouses.length > 0,
-});
 
 const normalizeQuery = (rawQuery: string | null): string => {
-  const trimmed = (rawQuery ?? "").trim().toLowerCase();
-  const unprefixed = trimmed.startsWith(NUMBER_PREFIX)
-    ? trimmed.slice(NUMBER_PREFIX.length).trimStart()
-    : trimmed;
+  const collapsed = stripInvisibles(rawQuery ?? EMPTY_TEXT)
+    .replace(WHITESPACE_PATTERN, SINGLE_SPACE)
+    .trim();
+  const unprefixed = collapsed.startsWith(NUMBER_PREFIX)
+    ? collapsed.slice(NUMBER_PREFIX.length).trimStart()
+    : collapsed;
 
   return unprefixed.slice(0, MAX_QUERY_LENGTH);
 };
 
 const rankWarehouses = (
-  warehouses: readonly CachedWarehouse[],
+  warehouses: readonly DecodedWarehouse[],
   query: string
-): readonly CachedWarehouse[] => {
-  if (query === "") {
+): readonly DecodedWarehouse[] => {
+  if (query === EMPTY_TEXT) {
     return warehouses;
   }
 
-  const exactMatches: CachedWarehouse[] = [];
-  const prefixMatches: CachedWarehouse[] = [];
-  const labelMatches: CachedWarehouse[] = [];
+  const needle = query.toLowerCase();
+  const exactMatches: DecodedWarehouse[] = [];
+  const prefixMatches: DecodedWarehouse[] = [];
+  const labelMatches: DecodedWarehouse[] = [];
 
   for (const warehouse of warehouses) {
-    if (warehouse.number === query) {
+    const number = warehouse.number.toLowerCase();
+
+    if (number === needle) {
       exactMatches.push(warehouse);
 
       continue;
     }
 
-    if (warehouse.number.startsWith(query)) {
+    if (number.startsWith(needle)) {
       prefixMatches.push(warehouse);
 
       continue;
     }
 
-    if (warehouse.label.toLowerCase().includes(query)) {
-      labelMatches.push(warehouse);
-    }
+    labelMatches.push(warehouse);
   }
 
   return [...exactMatches, ...prefixMatches, ...labelMatches];
 };
 
-const toWarehouseItem = (warehouse: CachedWarehouse): WarehouseItem => ({
-  number: warehouse.number,
-  label: warehouse.label,
+const cache = createDirectoryCache<readonly WarehouseItem[]>({
+  ttlMs: WAREHOUSE_CACHE_TTL_MS,
+  negativeTtlMs: WAREHOUSE_NEGATIVE_CACHE_TTL_MS,
+  maxEntries: WAREHOUSE_CACHE_MAX_ENTRIES,
+  isCacheable: (items) => items.length > 0,
 });
+
+const buildMethodProperties = (
+  cityRef: string,
+  query: string
+): Record<string, string> => {
+  const properties: Record<string, string> = {
+    CityRef: cityRef,
+    Page: FIRST_PAGE,
+    Limit: String(WAREHOUSE_PAGE_SIZE),
+  };
+
+  return query === EMPTY_TEXT
+    ? properties
+    : { ...properties, FindByString: query };
+};
+
+const loadWarehouses = async (
+  cityRef: string,
+  method: DeliveryMethod,
+  query: string
+): Promise<readonly WarehouseItem[] | null> => {
+  const result = await callNpDirectory(
+    WAREHOUSES_METHOD,
+    buildMethodProperties(cityRef, query),
+    AbortSignal.timeout(WAREHOUSE_REQUEST_TIMEOUT_MS)
+  );
+
+  if (!result.isSuccess) {
+    return null;
+  }
+
+  const decoded = decodeRows(result.rows);
+
+  if (result.rows.length > 0 && decoded.length === 0) {
+    return null;
+  }
+
+  const category = METHOD_CATEGORIES[method];
+  const selectable = dedupeByNumber(
+    decoded.filter((warehouse) => isSelectable(warehouse, category))
+  );
+
+  return rankWarehouses(selectable, query)
+    .slice(0, WAREHOUSE_ROW_LIMIT)
+    .map(({ number, label }) => ({ number, label }));
+};
 
 export const listWarehouses = async (
   cityRef: string,
@@ -218,28 +208,8 @@ export const listWarehouses = async (
   rawQuery: string | null
 ): Promise<readonly WarehouseItem[] | null> => {
   const cityKey = cityRef.toLowerCase();
+  const query = normalizeQuery(rawQuery);
+  const cacheKey = [cityKey, method, query].join(CACHE_KEY_SEPARATOR);
 
-  if (
-    !cache.isLoaded(cityKey) &&
-    activeMerges >= WAREHOUSE_MAX_CONCURRENT_MERGES
-  ) {
-    return null;
-  }
-
-  const warehouses = await cache.resolve(cityKey, () =>
-    loadCityWarehouses(cityKey)
-  );
-
-  if (warehouses === null) {
-    return null;
-  }
-
-  const category = METHOD_CATEGORIES[method];
-  const available = warehouses.filter(
-    (warehouse) => warehouse.category === category
-  );
-
-  return rankWarehouses(available, normalizeQuery(rawQuery))
-    .slice(0, WAREHOUSE_ROW_LIMIT)
-    .map(toWarehouseItem);
+  return cache.resolve(cacheKey, () => loadWarehouses(cityKey, method, query));
 };
