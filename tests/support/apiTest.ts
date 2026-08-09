@@ -31,6 +31,8 @@ export const expectUpstreamOnly = (
   calls: readonly Parameters<FetchStub>[],
   upstreamUrl: string
 ): void => {
+  expect(calls.length).toBeGreaterThan(0);
+
   for (const [input] of calls) {
     expect(input).toBe(upstreamUrl);
   }
