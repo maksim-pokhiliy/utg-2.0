@@ -8,6 +8,7 @@ import {
   isRecord,
   readString,
 } from "../client";
+import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
 const SETTLEMENT_CACHE_TTL_MS = 300_000;
 const SETTLEMENT_NEGATIVE_CACHE_TTL_MS = 30_000;
@@ -159,14 +160,18 @@ const decodeSettlements = (
 
 const loadSettlements = async (
   query: string
-): Promise<readonly SettlementItem[] | null> => {
+): Promise<readonly SettlementItem[] | null | CarrierRefused> => {
   const result = await callNpDirectory(SETTLEMENTS_METHOD, {
     CityName: query,
     Limit: String(SETTLEMENT_ROW_LIMIT),
     Page: FIRST_PAGE,
   });
 
-  if (!result.isSuccess || result.rows.length === 0) {
+  if (isCarrierRefused(result)) {
+    return result;
+  }
+
+  if (result.kind !== "rows" || result.rows.length === 0) {
     return null;
   }
 
@@ -185,5 +190,7 @@ export const searchSettlements = async (
     return [];
   }
 
-  return cache.resolve(query, () => loadSettlements(query));
+  const items = await cache.resolve(query, () => loadSettlements(query));
+
+  return isCarrierRefused(items) ? null : items;
 };

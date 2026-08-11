@@ -38,8 +38,14 @@ const NP_ROWS: readonly unknown[] = [{ TotalCount: 1, Addresses: [] }];
 const MALFORMED_BODY = "np gateway error page";
 const NON_OBJECT_PAYLOAD = "directory offline";
 
-const FAILURE_RESULT = { isSuccess: false };
+const DISTRESS_RESULT = { kind: "distress" };
+const REJECTED_RESULT = { kind: "rejected" };
 const LOG_MESSAGE = "Failed to reach the delivery directory:";
+
+const CITY_NOT_FOUND_CODE = "20000900768";
+const THROTTLE_CODE = "20000401501";
+const THROTTLE_TEXT = "To many requests";
+const CITY_NOT_FOUND_TEXT = "City not found";
 
 const TIMEOUT_ERROR_NAME = "TimeoutError";
 const TIMEOUT_ERROR_MESSAGE = "The operation was aborted due to timeout";
@@ -50,6 +56,17 @@ const SAMPLE_NUMBER = 42;
 const EMPTY_TEXT = "";
 
 const loadClient = () => import("@root/app/api/np/client");
+
+const loadRefusal = () => import("@root/app/api/np/refusal");
+
+const refusedValue = async (): Promise<symbol> => {
+  const { CARRIER_REFUSED } = await loadRefusal();
+
+  return CARRIER_REFUSED;
+};
+
+const rejectedEnvelope = (payload: Record<string, unknown>): Response =>
+  jsonResponse({ success: false, data: [], ...payload }, OK_STATUS);
 
 const successResponse = (): Response =>
   jsonResponse({ success: true, data: NP_ROWS }, OK_STATUS);
@@ -78,7 +95,7 @@ afterEach(() => {
 });
 
 describe("callNpDirectory", () => {
-  it("fails without touching the network when the api key is absent", async () => {
+  it("refuses without touching the network when the api key is absent, because a missing key is our own state and never the carrier's word", async () => {
     vi.stubEnv(NP_API_KEY_NAME, undefined);
 
     const fetchStub = stubUpstream(() => Promise.resolve(successResponse()));
@@ -89,7 +106,7 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toBe(await refusedValue());
     expect(fetchStub).not.toHaveBeenCalled();
   });
 
@@ -104,7 +121,7 @@ describe("callNpDirectory", () => {
       WAREHOUSE_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toBe(await refusedValue());
     expect(fetchStub).not.toHaveBeenCalled();
   });
 
@@ -162,11 +179,11 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual({ isSuccess: true, rows: NP_ROWS });
+    expect(result).toEqual({ kind: "rows", rows: NP_ROWS });
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
-  it("fails when the upstream status is not ok", async () => {
+  it("reads a non-ok upstream status as carrier distress", async () => {
     const errorLog = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -184,22 +201,17 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(DISTRESS_RESULT);
     expect(errorLog).not.toHaveBeenCalled();
   });
 
-  it("fails when np reports success false at http 200", async () => {
+  it("reads a bare success false as a verdict about our own input, not as distress", async () => {
     const errorLog = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
 
     stubUpstream(() =>
-      Promise.resolve(
-        jsonResponse(
-          { success: false, data: [], errors: [], errorCodes: [] },
-          OK_STATUS
-        )
-      )
+      Promise.resolve(rejectedEnvelope({ errors: [], errorCodes: [] }))
     );
 
     const { callNpDirectory } = await loadClient();
@@ -209,8 +221,78 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(REJECTED_RESULT);
     expect(errorLog).not.toHaveBeenCalled();
+  });
+
+  it("reads the carrier rejecting our city ref as a verdict, by its own error code", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        rejectedEnvelope({
+          errors: [CITY_NOT_FOUND_TEXT],
+          errorCodes: [CITY_NOT_FOUND_CODE],
+        })
+      )
+    );
+
+    const { callNpDirectory } = await loadClient();
+
+    const result = await callNpDirectory(
+      WAREHOUSES_METHOD,
+      WAREHOUSE_PROPERTIES
+    );
+
+    expect(result).toEqual(REJECTED_RESULT);
+  });
+
+  it("reads the carrier's throttle code as distress, because that is the carrier asking us to stop", async () => {
+    stubUpstream(() =>
+      Promise.resolve(
+        rejectedEnvelope({
+          errors: [THROTTLE_TEXT],
+          errorCodes: [THROTTLE_CODE],
+        })
+      )
+    );
+
+    const { callNpDirectory } = await loadClient();
+
+    const result = await callNpDirectory(
+      WAREHOUSES_METHOD,
+      WAREHOUSE_PROPERTIES
+    );
+
+    expect(result).toEqual(DISTRESS_RESULT);
+  });
+
+  it("reads the throttle code the carrier sends as a number, not only as a string", async () => {
+    stubUpstream(() =>
+      Promise.resolve(rejectedEnvelope({ errorCodes: [Number(THROTTLE_CODE)] }))
+    );
+
+    const { callNpDirectory } = await loadClient();
+
+    const result = await callNpDirectory(
+      WAREHOUSES_METHOD,
+      WAREHOUSE_PROPERTIES
+    );
+
+    expect(result).toEqual(DISTRESS_RESULT);
+  });
+
+  it("falls back to the throttle wording when the carrier sends no code at all", async () => {
+    stubUpstream(() =>
+      Promise.resolve(rejectedEnvelope({ errors: [THROTTLE_TEXT] }))
+    );
+
+    const { callNpDirectory } = await loadClient();
+
+    const result = await callNpDirectory(
+      WAREHOUSES_METHOD,
+      WAREHOUSE_PROPERTIES
+    );
+
+    expect(result).toEqual(DISTRESS_RESULT);
   });
 
   it("fails when the payload is not an object", async () => {
@@ -225,7 +307,7 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(DISTRESS_RESULT);
   });
 
   it("fails when the payload data is not an array", async () => {
@@ -240,7 +322,7 @@ describe("callNpDirectory", () => {
       WAREHOUSE_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(DISTRESS_RESULT);
   });
 
   it("fails and logs once when the response body is malformed json", async () => {
@@ -264,7 +346,7 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(DISTRESS_RESULT);
     expect(errorLog).toHaveBeenCalledTimes(1);
   });
 
@@ -285,7 +367,7 @@ describe("callNpDirectory", () => {
       SETTLEMENT_PROPERTIES
     );
 
-    expect(result).toEqual(FAILURE_RESULT);
+    expect(result).toEqual(DISTRESS_RESULT);
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(errorLog).toHaveBeenCalledWith(LOG_MESSAGE, timeoutError);
     expect(fetchStub).toHaveBeenCalledTimes(1);

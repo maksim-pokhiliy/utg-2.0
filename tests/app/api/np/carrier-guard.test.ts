@@ -41,6 +41,14 @@ const SETTLEMENT_QUERY = "льв";
 const WAREHOUSES_CALLED_METHOD = "getWarehouses";
 const NOT_PENDING = null;
 
+const CITY_NOT_FOUND_CODE = "20000900768";
+const THROTTLE_CODE = "20000401501";
+const REFUSED_QUERY_INDEX = 30;
+const DAMPED_QUERY_INDEX = 99;
+const REFUSAL_OFFSET_MS = 10_000;
+const NO_CALLS = 0;
+const ONE_CALL = 1;
+
 const BRANCH_ROW = {
   Number: "1",
   Description: "Відділення №1: вул. Соборна, 5",
@@ -105,6 +113,15 @@ const stubFailingUpstream = (): Mock<FetchStub> =>
 
 const stubRows = (rows: readonly unknown[]): Mock<FetchStub> =>
   stubUpstream(() => Promise.resolve(npResponse(rows)));
+
+const refusedResponse = (code: string): Response =>
+  jsonResponse(
+    { success: false, data: [], errors: [], errorCodes: [code] },
+    OK_STATUS
+  );
+
+const stubRefusingUpstream = (code: string): Mock<FetchStub> =>
+  stubUpstream(() => Promise.resolve(refusedResponse(code)));
 
 const flushPending = (): Promise<void> =>
   new Promise((resolve) => {
@@ -256,6 +273,47 @@ describe("the carrier outage damper", () => {
     expect(fetchStub).toHaveBeenCalledTimes(SESSION_QUERY_COUNT);
   });
 
+  it("is never armed by the carrier rejecting our own city ref, however many times we ask", async () => {
+    const fetchStub = stubRefusingUpstream(CITY_NOT_FOUND_CODE);
+    const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
+
+    expect(statuses).toEqual(
+      Array(SESSION_QUERY_COUNT).fill(UNAVAILABLE_STATUS)
+    );
+    expect(fetchStub).toHaveBeenCalledTimes(SESSION_QUERY_COUNT);
+  });
+
+  it("is armed by the throttle code the carrier answers when it wants us to stop", async () => {
+    const fetchStub = stubRefusingUpstream(THROTTLE_CODE);
+    const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
+
+    expect(statuses).toEqual(
+      Array(SESSION_QUERY_COUNT).fill(UNAVAILABLE_STATUS)
+    );
+    expect(fetchStub).toHaveBeenCalledTimes(FAILURE_THRESHOLD);
+  });
+
+  it("lets a carrier verdict interrupt a run of transport failures, because a carrier that answers us is not down", async () => {
+    silenceErrorLog();
+
+    let callIndex = 0;
+    const fetchStub = stubUpstream(() => {
+      const isVerdict = callIndex === RESET_SUCCESS_INDEX;
+
+      callIndex += 1;
+
+      return Promise.resolve(
+        isVerdict
+          ? refusedResponse(CITY_NOT_FOUND_CODE)
+          : new Response(null, { status: BAD_GATEWAY_STATUS })
+      );
+    });
+
+    await runWarehouseSession(RESET_SESSION_CALL_COUNT);
+
+    expect(fetchStub).toHaveBeenCalledTimes(RESET_SESSION_CALL_COUNT);
+  });
+
   it("damps both directory routes from one carrier, because np rate limits the key and not the method", async () => {
     silenceErrorLog();
 
@@ -388,6 +446,93 @@ describe("the carrier fan-out bound", () => {
 
     expect(served.status).toBe(OK_STATUS);
     expect(fetchStub).toHaveBeenCalledTimes(FAN_OUT_CAP + 1);
+  });
+
+  it("leaves no cache entry behind an over-cap refusal, so the carrier answers that query the moment a slot frees", async () => {
+    const releases: (() => void)[] = [];
+    let isGated = true;
+
+    const fetchStub = stubUpstream(() =>
+      isGated
+        ? new Promise<Response>((resolve) => {
+            releases.push(() => {
+              resolve(npResponse([BRANCH_ROW]));
+            });
+          })
+        : Promise.resolve(npResponse([BRANCH_ROW]))
+    );
+
+    const { GET } = await loadWarehousesRoute();
+    const pending = Array.from({ length: FAN_OUT_CAP }, (_value, index) =>
+      GET(buildWarehouseRequest(buildIndexedQuery(index)))
+    );
+
+    await flushPending();
+
+    const saturatedCallCount = fetchStub.mock.calls.length;
+    const refused = await GET(
+      buildWarehouseRequest(buildIndexedQuery(REFUSED_QUERY_INDEX))
+    );
+
+    expect(refused.status).toBe(UNAVAILABLE_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(saturatedCallCount);
+
+    isGated = false;
+
+    for (const release of releases) {
+      release();
+    }
+
+    await Promise.all(pending);
+
+    const served = await GET(
+      buildWarehouseRequest(buildIndexedQuery(REFUSED_QUERY_INDEX))
+    );
+
+    expect(served.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(saturatedCallCount + ONE_CALL);
+  });
+
+  it("leaves no cache entry behind a damped refusal, so the cooldown ends the outage instead of outliving it", async () => {
+    silenceErrorLog();
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE_TIME);
+
+    let isFailing = true;
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(
+        isFailing
+          ? new Response(null, { status: BAD_GATEWAY_STATUS })
+          : npResponse([BRANCH_ROW])
+      )
+    );
+
+    const { GET } = await loadWarehousesRoute();
+
+    for (let index = 0; index < FAILURE_THRESHOLD; index += 1) {
+      await GET(buildWarehouseRequest(buildIndexedQuery(index)));
+    }
+
+    const armedCallCount = fetchStub.mock.calls.length;
+
+    vi.setSystemTime(BASE_TIME + REFUSAL_OFFSET_MS);
+
+    const refused = await GET(
+      buildWarehouseRequest(buildIndexedQuery(DAMPED_QUERY_INDEX))
+    );
+
+    expect(refused.status).toBe(UNAVAILABLE_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(armedCallCount);
+
+    isFailing = false;
+    vi.setSystemTime(BASE_TIME + DAMPER_COOLDOWN_MS);
+
+    const served = await GET(
+      buildWarehouseRequest(buildIndexedQuery(DAMPED_QUERY_INDEX))
+    );
+
+    expect(served.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(armedCallCount + ONE_CALL);
   });
 
   it("keeps serving a cached answer while the carrier is saturated", async () => {

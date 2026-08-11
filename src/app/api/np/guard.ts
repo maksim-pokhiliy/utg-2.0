@@ -1,6 +1,10 @@
+import { CARRIER_REFUSED, type CarrierRefused } from "./refusal";
+
 const MAX_CONCURRENT_CALLS = 12;
 const FAILURE_THRESHOLD = 3;
 const DAMPER_COOLDOWN_MS = 30_000;
+
+export type CarrierVerdict = "answered" | "distress";
 
 let activeCalls = 0;
 let consecutiveFailures = 0;
@@ -10,8 +14,8 @@ const isDamped = (): boolean => Date.now() < dampedUntil;
 
 const isSaturated = (): boolean => activeCalls >= MAX_CONCURRENT_CALLS;
 
-const recordOutcome = (isSuccess: boolean): void => {
-  if (isSuccess) {
+const recordOutcome = (verdict: CarrierVerdict): void => {
+  if (verdict === "answered") {
     consecutiveFailures = 0;
     dampedUntil = 0;
 
@@ -28,11 +32,10 @@ const recordOutcome = (isSuccess: boolean): void => {
 
 export const guardCarrierCall = async <T>(
   attempt: () => Promise<T>,
-  refused: T,
-  isSuccess: (value: T) => boolean
-): Promise<T> => {
+  classify: (value: T) => CarrierVerdict
+): Promise<T | CarrierRefused> => {
   if (isDamped() || isSaturated()) {
-    return refused;
+    return CARRIER_REFUSED;
   }
 
   activeCalls += 1;
@@ -40,7 +43,7 @@ export const guardCarrierCall = async <T>(
   try {
     const value = await attempt();
 
-    recordOutcome(isSuccess(value));
+    recordOutcome(classify(value));
 
     return value;
   } finally {

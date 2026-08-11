@@ -8,6 +8,7 @@ import {
   isRecord,
   readString,
 } from "../client";
+import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
@@ -205,14 +206,18 @@ const selectCategory = (
 const loadWarehousePage = async (
   cityRef: string,
   query: string
-): Promise<WarehousePage | null> => {
+): Promise<WarehousePage | null | CarrierRefused> => {
   const result = await callNpDirectory(
     WAREHOUSES_METHOD,
     buildMethodProperties(cityRef, query),
     AbortSignal.timeout(WAREHOUSE_REQUEST_TIMEOUT_MS)
   );
 
-  if (!result.isSuccess) {
+  if (isCarrierRefused(result)) {
+    return result;
+  }
+
+  if (result.kind !== "rows") {
     return null;
   }
 
@@ -248,5 +253,5 @@ export const listWarehouses = async (
     loadWarehousePage(cityKey, query)
   );
 
-  return page === null ? null : page[method];
+  return page === null || isCarrierRefused(page) ? null : page[method];
 };
