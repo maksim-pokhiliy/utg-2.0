@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-08 (U5b running — a pre-step probe overturned UAC-13's prescribed
-fix and reshaped the step; D-14 ratified)
+**Updated:** 2026-08-08 (U5b half shipped — the carrier layer is merged and prod-verified;
+the checkout half is built and pushed on a branch, unreviewed)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -16,48 +16,49 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U3  | DS window: form primitives + DEF-41                      | ✅ done — PR #18 squash-merged `ac1b73a` incl. the D-6 fix round; prod live-verified; DEF-41 CLOSED | PR #18 · D-5 · D-6 · journal 2026-08-05 |
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
 | U5a | Contacts + copy + editable summary; payload flips to v2   | ✅ done — PR #21 `9099402`, prod-smoked end to end through the live shop route | PR #21 · D-13 · journal 2026-08-08 |
-| U5b | Delivery: method chips, NP comboboxes, courier fields     | 🟡 running — the warehouse proxy is rewritten first (D-14) | `step-u5b-delivery-prompt.md` · D-14 · requirements §1/§4 |
+| U5b | Delivery: method chips, NP comboboxes, courier fields     | 🟡 half done — **PR A merged** `25c58d7` (carrier layer, prod-verified); **PR B built, pushed, NOT opened** on `step-u5b-checkout` | D-14 · D-15 · `step-u5b-delivery-prompt.md` |
 | U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-**U5a CLOSED** (PR #21 `9099402`, squash-merged, deployed, prod-smoked end to end: a v2
-envelope carrying an `idempotency_key` with `mode: "generic"` under `locale: "uk"` went
-through the LIVE shop route → the secret injection → the relay → the operators' chat, 200).
-The payload is now truthful for everything that does not involve Нова Пошта. Rulings and
-the review outcome are D-13.
+**Resume here. U5b is half shipped.**
 
-**U5b is next, and it does NOT open with UI.** Two things must land before a single
-combobox exists, both found by probing rather than by reading:
+**PR A is merged and live** (`25c58d7`, squash). The warehouse proxy no longer tries to own
+each city's directory: the search is delegated to the carrier via `FindByString`, the
+page-merge and the 24h city cache are gone, and the cache is keyed `(city, method, query)`.
+Prod-verified after deploy — the Kyiv branch query that answered 503 an hour earlier
+returns real відділення. Rulings are D-15; the review pooled 60 candidates → 25 distinct →
+25 reported with no cap binding.
 
-1. **UAC-13 — and its prescribed fix was WRONG, corrected by a second probe (D-14).**
-   Pacing at 600ms does clear NP's rate limit, but Kyiv reports **12 298** warehouse
-   points — ~25 pages against a 10-page cap — and page 9 dies on OUR 7s deadline, not
-   NP's limit. D-8's "Kyiv ≈ 3000" estimate was low by 4×, so the whole-city merge was
-   never completable at any budget. The real fix is architectural: delegate the search to
-   the carrier via `FindByString` (measured: one page, 0.9–3.2s) and delete the merge and
-   the 24h city cache. Twice in two days now, probing before speccing has CHANGED a step
-   rather than confirmed it.
-2. **UAC-15** — `CheckoutForm.tsx` is already 315 LOC against a 300 bar, and U5b adds the
-   whole delivery-method surface to that same file. Extract first; it is a rewrite after.
+**PR B is BUILT, rebased onto master and pushed — but not opened, not reviewed, not
+verified.** Branch `step-u5b-checkout`, one WIP commit `34bfaf4`: method chips, both
+comboboxes on our proxy, courier fields, the runtime free-text fallback, the three `np_*`
+payload variants, and `CheckoutForm` down from 315 to 251 lines with the directory state
+machine moved into its own hook. Four new e2e specs. **Nobody has checked any of it** — the
+executor was stopped before it could report, so treat its state as unverified: run the
+battery first, then open the PR, then the independent review round.
 
-Then the UI: method chips, both NP comboboxes on the U4 proxy, runtime fallback, courier
-fields. Riders that were always U5b's, never U5a's: **UAC-9** (rejoin `delivery.city` as
-`label + ", " + region`; a 200-empty on a blank query is not a fallback trigger),
-**UAC-10** (NP-proxy `Present` edge guards), **UAC-16**, **UAC-17**.
+**Three debts must land IN PR B before it is reviewed** (UAC-18, from PR A's review):
+the negative cache lost its outage damping and must be solved together with the debounce —
+they are one problem; nothing bounds upstream fan-out since `MAX_CONCURRENT_MERGES` died
+with the merge; and flipping the delivery chip re-downloads a byte-identical page.
 
-**Then B5** (bot repo) — orders become durable. D-13 puts a hard constraint on it: the
-`idempotency_key` deliberately spans an order the buyer EDITED between retries, so
-**dedupe must be on a content hash, never on the key alone** — key-only dedupe would
-answer 200 to a corrected order that was never delivered, and the shop would show the
-success screen and clear the cart.
+**One owner action gates PR B's MERGE, not its review** — UAC-11's forged-identity probe.
+The operator's paid key is live in production and PR B is what brings real buyer traffic
+to the directory. The limiter holds for honest clients (59 × 200, then 429 with
+`retry-after: 34`); what is unknown is whether an empty `x-forwarded-for`/`x-real-ip`
+disables it. If it does, tighten the directory bucket ONLY — never `place_order`, where a
+false 429 costs a real volunteer order.
+
+**Then B5** (bot repo) — orders become durable, with D-13's hard constraint: dedupe on a
+content hash, never on the `idempotency_key` alone.
 
 Then U6 → U7.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-13 ratified)
+(none — D-1…D-15 ratified)
 
 ## Live carry-forwards
 

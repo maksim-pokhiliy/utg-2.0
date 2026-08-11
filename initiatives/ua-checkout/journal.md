@@ -284,3 +284,39 @@ Append-only. One entry per session/step.
   export until U5b.
 - Counts, per the standing rule: **70 raw candidates → 28 distinct → 21 reported, no cap
   binding**, five refuted with executed evidence. verified ≈ reported, so no invisible tail.
+
+## 2026-08-08 — U5b PR A: the proxy stops owning the corpus
+
+- **PR A merged** (`25c58d7`) and prod-verified: the Kyiv branch query that answered 503
+  an hour earlier returns real відділення. UAC-13, UAC-10 and UAC-17 closed.
+- **The step was reshaped before it was written, for the second day running.** D-12's rule
+  sent a probe ahead of the prompt, and the probe overturned the ledger's own prescription:
+  pacing does clear NP's rate limit, but Kyiv reports **12 298** points against a 10-page
+  cap, so the merge was never completable and pacing only moves where it dies. D-8's
+  "Kyiv ≈ 3000" estimate was low by 4×. `FindByString` answers the same question in one
+  page in about a second. **Three times now — B4's falsified width premise, UAC-13's wrong
+  fix, and the carrier key's real bind time — probing an external system has CHANGED the
+  work rather than confirming it, and none of the three was catchable by any test in this
+  repository, because all three lived outside it.**
+- **The review earned its keep on two findings the executor could not have seen.** A
+  carrier vocabulary change would have answered `200 {"items":[]}` forever, with no log
+  and no metric, and PR B's fallback would never trip because it keys on 503 — so
+  "recognised" and "offered" were split, and a page where nothing is recognised is now an
+  outage. And `DenyToSelect: "true"` read as *not denied*, offering a point the carrier
+  will refuse to ship — the same hardening the executor had applied to the sibling field
+  and argued for in his own PR body, one field away.
+- **A test's name is a claim, again.** The advertised dedupe fix survived its own
+  reintroduction: reinstating the exact bug left 36/36 green, because no fixture paired a
+  Branch and a Postomat under one number. Every blocking fix in the round is now
+  mutation-proven, by the executor and again by the planner.
+- **Planner error, recorded rather than quietly fixed.** UAC-1 said the carrier key was
+  "deliberately NOT redeployed — it binds on the next natural master deploy". Literally
+  true; wrong in consequence, because the next deploy was U5a's merge an hour later. The
+  reviewer raised it as a merge gate and was right to. UAC-11 moves from U7 to before
+  PR B merges as a result.
+- **Process that worked and is worth keeping:** the reviewer ran in an isolated git
+  worktree while the executor held the main checkout, so review and build ran in parallel
+  without either touching the other's branch; the planner verified in a third worktree
+  with `node_modules` symlinked. Also: a mutation must be valid TypeScript — a sloppy one
+  reddened 33 tests and proved nothing, while the surgical one reddened exactly one test
+  whose name states the intent.

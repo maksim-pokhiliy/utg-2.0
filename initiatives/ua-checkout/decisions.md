@@ -495,3 +495,43 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   Kyiv, discovered at the browser gate or, worse, in production.
 - **Links.** UAC-13 (corrected in place); requirements §4 (amended with the measurements);
   D-7, D-8, D-12; journal 2026-08-08.
+
+### D-15 — U5b PR A rulings: split the step, strip at the boundary, recognise ≠ offer
+
+- **Status:** RATIFIED (planner rulings inside the ratified D-14 contour; user merged PR A
+  2026-08-08, "мержи А"). Shipped as PR #22 `25c58d7`, prod-verified.
+- **Decision.**
+  1. **U5b ships as TWO PRs.** The executor leaned to one at ~50 files; overruled. Its
+     strongest counter — "two browser gates" — does not survive: PR A has no UI, so it
+     needs no browser gate at all. The real cost is one extra review round, and this
+     initiative's evidence is that the review round is where order-loss defects surface
+     (U5a's review found a 400-on-submit path in a 28-file diff). Review quality degrades
+     with diff size. PR A also deploys as a pure no-op because nothing consumes the
+     routes, so it carries near-zero deploy risk.
+  2. **Invisible characters are stripped at `readString`, not at the call sites.** The
+     ledger's UAC-17 rationale was about the CARRIER's labels, not our queries: D-8's
+     "`Present` verbatim" means *do not recompose it from parts*, never *forward bidi
+     controls into a combobox where they can reorder a branch number in front of the
+     buyer*. The relay's B4 sanitizer closes this from the operator's side; this closes
+     it from the buyer's. Placing it in `readString` — whose every consumer is
+     carrier-derived, verified — covers future fields by construction.
+  3. **Recognising a category and offering it are different things.** Offered stays
+     `Branch` + `Postomat`. Recognised adds `Cargo`, attested by a repo fixture rather
+     than invented. So a page of only-`Cargo` rows is an honest 200-empty, and a page
+     where NOTHING is recognised is a 503 — the carrier changed under us. Without that
+     split, a vocabulary change would answer an empty list forever, with PR B's
+     fallback never tripping because it keys on 503.
+  4. **`number | null` over a `-1` sentinel** for the warehouse count: an in-band
+     sentinel in a numeric field renders by accident ("-1 відділень"), `null` is
+     compile-enforced at the consumer.
+- **The merge gate, and a correction I owe the ledger.** The reviewer refused the PR's
+  "pure no-op deploy" claim: merging binds the operator's paid carrier key behind a
+  limiter UAC-11 records as possibly bypassable. Investigating it showed the exposure
+  already existed — **the key bound at U5a's deploy an hour after I set it**, not "when
+  U5b needs it" as UAC-1 claimed. The claim was literally true and wrong in consequence.
+  Resolution: merge on merits (PR A reduces harm — it fixes a live prod 503), and
+  **UAC-11 moves from the U7 gate to before PR B merges**, because PR B is what brings
+  real buyer traffic. The limiter is confirmed alive for honest clients: 59 × 200 then
+  429 with `retry-after: 34`.
+- **Links.** PR #22; D-14, D-7, D-8; UAC-1 (corrected), UAC-10/13/17 (closed),
+  UAC-11 (rescheduled), UAC-18, UAC-19; journal 2026-08-08.
