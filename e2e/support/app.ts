@@ -75,6 +75,7 @@ export const SPEC_CLIENT_IPS = {
   ukDelivery: "203.0.113.26",
   ukDeliveryFallback: "203.0.113.27",
   enGeneric: "203.0.113.28",
+  ukDeliveryFocus: "203.0.113.29",
 } as const;
 
 const specClientIps = Object.values(SPEC_CLIENT_IPS);
@@ -100,6 +101,8 @@ const INCREMENT_SUFFIX = "+";
 const NP_CITY_ID = "np_city";
 
 const NP_WAREHOUSE_ID = "np_warehouse";
+
+const TELEPHONE_ID = "telephone";
 
 const STREET_ID = "street";
 
@@ -257,6 +260,38 @@ export const stubSettlements = async (
   await page.route(SETTLEMENTS_ROUTE_GLOB, async (route) => {
     await route.fulfill({ status: OK_STATUS, json: { items } });
   });
+};
+
+export interface HeldSettlements {
+  waitForRequest: () => Promise<void>;
+  release: () => void;
+}
+
+export const stubHeldSettlements = async (
+  page: Page,
+  items: readonly SettlementItem[]
+): Promise<HeldSettlements> => {
+  let signalArrival: (() => void) | null = null;
+  let signalRelease: (() => void) | null = null;
+
+  const arrived = new Promise<void>((resolve) => {
+    signalArrival = resolve;
+  });
+  const held = new Promise<void>((resolve) => {
+    signalRelease = resolve;
+  });
+
+  await page.route(SETTLEMENTS_ROUTE_GLOB, async (route) => {
+    signalArrival?.();
+
+    await held;
+    await route.fulfill({ status: OK_STATUS, json: { items } });
+  });
+
+  return {
+    waitForRequest: () => arrived,
+    release: () => signalRelease?.(),
+  };
 };
 
 export const stubWarehouses = async (
@@ -440,6 +475,9 @@ export const npCityInput = (page: Page): Locator =>
 
 export const npWarehouseInput = (page: Page): Locator =>
   page.locator(`#${NP_WAREHOUSE_ID}`);
+
+export const telephoneInput = (page: Page): Locator =>
+  page.locator(`#${TELEPHONE_ID}`);
 
 export const streetInput = (page: Page): Locator =>
   page.locator(`#${STREET_ID}`);
