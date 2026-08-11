@@ -2,6 +2,8 @@ import "server-only";
 
 import { stripInvisibles } from "@root/utils/invisibles";
 
+import { guardCarrierCall } from "./guard";
+
 const NP_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 const NP_MODEL_NAME = "Address";
 const NP_REQUEST_TIMEOUT_MS = 2500;
@@ -28,17 +30,14 @@ export const capLabel = (text: string): string =>
 export const capIdentifier = (text: string): string =>
   text.slice(0, MAX_IDENTIFIER_LENGTH);
 
-export const callNpDirectory = async (
+const isNpSuccess = (result: NpResult): boolean => result.isSuccess;
+
+const fetchDirectory = async (
+  apiKey: string,
   calledMethod: NpMethod,
   methodProperties: Record<string, string>,
   signal?: AbortSignal
 ): Promise<NpResult> => {
-  const apiKey = process.env.NOVA_POSHTA_API_KEY;
-
-  if (!apiKey) {
-    return NP_FAILURE;
-  }
-
   try {
     const response = await fetch(NP_API_URL, {
       method: "POST",
@@ -74,4 +73,22 @@ export const callNpDirectory = async (
 
     return NP_FAILURE;
   }
+};
+
+export const callNpDirectory = async (
+  calledMethod: NpMethod,
+  methodProperties: Record<string, string>,
+  signal?: AbortSignal
+): Promise<NpResult> => {
+  const apiKey = process.env.NOVA_POSHTA_API_KEY;
+
+  if (!apiKey) {
+    return NP_FAILURE;
+  }
+
+  return guardCarrierCall(
+    () => fetchDirectory(apiKey, calledMethod, methodProperties, signal),
+    NP_FAILURE,
+    isNpSuccess
+  );
 };

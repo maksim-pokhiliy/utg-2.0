@@ -1,3 +1,5 @@
+const KEY_SEPARATOR = "|";
+
 interface CacheOptions<T> {
   ttlMs: number;
   maxEntries: number;
@@ -86,6 +88,11 @@ const runSingleFlight = async <T>(
     inFlight.delete(key);
   }
 };
+
+export const composeCacheKey = (...parts: readonly string[]): string =>
+  parts
+    .map((part) => `${part.length}${KEY_SEPARATOR}${part}`)
+    .join(KEY_SEPARATOR);
 
 export const createDirectoryCache = <T>(
   options: CacheOptions<T>
