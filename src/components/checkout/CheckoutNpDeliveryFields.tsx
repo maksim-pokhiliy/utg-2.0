@@ -10,12 +10,19 @@ import { CheckoutDirectoryField } from "./CheckoutDirectoryField";
 import { CheckoutMethodChips } from "./CheckoutMethodChips";
 import {
   WAREHOUSE_LABEL_KEYS,
+  composeOptionId,
   isWarehouseMethod,
   type NpMethod,
 } from "./delivery";
 import type { CheckoutFieldName, CheckoutFormValues } from "./fields";
 import type { NpDelivery } from "./useNpDelivery";
 import type { CheckoutErrors } from "./validation";
+
+const HINT_ID = "np-fallback-hint";
+
+const HINT_CLASS = "max-w-[55ch] text-pretty text-ink-soft";
+
+const HINT_SILENT_CLASS = "sr-only";
 
 interface CheckoutNpDeliveryFieldsProps {
   delivery: NpDelivery;
@@ -41,8 +48,8 @@ export function CheckoutNpDeliveryFields({
 
   const cityOptions = useMemo<readonly ComboboxOption[]>(
     () =>
-      delivery.city.options.map((settlement) => ({
-        id: settlement.ref,
+      delivery.city.options.map((settlement, index) => ({
+        id: composeOptionId(index, settlement.ref),
         label: settlement.label,
         meta: settlement.region,
       })),
@@ -68,6 +75,9 @@ export function CheckoutNpDeliveryFields({
       ? dictionary.cart.np_fallback_hint_warehouse
       : null;
 
+  const emptyLabel = (isThrottled: boolean): string =>
+    isThrottled ? dictionary.cart.np_throttled : dictionary.cart.np_empty;
+
   const clearWarehouseField = (): void => {
     onValueChange("np_warehouse", "");
   };
@@ -89,15 +99,15 @@ export function CheckoutNpDeliveryFields({
         }}
       />
 
-      {hint === null ? null : (
-        <Typography
-          variant="small"
-          as="p"
-          className="max-w-[55ch] text-pretty text-ink-soft"
-        >
-          {hint}
-        </Typography>
-      )}
+      <Typography
+        variant="small"
+        as="p"
+        id={HINT_ID}
+        aria-live="polite"
+        className={hint === null ? HINT_SILENT_CLASS : HINT_CLASS}
+      >
+        {hint}
+      </Typography>
 
       <CheckoutDirectoryField
         name="np_city"
@@ -106,7 +116,9 @@ export function CheckoutNpDeliveryFields({
         value={values.np_city}
         source={delivery.city.source}
         options={cityOptions}
+        emptyLabel={emptyLabel(delivery.city.isThrottled)}
         isLoading={delivery.city.isLoading}
+        describedBy={hint === null ? undefined : HINT_ID}
         error={errors.np_city}
         disabled={isPending}
         onValueChange={(name, next) => {
@@ -120,7 +132,7 @@ export function CheckoutNpDeliveryFields({
         onSearch={delivery.searchCity}
         onSelect={(option) => {
           const settlement = delivery.city.options.find(
-            (row) => row.ref === option.id
+            (row, index) => composeOptionId(index, row.ref) === option.id
           );
 
           onValueChange("np_city", option.label);
@@ -144,7 +156,9 @@ export function CheckoutNpDeliveryFields({
           value={values.np_warehouse}
           source={warehouseMode}
           options={warehouseOptions}
+          emptyLabel={emptyLabel(delivery.warehouse.isThrottled)}
           isLoading={delivery.warehouse.isLoading}
+          describedBy={hint === null ? undefined : HINT_ID}
           error={errors.np_warehouse}
           disabled={isPending || !hasCityText}
           onValueChange={(name, next) => {

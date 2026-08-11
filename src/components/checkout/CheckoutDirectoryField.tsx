@@ -19,6 +19,8 @@ const ERROR_KEYS = {
   phone_format: "phone_invalid",
 } as const satisfies Record<CheckoutFieldError, keyof Dictionary["cart"]>;
 
+const DESCRIPTION_SEPARATOR = " ";
+
 interface CheckoutDirectoryFieldProps {
   name: CheckoutFieldName;
   label: string;
@@ -26,7 +28,9 @@ interface CheckoutDirectoryFieldProps {
   value: string;
   source: DirectorySource;
   options: readonly ComboboxOption[];
+  emptyLabel: string;
   isLoading: boolean;
+  describedBy?: string;
   error?: CheckoutFieldError;
   disabled?: boolean;
   onValueChange: (name: CheckoutFieldName, value: string) => void;
@@ -41,7 +45,9 @@ export function CheckoutDirectoryField({
   value,
   source,
   options,
+  emptyLabel,
   isLoading,
+  describedBy,
   error,
   disabled,
   onValueChange,
@@ -86,7 +92,7 @@ export function CheckoutDirectoryField({
         onSearch={onSearch}
         onSelect={onSelect}
         options={options}
-        emptyLabel={dictionary.cart.np_empty}
+        emptyLabel={emptyLabel}
         loading={isLoading}
         required
         disabled={disabled}
@@ -94,6 +100,10 @@ export function CheckoutDirectoryField({
       />
     );
   }
+
+  const describedIds = [describedBy, isInvalid ? `${name}-error` : undefined]
+    .filter((id): id is string => id !== undefined)
+    .join(DESCRIPTION_SEPARATOR);
 
   return (
     <Field label={label} htmlFor={name} required error={errorText}>
@@ -106,10 +116,11 @@ export function CheckoutDirectoryField({
         placeholder={placeholder}
         disabled={disabled}
         onChange={(event) => onValueChange(name, event.target.value)}
+        onBlur={(event) => onSearch(event.target.value)}
         invalid={isInvalid}
         required
         aria-invalid={isInvalid}
-        aria-describedby={isInvalid ? `${name}-error` : undefined}
+        aria-describedby={describedIds === "" ? undefined : describedIds}
       />
     </Field>
   );

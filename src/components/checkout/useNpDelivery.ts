@@ -28,9 +28,14 @@ const WAREHOUSE_METHOD_PARAMS = {
 type WarehouseMethodParam =
   (typeof WAREHOUSE_METHOD_PARAMS)[keyof typeof WAREHOUSE_METHOD_PARAMS];
 
+type AbortRef = { current: AbortController | null };
+
+type RequestRef = { current: number };
+
 interface DirectoryChannel<T> {
   options: readonly T[];
   isLoading: boolean;
+  isThrottled: boolean;
   source: DirectorySource;
 }
 
@@ -55,9 +60,15 @@ const readWarehouseParam = (method: NpMethod): WarehouseMethodParam | null =>
     ? WAREHOUSE_METHOD_PARAMS[method]
     : null;
 
+const abandonRequest = (abortRef: AbortRef, requestRef: RequestRef): void => {
+  abortRef.current?.abort();
+  abortRef.current = null;
+  requestRef.current += 1;
+};
+
 const startRequest = (
-  abortRef: { current: AbortController | null },
-  requestRef: { current: number }
+  abortRef: AbortRef,
+  requestRef: RequestRef
 ): { controller: AbortController; requestId: number } => {
   abortRef.current?.abort();
 
@@ -85,6 +96,9 @@ export function useNpDelivery(): NpDelivery {
   const [isCityLoading, setIsCityLoading] = useState(false);
   const [isWarehouseLoading, setIsWarehouseLoading] = useState(false);
 
+  const [isCityThrottled, setIsCityThrottled] = useState(false);
+  const [isWarehouseThrottled, setIsWarehouseThrottled] = useState(false);
+
   const [citySource, setCitySource] = useState<DirectorySource>("directory");
   const [warehouseSource, setWarehouseSource] =
     useState<DirectorySource>("directory");
@@ -107,14 +121,18 @@ export function useNpDelivery(): NpDelivery {
       setIsCityLoading(true);
 
       if (query.trim().length < MIN_SETTLEMENT_QUERY_LENGTH) {
+        abandonRequest(cityAbortRef, cityRequestRef);
         setCityOptions([]);
+        setIsCityThrottled(false);
         setIsCityLoading(false);
 
         return;
       }
 
       if (cityChoice !== null && query === cityChoice.label) {
+        abandonRequest(cityAbortRef, cityRequestRef);
         setCityOptions((previous) => [...previous]);
+        setIsCityThrottled(false);
         setIsCityLoading(false);
 
         return;
@@ -138,12 +156,18 @@ export function useNpDelivery(): NpDelivery {
             setCitySource("manual");
             setWarehouseSource("manual");
             setCityOptions([]);
+            setIsCityThrottled(false);
             setIsCityLoading(false);
 
             return;
           }
 
+          if (result.kind === "ok") {
+            setCitySource("directory");
+          }
+
           setCityOptions(result.kind === "ok" ? [...result.items] : []);
+          setIsCityThrottled(result.kind === "throttled");
           setIsCityLoading(false);
         }
       );
@@ -158,14 +182,18 @@ export function useNpDelivery(): NpDelivery {
       const methodParam = readWarehouseParam(method);
 
       if (cityChoice === null || methodParam === null) {
+        abandonRequest(warehouseAbortRef, warehouseRequestRef);
         setWarehouseOptions([]);
+        setIsWarehouseThrottled(false);
         setIsWarehouseLoading(false);
 
         return;
       }
 
       if (warehouseChoice !== null && query === warehouseChoice.label) {
+        abandonRequest(warehouseAbortRef, warehouseRequestRef);
         setWarehouseOptions((previous) => [...previous]);
+        setIsWarehouseThrottled(false);
         setIsWarehouseLoading(false);
 
         return;
@@ -192,12 +220,18 @@ export function useNpDelivery(): NpDelivery {
         if (result.kind === "down") {
           setWarehouseSource("manual");
           setWarehouseOptions([]);
+          setIsWarehouseThrottled(false);
           setIsWarehouseLoading(false);
 
           return;
         }
 
+        if (result.kind === "ok") {
+          setWarehouseSource("directory");
+        }
+
         setWarehouseOptions(result.kind === "ok" ? [...result.items] : []);
+        setIsWarehouseThrottled(result.kind === "throttled");
         setIsWarehouseLoading(false);
       });
     },
@@ -209,6 +243,7 @@ export function useNpDelivery(): NpDelivery {
     warehouseRequestRef.current += 1;
     setWarehouseChoice(null);
     setWarehouseOptions([]);
+    setIsWarehouseThrottled(false);
     setIsWarehouseLoading(false);
   }, []);
 
@@ -228,6 +263,7 @@ export function useNpDelivery(): NpDelivery {
   const selectCity = useCallback(
     (settlement: SettlementChoice): void => {
       setCityChoice(settlement);
+      setWarehouseSource("directory");
       resetWarehouse();
 
       const nextAvailability = deriveAvailability(settlement);
@@ -262,11 +298,13 @@ export function useNpDelivery(): NpDelivery {
     city: {
       options: cityOptions,
       isLoading: isCityLoading,
+      isThrottled: isCityThrottled,
       source: citySource,
     },
     warehouse: {
       options: warehouseOptions,
       isLoading: isWarehouseLoading,
+      isThrottled: isWarehouseThrottled,
       source: warehouseSource,
     },
     selectMethod,

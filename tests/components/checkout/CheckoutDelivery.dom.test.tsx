@@ -1,14 +1,6 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { useState, type ReactElement } from "react";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutForm } from "@root/components/checkout/CheckoutForm";
 import {
@@ -18,12 +10,18 @@ import {
 } from "@root/store/cart";
 
 import {
+  createDirectoryFetch,
+  heldFailure,
+  heldPastAbort,
+  heldReply,
+  rowsReply,
+  type DirectoryFetch,
+} from "../../support/directoryFetch";
+import {
   EN_DICTIONARY,
   UK_DICTIONARY,
   renderWithI18n,
 } from "../../support/renderWithI18n";
-
-type FetchMock = Mock<typeof fetch>;
 
 type I18nOptions = NonNullable<Parameters<typeof renderWithI18n>[1]>;
 
@@ -31,12 +29,11 @@ interface HarnessProps {
   onPlaced: () => void;
 }
 
-interface DirectoryReply {
-  status: number;
-  body?: unknown;
-}
-
 const DEBOUNCE_MS = 250;
+
+const RETRY_DELAY_MS = 400;
+
+const SETTLE_MS = DEBOUNCE_MS + RETRY_DELAY_MS;
 
 const OK_STATUS = 200;
 
@@ -50,15 +47,9 @@ const UNAVAILABLE_STATUS = 503;
 
 const ORDER_ROUTE = "/api/place_order";
 
-const SETTLEMENTS_ROUTE = "/api/np/settlements";
-
-const WAREHOUSES_ROUTE = "/api/np/warehouses";
-
 const BRANCH_PARAM = "method=branch";
 
 const POSTOMAT_PARAM = "method=postomat";
-
-const JSON_HEADERS = { "Content-Type": "application/json" };
 
 const HIDDEN_SELECTOR = '[aria-hidden="true"]';
 
@@ -102,6 +93,14 @@ const KYIV = {
   label: "Київ",
   region: "Київська обл.",
   warehouseCount: 12298,
+  isCourierAllowed: true,
+};
+
+const LVIV_TWIN = {
+  ref: "lviv-ref",
+  label: "Іванівка",
+  region: "Полтавська обл.",
+  warehouseCount: 3,
   isCourierAllowed: true,
 };
 
@@ -158,6 +157,12 @@ const SECOND_ROW = 1;
 
 const TYPED_CHARACTER_COUNT = LVIV_QUERY.length;
 
+const ONE_REQUEST = 1;
+
+const HINT_ID = "np-fallback-hint";
+
+const EMPTY_TEXT = "";
+
 const CART_LINES: readonly ICartItem[] = [
   composeCartLine({
     slug: "waiting",
@@ -173,42 +178,7 @@ const CART_LINES: readonly ICartItem[] = [
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const toResponse = ({ status, body }: DirectoryReply): Response =>
-  body === undefined
-    ? new Response(null, { status })
-    : new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
-
-const rowsBody = (items: readonly unknown[]): DirectoryReply => ({
-  status: OK_STATUS,
-  body: { items },
-});
-
-const takeReply = (queue: DirectoryReply[]): DirectoryReply => {
-  const reply = queue.length > 1 ? queue.shift() : queue[0];
-
-  return reply ?? { status: UNAVAILABLE_STATUS };
-};
-
-let settlementReplies: DirectoryReply[] = [];
-
-let warehouseReplies: DirectoryReply[] = [];
-
-const createFetchMock = (): FetchMock =>
-  vi.fn<typeof fetch>((input) => {
-    const url = String(input);
-
-    if (url.startsWith(SETTLEMENTS_ROUTE)) {
-      return Promise.resolve(toResponse(takeReply(settlementReplies)));
-    }
-
-    if (url.startsWith(WAREHOUSES_ROUTE)) {
-      return Promise.resolve(toResponse(takeReply(warehouseReplies)));
-    }
-
-    return Promise.resolve(new Response(null, { status: OK_STATUS }));
-  });
-
-let fetchMock = createFetchMock();
+let directory: DirectoryFetch = createDirectoryFetch();
 
 let onPlaced = vi.fn<() => void>();
 
@@ -228,11 +198,6 @@ function PendingHarness({
 
 const renderCheckout = (options: I18nOptions = {}) =>
   renderWithI18n(<PendingHarness onPlaced={onPlaced} />, options);
-
-const callsTo = (route: string): string[] =>
-  fetchMock.mock.calls
-    .map(([input]) => String(input))
-    .filter((url) => url.startsWith(route));
 
 const control = (id: string): HTMLInputElement => {
   const node = document.getElementById(id);
@@ -262,7 +227,7 @@ const typeInto = (id: string, value: string): void => {
 
 const settle = async (): Promise<void> => {
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
   });
 };
 
@@ -324,7 +289,7 @@ const pickCity = async (
   query: string,
   settlements: readonly unknown[]
 ): Promise<void> => {
-  settlementReplies = [rowsBody(settlements)];
+  directory.queue("settlements", [rowsReply(settlements)]);
   await searchIn(CITY_FIELD, query);
   pickRow(CITY_FIELD, FIRST_ROW);
 };
@@ -345,7 +310,7 @@ const submit = async (): Promise<void> => {
 };
 
 const readOrderPayload = (): Record<string, unknown> => {
-  const call = fetchMock.mock.calls.find(
+  const call = directory.mock.mock.calls.find(
     ([input]) => String(input) === ORDER_ROUTE
   );
 
@@ -383,11 +348,11 @@ Element.prototype.scrollIntoView = function scrollIntoView(): void {};
 beforeEach(() => {
   vi.useFakeTimers();
   useCartStore.setState({ items: [...CART_LINES] });
-  settlementReplies = [rowsBody([LVIV, KYIV])];
-  warehouseReplies = [rowsBody(BRANCH_ROWS)];
-  fetchMock = createFetchMock();
+  directory = createDirectoryFetch();
+  directory.queue("settlements", [rowsReply([LVIV, KYIV])]);
+  directory.queue("warehouses", [rowsReply(BRANCH_ROWS)]);
   onPlaced = vi.fn<() => void>();
-  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("fetch", directory.mock);
 });
 
 afterEach(() => {
@@ -535,10 +500,10 @@ describe("the warehouse field's dependence on the settlement above it", () => {
     await settle();
     pickRow(WAREHOUSE_FIELD, FIRST_ROW);
 
-    expect(callsTo(WAREHOUSES_ROUTE)).toHaveLength(1);
-    expect(callsTo(WAREHOUSES_ROUTE)[0]).toContain(BRANCH_PARAM);
+    expect(directory.callsTo("warehouses")).toHaveLength(1);
+    expect(directory.callsTo("warehouses")[0]).toContain(BRANCH_PARAM);
 
-    warehouseReplies = [rowsBody(POSTOMAT_ROWS)];
+    directory.queue("warehouses", [rowsReply(POSTOMAT_ROWS)]);
 
     const postomat = methodChip(UK_DICTIONARY.cart.method_postomat);
 
@@ -546,13 +511,13 @@ describe("the warehouse field's dependence on the settlement above it", () => {
     moveFocusTo(postomat);
     await settle();
 
-    expect(callsTo(WAREHOUSES_ROUTE)).toHaveLength(1);
+    expect(directory.callsTo("warehouses")).toHaveLength(1);
 
     moveFocusTo(control(WAREHOUSE_FIELD));
     await settle();
 
-    expect(callsTo(WAREHOUSES_ROUTE)).toHaveLength(2);
-    expect(callsTo(WAREHOUSES_ROUTE)[1]).toContain(POSTOMAT_PARAM);
+    expect(directory.callsTo("warehouses")).toHaveLength(2);
+    expect(directory.callsTo("warehouses")[1]).toContain(POSTOMAT_PARAM);
     expect(rowsIn(WAREHOUSE_FIELD).map((row) => row.textContent)).toEqual(
       POSTOMAT_ROWS.map((row) => row.label)
     );
@@ -622,7 +587,7 @@ describe("the loading bars, which must come down on every path they go up on", (
 
     await settle();
 
-    expect(callsTo(SETTLEMENTS_ROUTE)).toHaveLength(0);
+    expect(directory.callsTo("settlements")).toHaveLength(0);
     expect(barsIn(CITY_FIELD)).toBe(0);
     expect(screen.getByText(UK_DICTIONARY.cart.np_empty).textContent).toBe(
       UK_DICTIONARY.cart.np_empty
@@ -633,7 +598,7 @@ describe("the loading bars, which must come down on every path they go up on", (
     renderCheckout();
     await pickCity(LVIV_QUERY, [LVIV]);
 
-    expect(callsTo(SETTLEMENTS_ROUTE)).toHaveLength(1);
+    expect(directory.callsTo("settlements")).toHaveLength(1);
 
     moveFocusTo(control(TELEPHONE_FIELD));
     moveFocusTo(control(CITY_FIELD));
@@ -642,27 +607,44 @@ describe("the loading bars, which must come down on every path they go up on", (
 
     await settle();
 
-    expect(callsTo(SETTLEMENTS_ROUTE)).toHaveLength(1);
+    expect(directory.callsTo("settlements")).toHaveLength(1);
     expect(barsIn(CITY_FIELD)).toBe(0);
   });
 
   it("lowers them when our own limiter answers 429, so a throttled field never spins forever", async () => {
     renderCheckout();
-    settlementReplies = [{ status: THROTTLED_STATUS }];
+    directory.queue("settlements", [{ status: THROTTLED_STATUS }]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
     expect(barsIn(CITY_FIELD)).toBe(0);
-    expect(screen.getByText(UK_DICTIONARY.cart.np_empty).textContent).toBe(
-      UK_DICTIONARY.cart.np_empty
+    expect(screen.getByText(UK_DICTIONARY.cart.np_throttled).textContent).toBe(
+      UK_DICTIONARY.cart.np_throttled
     );
+  });
+
+  it("tells a throttled buyer to wait rather than that their city does not exist", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: THROTTLED_STATUS }]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    expect(screen.queryByText(UK_DICTIONARY.cart.np_empty)).toBeNull();
+    expect(directory.callsTo("settlements")).toHaveLength(1);
+
+    directory.queue("settlements", [rowsReply([LVIV, KYIV])]);
+    typeInto(CITY_FIELD, KYIV_QUERY);
+    await settle();
+
+    expect(screen.queryByText(UK_DICTIONARY.cart.np_throttled)).toBeNull();
+    expect(rowsIn(CITY_FIELD)).toHaveLength(2);
   });
 });
 
 describe("the fallback machine, which no directory failure may leave a volunteer stuck behind", () => {
   it("turns the settlement field into a plain text input on a 503, keeping the typed characters, the focus and the caret at their end", async () => {
     renderCheckout();
-    settlementReplies = [{ status: UNAVAILABLE_STATUS }];
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
@@ -677,7 +659,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
 
   it("says why the list went away and unlocks the warehouse field the missing settlement used to gate", async () => {
     renderCheckout();
-    settlementReplies = [{ status: UNAVAILABLE_STATUS }];
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
@@ -693,7 +675,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
 
   it("keeps the combobox when the carrier answers 200 with nothing, because a settlement with no match is a fact and not an outage", async () => {
     renderCheckout();
-    settlementReplies = [rowsBody([])];
+    directory.queue("settlements", [rowsReply([])]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
@@ -706,7 +688,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
 
   it("keeps the combobox on a 429, because our own rate limit is not the carrier going down", async () => {
     renderCheckout();
-    settlementReplies = [{ status: THROTTLED_STATUS }];
+    directory.queue("settlements", [{ status: THROTTLED_STATUS }]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
@@ -717,7 +699,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
   it("leaves the settlement combobox live when only the warehouse lookup falls over", async () => {
     renderCheckout();
     await pickCity(LVIV_QUERY, [LVIV]);
-    warehouseReplies = [{ status: UNAVAILABLE_STATUS }];
+    directory.queue("warehouses", [{ status: UNAVAILABLE_STATUS }]);
 
     moveFocusTo(control(WAREHOUSE_FIELD));
     await settle();
@@ -730,46 +712,61 @@ describe("the fallback machine, which no directory failure may leave a volunteer
     ).toBe(UK_DICTIONARY.cart.np_fallback_hint_warehouse);
   });
 
-  it("never restores the settlement combobox once it has fallen back, however healthy the carrier turns", async () => {
+  it("retries once before falling back, so a refusal the proxy answers while it is saturated never costs the buyer the list", async () => {
     renderCheckout();
-    settlementReplies = [
+    directory.queue("settlements", [
       { status: UNAVAILABLE_STATUS },
-      rowsBody([LVIV, KYIV]),
-    ];
+      rowsReply([LVIV, KYIV]),
+    ]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    expect(directory.callsTo("settlements")).toHaveLength(2);
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+    expect(rowsIn(CITY_FIELD)).toHaveLength(2);
+    expect(screen.queryByText(UK_DICTIONARY.cart.np_fallback_hint)).toBeNull();
+  });
+
+  it("takes the settlement list back once the buyer leaves the field and the directory answers again, without stealing the caret", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
 
     await searchIn(CITY_FIELD, LVIV_QUERY);
 
     expect(isCombobox(CITY_FIELD)).toBe(false);
 
-    typeInto(CITY_FIELD, KYIV_QUERY);
-    await settle();
+    directory.queue("settlements", [rowsReply([LVIV, KYIV])]);
+
+    fireEvent.blur(control(CITY_FIELD));
     await settle();
 
-    expect(callsTo(SETTLEMENTS_ROUTE)).toHaveLength(1);
-    expect(isCombobox(CITY_FIELD)).toBe(false);
-    expect(control(CITY_FIELD).value).toBe(KYIV_QUERY);
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+    expect(control(CITY_FIELD).value).toBe(LVIV_QUERY);
+    expect(document.activeElement).toBe(document.body);
+    expect(screen.queryByText(UK_DICTIONARY.cart.np_fallback_hint)).toBeNull();
   });
 
-  it("never restores the warehouse combobox either, not even when a later settlement search succeeds", async () => {
+  it("gives the warehouse field its live list back when the buyer picks a settlement the directory does answer", async () => {
     renderCheckout();
     await pickCity(LVIV_QUERY, [LVIV]);
-    warehouseReplies = [{ status: UNAVAILABLE_STATUS }];
+    directory.queue("warehouses", [{ status: UNAVAILABLE_STATUS }]);
 
     moveFocusTo(control(WAREHOUSE_FIELD));
     await settle();
 
     expect(isCombobox(WAREHOUSE_FIELD)).toBe(false);
 
+    directory.queue("warehouses", [rowsReply(BRANCH_ROWS)]);
     await pickCity(KYIV_QUERY, [KYIV]);
 
-    expect(callsTo(SETTLEMENTS_ROUTE)).toHaveLength(2);
     expect(isCombobox(CITY_FIELD)).toBe(true);
-    expect(isCombobox(WAREHOUSE_FIELD)).toBe(false);
+    expect(isCombobox(WAREHOUSE_FIELD)).toBe(true);
+    expect(document.activeElement).toBe(control(CITY_FIELD));
   });
 
   it("still posts the order after the directory fell over, as a manual branch delivery carrying no warehouse number", async () => {
     renderCheckout();
-    settlementReplies = [{ status: UNAVAILABLE_STATUS }];
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
 
     fillContact();
     await searchIn(CITY_FIELD, LVIV_QUERY);
@@ -794,7 +791,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
     renderCheckout();
     fillContact();
 
-    settlementReplies = [rowsBody([])];
+    directory.queue("settlements", [rowsReply([])]);
     await searchIn(CITY_FIELD, UNLISTED_SETTLEMENT);
 
     expect(isCombobox(CITY_FIELD)).toBe(true);
@@ -815,7 +812,7 @@ describe("the fallback machine, which no directory failure may leave a volunteer
     renderCheckout();
     fillContact();
 
-    settlementReplies = [{ status: THROTTLED_STATUS }];
+    directory.queue("settlements", [{ status: THROTTLED_STATUS }]);
     await searchIn(CITY_FIELD, UNLISTED_SETTLEMENT);
 
     expect(control(WAREHOUSE_FIELD).disabled).toBe(false);
@@ -849,5 +846,185 @@ describe("the fallback machine, which no directory failure may leave a volunteer
       warehouse: BRANCH_ROWS[FIRST_ROW].label,
       warehouse_number: BRANCH_ROWS[FIRST_ROW].number,
     });
+  });
+});
+
+describe("the requests a buyer leaves behind", () => {
+  it("drops the answer to a query the buyer has already erased, instead of repopulating the panel under one letter", async () => {
+    renderCheckout();
+    directory.queue("settlements", [heldReply([KYIV])]);
+
+    moveFocusTo(control(CITY_FIELD));
+    typeInto(CITY_FIELD, KYIV_QUERY);
+    await settle();
+
+    expect(directory.heldCount()).toBe(ONE_REQUEST);
+
+    typeInto(CITY_FIELD, ONE_LETTER_QUERY);
+    await settle();
+
+    directory.release();
+    await settle();
+
+    expect(screen.queryByText(KYIV.label)).toBeNull();
+    expect(screen.getByText(UK_DICTIONARY.cart.np_empty).textContent).toBe(
+      UK_DICTIONARY.cart.np_empty
+    );
+    expect(control(CITY_FIELD).value).toBe(ONE_LETTER_QUERY);
+  });
+
+  it("never lets the failure of a query the buyer erased turn the fields into free text", async () => {
+    renderCheckout();
+    directory.queue("settlements", [heldFailure(UNAVAILABLE_STATUS)]);
+
+    moveFocusTo(control(CITY_FIELD));
+    typeInto(CITY_FIELD, KYIV_QUERY);
+    await settle();
+
+    typeInto(CITY_FIELD, ONE_LETTER_QUERY);
+    await settle();
+
+    directory.release();
+    await settle();
+
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+    expect(screen.queryByText(UK_DICTIONARY.cart.np_fallback_hint)).toBeNull();
+  });
+
+  it("keeps the answer to the latest settlement search when an older one lands after it", async () => {
+    renderCheckout();
+    directory.queue("settlements", [
+      heldPastAbort([LVIV]),
+      rowsReply([KYIV, LOCKERLESS_VILLAGE]),
+    ]);
+
+    moveFocusTo(control(CITY_FIELD));
+    typeInto(CITY_FIELD, LVIV_QUERY);
+    await settle();
+
+    typeInto(CITY_FIELD, KYIV_QUERY);
+    await settle();
+
+    expect(rowsIn(CITY_FIELD).map((row) => row.textContent)).toEqual([
+      `${KYIV.label}${KYIV.region}`,
+      `${LOCKERLESS_VILLAGE.label}${LOCKERLESS_VILLAGE.region}`,
+    ]);
+
+    directory.release();
+    await settle();
+
+    expect(rowsIn(CITY_FIELD).map((row) => row.textContent)).toEqual([
+      `${KYIV.label}${KYIV.region}`,
+      `${LOCKERLESS_VILLAGE.label}${LOCKERLESS_VILLAGE.region}`,
+    ]);
+  });
+
+  it("keeps the answer to the latest warehouse search when an older one lands after it", async () => {
+    renderCheckout();
+    await pickCity(LVIV_QUERY, [LVIV]);
+
+    directory.queue("warehouses", [
+      heldPastAbort(POSTOMAT_ROWS),
+      rowsReply(BRANCH_ROWS),
+    ]);
+
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    typeInto(WAREHOUSE_FIELD, BRANCH_ROWS[FIRST_ROW].number);
+    await settle();
+
+    expect(rowsIn(WAREHOUSE_FIELD).map((row) => row.textContent)).toEqual(
+      BRANCH_ROWS.map((row) => row.label)
+    );
+
+    directory.release();
+    await settle();
+
+    expect(rowsIn(WAREHOUSE_FIELD).map((row) => row.textContent)).toEqual(
+      BRANCH_ROWS.map((row) => row.label)
+    );
+  });
+
+  it("aborts the search still in flight when the buyer leaves the checkout", async () => {
+    const view = renderCheckout();
+
+    directory.queue("settlements", [heldReply([LVIV])]);
+
+    moveFocusTo(control(CITY_FIELD));
+    typeInto(CITY_FIELD, LVIV_QUERY);
+    await settle();
+
+    const [signal] = directory.signalsTo("settlements");
+
+    expect(signal.aborted).toBe(false);
+
+    view.unmount();
+
+    expect(signal.aborted).toBe(true);
+  });
+});
+
+describe("the two warehouse categories the carrier numbers apart", () => {
+  it("names the field after the category the chip selects, so a locker is never labelled a branch", async () => {
+    renderCheckout();
+    await pickCity(LVIV_QUERY, [LVIV]);
+
+    expect(screen.getByLabelText(`${UK_DICTIONARY.cart.np_branch} *`)).toBe(
+      control(WAREHOUSE_FIELD)
+    );
+
+    fireEvent.click(methodChip(UK_DICTIONARY.cart.method_postomat));
+
+    expect(screen.getByLabelText(`${UK_DICTIONARY.cart.np_postomat} *`)).toBe(
+      control(WAREHOUSE_FIELD)
+    );
+  });
+});
+
+describe("the settlement rows the carrier may hand one city ref", () => {
+  it("resolves the row the buyer clicked and not the first row sharing its ref", async () => {
+    renderCheckout();
+    fillContact();
+    directory.queue("settlements", [rowsReply([LVIV, LVIV_TWIN])]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+    pickRow(CITY_FIELD, SECOND_ROW);
+    typeInto(WAREHOUSE_FIELD, MANUAL_WAREHOUSE);
+
+    await submit();
+
+    expect(readOrderGroup("delivery").city).toBe(
+      `${LVIV_TWIN.label}, ${LVIV_TWIN.region}`
+    );
+    expect(control(CITY_FIELD).value).toBe(LVIV_TWIN.label);
+  });
+});
+
+describe("the fallback hint, which a screen reader has to hear", () => {
+  it("keeps its live region mounted before there is anything to announce", () => {
+    renderCheckout();
+
+    const region = document.getElementById(HINT_ID);
+
+    expect(region?.getAttribute("aria-live")).toBe("polite");
+    expect(region?.textContent).toBe(EMPTY_TEXT);
+  });
+
+  it("describes both free-text fields it explains once the directory falls over", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    const region = screen.getByText(UK_DICTIONARY.cart.np_fallback_hint);
+
+    expect(region.id).toBe(HINT_ID);
+    expect(control(CITY_FIELD).getAttribute("aria-describedby")).toContain(
+      HINT_ID
+    );
+    expect(control(WAREHOUSE_FIELD).getAttribute("aria-describedby")).toContain(
+      HINT_ID
+    );
   });
 });

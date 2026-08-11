@@ -3,7 +3,10 @@ import type { SettlementChoice, WarehouseChoice } from "./delivery";
 const SETTLEMENTS_ROUTE = "/api/np/settlements";
 const WAREHOUSES_ROUTE = "/api/np/warehouses";
 const THROTTLED_STATUS = 429;
+const UNAVAILABLE_STATUS = 503;
 const ABORT_ERROR_NAME = "AbortError";
+const DIRECTORY_DEADLINE_MS = 10_000;
+const RETRY_DELAY_MS = 400;
 
 export type DirectoryResult<T> =
   | { kind: "ok"; items: readonly T[] }
@@ -80,31 +83,110 @@ const decodeItems = <T>(
   return decoded;
 };
 
+interface Deadline {
+  signal: AbortSignal;
+  isExpired: () => boolean;
+  release: () => void;
+}
+
+const startDeadline = (caller: AbortSignal): Deadline => {
+  const controller = new AbortController();
+  const forward = (): void => {
+    controller.abort();
+  };
+
+  let isExpired = false;
+
+  const timer = setTimeout(() => {
+    isExpired = true;
+    controller.abort();
+  }, DIRECTORY_DEADLINE_MS);
+
+  if (caller.aborted) {
+    forward();
+  } else {
+    caller.addEventListener("abort", forward, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    isExpired: () => isExpired,
+    release: () => {
+      clearTimeout(timer);
+      caller.removeEventListener("abort", forward);
+    },
+  };
+};
+
+const pause = (delayMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+
+interface Attempt<T> {
+  outcome: DirectoryResult<T>;
+  isRetryable: boolean;
+}
+
+const readAbortOutcome = <T>(deadline: Deadline): DirectoryResult<T> =>
+  deadline.isExpired() ? DOWN : ABORTED;
+
+const settled = <T>(
+  outcome: DirectoryResult<T>,
+  isRetryable = false
+): Attempt<T> => ({ outcome, isRetryable });
+
+const attempt = async <T>(
+  url: string,
+  deadline: Deadline,
+  decode: (row: unknown) => T | null
+): Promise<Attempt<T>> => {
+  try {
+    const response = await fetch(url, { signal: deadline.signal });
+
+    if (response.status === THROTTLED_STATUS) {
+      return settled(THROTTLED);
+    }
+
+    if (!response.ok) {
+      return settled(DOWN, response.status === UNAVAILABLE_STATUS);
+    }
+
+    const items = decodeItems(await response.json(), decode);
+
+    return settled(items === null ? DOWN : { kind: "ok", items });
+  } catch (error) {
+    if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
+      return settled(readAbortOutcome(deadline));
+    }
+
+    return settled(DOWN, true);
+  }
+};
+
 const request = async <T>(
   url: string,
   signal: AbortSignal,
   decode: (row: unknown) => T | null
 ): Promise<DirectoryResult<T>> => {
+  const deadline = startDeadline(signal);
+
   try {
-    const response = await fetch(url, { signal });
+    const first = await attempt(url, deadline, decode);
 
-    if (response.status === THROTTLED_STATUS) {
-      return THROTTLED;
+    if (!first.isRetryable || deadline.signal.aborted) {
+      return first.outcome;
     }
 
-    if (!response.ok) {
-      return DOWN;
+    await pause(RETRY_DELAY_MS);
+
+    if (deadline.signal.aborted) {
+      return readAbortOutcome(deadline);
     }
 
-    const items = decodeItems(await response.json(), decode);
-
-    return items === null ? DOWN : { kind: "ok", items };
-  } catch (error) {
-    if (error instanceof Error && error.name === ABORT_ERROR_NAME) {
-      return ABORTED;
-    }
-
-    return DOWN;
+    return (await attempt(url, deadline, decode)).outcome;
+  } finally {
+    deadline.release();
   }
 };
 

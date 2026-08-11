@@ -60,6 +60,11 @@ const NETWORK_ERROR_MESSAGE = "fetch failed";
 const ABORT_ERROR_NAME = "AbortError";
 const ABORT_ERROR_MESSAGE = "The user aborted a request.";
 
+const DIRECTORY_DEADLINE_MS = 10_000;
+const FIRST_ATTEMPT = 1;
+const SINGLE_ATTEMPT = 1;
+const ATTEMPTS_WITH_RETRY = 2;
+
 const NOT_OK_MESSAGE = "The directory call did not answer ok but ";
 const NON_STRING_URL_MESSAGE =
   "The directory client requested a non-string url";
@@ -152,6 +157,7 @@ const expectOk = <T>(result: DirectoryResult<T>): readonly T[] => {
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -195,15 +201,35 @@ describe("the settlement request the directory client sends", () => {
     expect(readRequestedParams(fetchStub).get(QUERY_PARAM)).toBe(CITY_LABEL);
   });
 
-  it("hands the abort signal to fetch, so a stale keystroke can be cancelled", async () => {
-    const fetchStub = stubUpstream(respondWithItems([]));
-    const signal = freshSignal();
+  it("hands fetch a signal the caller's own abort still reaches, so a stale keystroke can be cancelled", async () => {
+    const fetchStub = stubUpstream(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const error = new Error(ABORT_ERROR_MESSAGE);
 
-    await fetchSettlements(CITY_QUERY, signal);
+            error.name = ABORT_ERROR_NAME;
+
+            reject(error);
+          });
+        })
+    );
+    const controller = new AbortController();
+    const pending = fetchSettlements(CITY_QUERY, controller.signal);
 
     const [, init] = fetchStub.mock.calls[0];
+    const sent = init?.signal;
 
-    expect(init?.signal).toBe(signal);
+    if (sent === undefined || sent === null) {
+      throw new Error(MISSING_SIGNAL_MESSAGE);
+    }
+
+    expect(sent.aborted).toBe(false);
+
+    controller.abort();
+
+    expect(sent.aborted).toBe(true);
+    expect((await pending).kind).toBe(ABORTED_KIND);
   });
 });
 
@@ -531,6 +557,78 @@ describe.each(CALLERS)(
       });
 
       expect((await call(freshSignal())).kind).toBe(ABORTED_KIND);
+    });
+
+    it("tries a 503 once more before it answers down, because a saturated proxy frees a slot in the meantime", async () => {
+      let callCount = 0;
+      const fetchStub = stubUpstream(() => {
+        callCount += 1;
+
+        return Promise.resolve(
+          callCount === FIRST_ATTEMPT
+            ? jsonResponse({ error: NETWORK_ERROR_MESSAGE }, UNAVAILABLE_STATUS)
+            : jsonResponse({ items: [] }, OK_STATUS)
+        );
+      });
+
+      const result = await call(freshSignal());
+
+      expect(result.kind).toBe(OK_KIND);
+      expect(fetchStub).toHaveBeenCalledTimes(ATTEMPTS_WITH_RETRY);
+    });
+
+    it("retries a connection that never landed, and stops after one retry", async () => {
+      const fetchStub = stubUpstream(() =>
+        Promise.reject(new TypeError(NETWORK_ERROR_MESSAGE))
+      );
+
+      const result = await call(freshSignal());
+
+      expect(result.kind).toBe(DOWN_KIND);
+      expect(fetchStub).toHaveBeenCalledTimes(ATTEMPTS_WITH_RETRY);
+    });
+
+    it("never spends a retry on our own 429, because that would spend the bucket that produced it", async () => {
+      const fetchStub = stubUpstream(
+        respondWith({ error: NETWORK_ERROR_MESSAGE }, THROTTLED_STATUS)
+      );
+
+      await call(freshSignal());
+
+      expect(fetchStub).toHaveBeenCalledTimes(SINGLE_ATTEMPT);
+    });
+
+    it("never retries a request the proxy refused as invalid", async () => {
+      const fetchStub = stubUpstream(
+        respondWith({ error: NETWORK_ERROR_MESSAGE }, BAD_REQUEST_STATUS)
+      );
+
+      await call(freshSignal());
+
+      expect(fetchStub).toHaveBeenCalledTimes(SINGLE_ATTEMPT);
+    });
+
+    it("answers down on its own deadline when the proxy never answers at all, so the field never spins forever", async () => {
+      vi.useFakeTimers();
+
+      stubUpstream(
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              const error = new Error(ABORT_ERROR_MESSAGE);
+
+              error.name = ABORT_ERROR_NAME;
+
+              reject(error);
+            });
+          })
+      );
+
+      const pending = call(freshSignal());
+
+      await vi.advanceTimersByTimeAsync(DIRECTORY_DEADLINE_MS);
+
+      expect((await pending).kind).toBe(DOWN_KIND);
     });
   }
 );

@@ -66,6 +66,11 @@ const WAREHOUSE_METHODS: readonly NpMethod[] = ["np_branch", "np_postomat"];
 
 const REGION_SEPARATOR = ", ";
 
+const OPTION_ID_SEPARATOR = "::";
+
+export const composeOptionId = (index: number, ref: string): string =>
+  `${index}${OPTION_ID_SEPARATOR}${ref}`;
+
 export const isNpMethod = (value: string): value is NpMethod =>
   NP_METHODS.some((method) => method === value);
 

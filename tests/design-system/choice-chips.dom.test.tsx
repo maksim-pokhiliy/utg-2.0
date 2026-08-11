@@ -27,6 +27,17 @@ const COURIER_ONLY_METHODS: readonly ChoiceChipOption[] = [
   { id: "locker", label: "Parcel locker", disabled: true },
   { id: "courier", label: "Courier" },
 ];
+const HEAD_DISABLED_METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch", disabled: true },
+  { id: "locker", label: "Parcel locker" },
+  { id: "courier", label: "Courier" },
+];
+const TAIL_DISABLED_METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch" },
+  { id: "locker", label: "Parcel locker" },
+  { id: "courier", label: "Courier", disabled: true },
+];
+const SERVED_METHOD = "locker";
 const UNSERVED_METHODS: readonly ChoiceChipOption[] = METHODS.map((option) => ({
   ...option,
   disabled: true,
@@ -279,6 +290,36 @@ describe("the arrow, Home and End matrix from the middle chip", () => {
 
   it("jumps to the last option on End", () => {
     expect(press("End", 1)).toEqual([[OPTIONS[2].id]]);
+  });
+});
+
+describe("Home and End over a row whose edge chip the carrier does not serve", () => {
+  it("walks Home forward off a disabled first chip onto the first one the carrier does serve", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({
+      options: HEAD_DISABLED_METHODS,
+      value: LAST_METHOD,
+      onChange,
+    });
+
+    fireEvent.keyDown(chips[2], { key: "Home" });
+
+    expect(onChange.mock.calls).toEqual([[SERVED_METHOD]]);
+    expect(document.activeElement).toBe(chips[1]);
+  });
+
+  it("walks End backward off a disabled last chip onto the last one the carrier does serve", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({
+      options: TAIL_DISABLED_METHODS,
+      value: FIRST_METHOD,
+      onChange,
+    });
+
+    fireEvent.keyDown(chips[0], { key: "End" });
+
+    expect(onChange.mock.calls).toEqual([[SERVED_METHOD]]);
+    expect(document.activeElement).toBe(chips[1]);
   });
 });
 
