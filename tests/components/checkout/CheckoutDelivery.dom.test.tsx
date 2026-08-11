@@ -746,6 +746,25 @@ describe("the fallback machine, which no directory failure may leave a volunteer
     expect(screen.queryByText(UK_DICTIONARY.cart.np_fallback_hint)).toBeNull();
   });
 
+  it("takes the warehouse list back when the buyer leaves that field and the directory answers again", async () => {
+    renderCheckout();
+    await pickCity(LVIV_QUERY, [LVIV]);
+    directory.queue("warehouses", [{ status: UNAVAILABLE_STATUS }]);
+
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(isCombobox(WAREHOUSE_FIELD)).toBe(false);
+
+    directory.queue("warehouses", [rowsReply(BRANCH_ROWS)]);
+
+    fireEvent.blur(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(isCombobox(WAREHOUSE_FIELD)).toBe(true);
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+  });
+
   it("gives the warehouse field its live list back when the buyer picks a settlement the directory does answer", async () => {
     renderCheckout();
     await pickCity(LVIV_QUERY, [LVIV]);
