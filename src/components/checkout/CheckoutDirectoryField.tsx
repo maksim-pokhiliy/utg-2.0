@@ -21,6 +21,15 @@ const ERROR_KEYS = {
 
 const DESCRIPTION_SEPARATOR = " ";
 
+const focusEnd = (node: Element | null): void => {
+  if (!(node instanceof HTMLInputElement)) {
+    return;
+  }
+
+  node.focus();
+  node.setSelectionRange(node.value.length, node.value.length);
+};
+
 interface CheckoutDirectoryFieldProps {
   name: CheckoutFieldName;
   label: string;
@@ -57,6 +66,7 @@ export function CheckoutDirectoryField({
   const dictionary = useDictionary();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previousSourceRef = useRef(source);
+  const wasFocusedRef = useRef(false);
 
   const isInvalid = error !== undefined;
   const errorText =
@@ -64,22 +74,24 @@ export function CheckoutDirectoryField({
 
   useEffect(() => {
     const hasFlipped = previousSourceRef.current !== source;
+    const wasFocused = wasFocusedRef.current;
 
     previousSourceRef.current = source;
 
-    if (!hasFlipped || source !== "manual") {
+    if (!hasFlipped || document.activeElement !== document.body) {
       return;
     }
 
-    const input = inputRef.current;
+    if (source === "manual") {
+      focusEnd(inputRef.current);
 
-    if (input === null || document.activeElement !== document.body) {
       return;
     }
 
-    input.focus();
-    input.setSelectionRange(input.value.length, input.value.length);
-  }, [source]);
+    if (wasFocused) {
+      focusEnd(document.getElementById(name));
+    }
+  }, [name, source]);
 
   if (source === "directory") {
     return (
@@ -116,7 +128,13 @@ export function CheckoutDirectoryField({
         placeholder={placeholder}
         disabled={disabled}
         onChange={(event) => onValueChange(name, event.target.value)}
-        onBlur={(event) => onSearch(event.target.value)}
+        onFocus={() => {
+          wasFocusedRef.current = true;
+        }}
+        onBlur={(event) => {
+          wasFocusedRef.current = !event.currentTarget.isConnected;
+          onSearch(event.target.value);
+        }}
         invalid={isInvalid}
         required
         aria-invalid={isInvalid}

@@ -12,6 +12,9 @@ const MAX_LABEL_LENGTH = 256;
 const MAX_IDENTIFIER_LENGTH = 64;
 const THROTTLE_ERROR_CODE = "20000401501";
 const THROTTLE_ERROR_TEXT = "to many requests";
+const THROTTLED_STATUS = 429;
+const FIRST_CLIENT_ERROR_STATUS = 400;
+const FIRST_SERVER_ERROR_STATUS = 500;
 
 type NpMethod = "searchSettlements" | "getWarehouses";
 
@@ -52,6 +55,13 @@ const isThrottleEnvelope = (payload: Record<string, unknown>): boolean =>
 const classifyResult = (result: NpResult): CarrierVerdict =>
   result.kind === "distress" ? "distress" : "answered";
 
+const classifyStatus = (status: number): NpResult =>
+  status !== THROTTLED_STATUS &&
+  status >= FIRST_CLIENT_ERROR_STATUS &&
+  status < FIRST_SERVER_ERROR_STATUS
+    ? NP_REJECTED
+    : NP_DISTRESS;
+
 const fetchDirectory = async (
   apiKey: string,
   calledMethod: NpMethod,
@@ -74,7 +84,7 @@ const fetchDirectory = async (
     });
 
     if (!response.ok) {
-      return NP_DISTRESS;
+      return classifyStatus(response.status);
     }
 
     const payload: unknown = await response.json();

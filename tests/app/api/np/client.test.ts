@@ -42,6 +42,11 @@ const DISTRESS_RESULT = { kind: "distress" };
 const REJECTED_RESULT = { kind: "rejected" };
 const LOG_MESSAGE = "Failed to reach the delivery directory:";
 
+const BAD_REQUEST_STATUS = 400;
+const NOT_FOUND_STATUS = 404;
+const THROTTLED_HTTP_STATUS = 429;
+const CLIENT_ERROR_STATUSES = [BAD_REQUEST_STATUS, NOT_FOUND_STATUS];
+
 const CITY_NOT_FOUND_CODE = "20000900768";
 const THROTTLE_CODE = "20000401501";
 const THROTTLE_TEXT = "To many requests";
@@ -203,6 +208,39 @@ describe("callNpDirectory", () => {
 
     expect(result).toEqual(DISTRESS_RESULT);
     expect(errorLog).not.toHaveBeenCalled();
+  });
+
+  it("reads a 4xx about our own request as a verdict, not as the carrier being down", async () => {
+    for (const status of CLIENT_ERROR_STATUSES) {
+      vi.resetModules();
+      stubUpstream(() =>
+        Promise.resolve(jsonResponse({ success: false }, status))
+      );
+
+      const { callNpDirectory } = await loadClient();
+
+      const result = await callNpDirectory(
+        SETTLEMENTS_METHOD,
+        SETTLEMENT_PROPERTIES
+      );
+
+      expect(result, String(status)).toEqual(REJECTED_RESULT);
+    }
+  });
+
+  it("reads an http 429 as distress, because that one is the carrier throttling us", async () => {
+    stubUpstream(() =>
+      Promise.resolve(jsonResponse({ success: false }, THROTTLED_HTTP_STATUS))
+    );
+
+    const { callNpDirectory } = await loadClient();
+
+    const result = await callNpDirectory(
+      SETTLEMENTS_METHOD,
+      SETTLEMENT_PROPERTIES
+    );
+
+    expect(result).toEqual(DISTRESS_RESULT);
   });
 
   it("reads a bare success false as a verdict about our own input, not as distress", async () => {

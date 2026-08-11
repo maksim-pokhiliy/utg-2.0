@@ -162,7 +162,7 @@ export function useNpDelivery(): NpDelivery {
             return;
           }
 
-          if (result.kind === "ok") {
+          if (result.kind === "ok" && result.items.length > 0) {
             setCitySource("directory");
           }
 
@@ -226,7 +226,7 @@ export function useNpDelivery(): NpDelivery {
           return;
         }
 
-        if (result.kind === "ok") {
+        if (result.kind === "ok" && result.items.length > 0) {
           setWarehouseSource("directory");
         }
 

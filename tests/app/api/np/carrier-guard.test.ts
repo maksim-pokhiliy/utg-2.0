@@ -20,6 +20,7 @@ const CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
 const BRANCH_METHOD = "branch";
 
 const OK_STATUS = 200;
+const NOT_FOUND_STATUS = 404;
 const BAD_GATEWAY_STATUS = 502;
 const UNAVAILABLE_STATUS = 503;
 
@@ -275,6 +276,18 @@ describe("the carrier outage damper", () => {
 
   it("is never armed by the carrier rejecting our own city ref, however many times we ask", async () => {
     const fetchStub = stubRefusingUpstream(CITY_NOT_FOUND_CODE);
+    const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
+
+    expect(statuses).toEqual(
+      Array(SESSION_QUERY_COUNT).fill(UNAVAILABLE_STATUS)
+    );
+    expect(fetchStub).toHaveBeenCalledTimes(SESSION_QUERY_COUNT);
+  });
+
+  it("is never armed by an http 4xx, which is the carrier rejecting our request and not falling over", async () => {
+    const fetchStub = stubUpstream(() =>
+      Promise.resolve(new Response(null, { status: NOT_FOUND_STATUS }))
+    );
     const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
 
     expect(statuses).toEqual(

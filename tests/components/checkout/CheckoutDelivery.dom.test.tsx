@@ -765,6 +765,82 @@ describe("the fallback machine, which no directory failure may leave a volunteer
     expect(isCombobox(CITY_FIELD)).toBe(true);
   });
 
+  it("keeps the buyer's focus when the un-latch lands while they are back in the field", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    expect(isCombobox(CITY_FIELD)).toBe(false);
+
+    directory.queue("settlements", [rowsReply([LVIV, KYIV])]);
+
+    moveFocusTo(control(CITY_FIELD));
+    moveFocusTo(control(TELEPHONE_FIELD));
+    moveFocusTo(control(CITY_FIELD));
+    await settle();
+
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+    expect(document.activeElement?.id).toBe(CITY_FIELD);
+  });
+
+  it("keeps focus when the warehouse un-latch lands while the buyer is back in that field", async () => {
+    renderCheckout();
+    await pickCity(LVIV_QUERY, [LVIV]);
+    directory.queue("warehouses", [{ status: UNAVAILABLE_STATUS }]);
+
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(isCombobox(WAREHOUSE_FIELD)).toBe(false);
+
+    directory.queue("warehouses", [rowsReply(BRANCH_ROWS)]);
+
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    moveFocusTo(control(TELEPHONE_FIELD));
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(isCombobox(WAREHOUSE_FIELD)).toBe(true);
+    expect(document.activeElement?.id).toBe(WAREHOUSE_FIELD);
+  });
+
+  it("never pulls the caret out of the field the buyer moved on to when the un-latch lands", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    directory.queue("settlements", [rowsReply([LVIV, KYIV])]);
+
+    moveFocusTo(control(CITY_FIELD));
+    moveFocusTo(control(TELEPHONE_FIELD));
+    await settle();
+
+    expect(isCombobox(CITY_FIELD)).toBe(true);
+    expect(document.activeElement?.id).toBe(TELEPHONE_FIELD);
+  });
+
+  it("does not take the field back on an empty answer, because an address matching nothing is not proof the directory is up", async () => {
+    renderCheckout();
+    directory.queue("settlements", [{ status: UNAVAILABLE_STATUS }]);
+
+    await searchIn(CITY_FIELD, LVIV_QUERY);
+
+    expect(isCombobox(CITY_FIELD)).toBe(false);
+
+    directory.queue("settlements", [rowsReply([])]);
+
+    moveFocusTo(control(CITY_FIELD));
+    moveFocusTo(control(TELEPHONE_FIELD));
+    await settle();
+
+    expect(isCombobox(CITY_FIELD)).toBe(false);
+    expect(
+      screen.getByText(UK_DICTIONARY.cart.np_fallback_hint).textContent
+    ).toBe(UK_DICTIONARY.cart.np_fallback_hint);
+  });
+
   it("gives the warehouse field its live list back when the buyer picks a settlement the directory does answer", async () => {
     renderCheckout();
     await pickCity(LVIV_QUERY, [LVIV]);
