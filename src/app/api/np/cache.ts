@@ -1,3 +1,7 @@
+import { isCarrierRefused, type CarrierRefused } from "./refusal";
+
+const KEY_SEPARATOR = "|";
+
 interface CacheOptions<T> {
   ttlMs: number;
   maxEntries: number;
@@ -12,10 +16,12 @@ interface CacheEntry<T> {
 
 type CacheEntries<T> = Map<string, CacheEntry<T>>;
 
-type CacheLoader<T> = () => Promise<T | null>;
+export type CacheOutcome<T> = T | null | CarrierRefused;
+
+type CacheLoader<T> = () => Promise<CacheOutcome<T>>;
 
 export interface DirectoryCache<T> {
-  resolve: (key: string, load: CacheLoader<T>) => Promise<T | null>;
+  resolve: (key: string, load: CacheLoader<T>) => Promise<CacheOutcome<T>>;
 }
 
 const readEntry = <T>(
@@ -66,10 +72,10 @@ const writeEntry = <T>(
 };
 
 const runSingleFlight = async <T>(
-  inFlight: Map<string, Promise<T | null>>,
+  inFlight: Map<string, Promise<CacheOutcome<T>>>,
   key: string,
   load: CacheLoader<T>
-): Promise<T | null> => {
+): Promise<CacheOutcome<T>> => {
   const pending = inFlight.get(key);
 
   if (pending !== undefined) {
@@ -87,12 +93,17 @@ const runSingleFlight = async <T>(
   }
 };
 
+export const composeCacheKey = (...parts: readonly string[]): string =>
+  parts
+    .map((part) => `${part.length}${KEY_SEPARATOR}${part}`)
+    .join(KEY_SEPARATOR);
+
 export const createDirectoryCache = <T>(
   options: CacheOptions<T>
 ): DirectoryCache<T> => {
   const { ttlMs, maxEntries, negativeTtlMs, isCacheable } = options;
   const entries: CacheEntries<T> = new Map();
-  const inFlight = new Map<string, Promise<T | null>>();
+  const inFlight = new Map<string, Promise<CacheOutcome<T>>>();
 
   const resolveTtlMs = (value: T | null): number | null => {
     if (value === null) {
@@ -118,7 +129,7 @@ export const createDirectoryCache = <T>(
   const resolve = async (
     key: string,
     load: CacheLoader<T>
-  ): Promise<T | null> => {
+  ): Promise<CacheOutcome<T>> => {
     const cached = readEntry(entries, key);
 
     if (cached !== null) {
@@ -127,6 +138,10 @@ export const createDirectoryCache = <T>(
 
     return runSingleFlight(inFlight, key, async () => {
       const value = await load();
+
+      if (isCarrierRefused(value)) {
+        return value;
+      }
 
       store(key, value);
 

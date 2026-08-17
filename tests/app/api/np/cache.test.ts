@@ -17,6 +17,17 @@ const FIRST_VALUE = "first";
 const SECOND_VALUE = "second";
 const EMPTY_VALUE = "";
 
+const CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
+const BARE_QUERY = "a|b";
+const SPLIT_CITY_REF = `${CITY_REF}|a`;
+const SPLIT_QUERY = "b";
+const AMBIGUOUS_SPLITS: readonly (readonly [string, string])[] = [
+  ["", "a|b|c"],
+  ["a", "b|c"],
+  ["a|b", "c"],
+  ["a|b|c", ""],
+];
+
 const LOADER_ERROR_MESSAGE = "the directory loader exploded";
 const REJECTED_STATUS = "rejected";
 const RELOADED_CALL_COUNT = 2;
@@ -336,5 +347,32 @@ describe("createDirectoryCache", () => {
 
     expect(value).toBe(FIRST_VALUE);
     expect(unusedReload).not.toHaveBeenCalled();
+  });
+});
+
+describe("composeCacheKey", () => {
+  it("keeps two component pairs apart when a component carries the separator itself", async () => {
+    const { composeCacheKey } = await loadCache();
+
+    expect(composeCacheKey(SPLIT_CITY_REF, BARE_QUERY)).not.toBe(
+      composeCacheKey(CITY_REF, SPLIT_QUERY)
+    );
+  });
+
+  it("keeps every ambiguous split of one joined spelling apart", async () => {
+    const { composeCacheKey } = await loadCache();
+    const keys = AMBIGUOUS_SPLITS.map(([city, query]) =>
+      composeCacheKey(city, query)
+    );
+
+    expect(new Set(keys).size).toBe(AMBIGUOUS_SPLITS.length);
+  });
+
+  it("gives one component pair one key", async () => {
+    const { composeCacheKey } = await loadCache();
+
+    expect(composeCacheKey(CITY_REF, BARE_QUERY)).toBe(
+      composeCacheKey(CITY_REF, BARE_QUERY)
+    );
   });
 });

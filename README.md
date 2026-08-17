@@ -135,9 +135,9 @@ source.
 
 ### Delivery directory
 
-`GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory. **Nothing consumes them
-yet** — the Ukrainian checkout still uses free-text delivery fields; these routes exist so the contract can be pinned
-before a screen depends on it. The API key stays server-side and the rows are minimized on the way out — a settlement is
+`GET /api/np/settlements` and `GET /api/np/warehouses` proxy the Нова Пошта address directory, and the Ukrainian
+checkout is what consumes them: a method chooser (відділення, поштомат or courier), a settlement box and a warehouse box
+filtered to the chosen method. The API key stays server-side and the rows are minimized on the way out — a settlement is
 `{ref, label, region?, warehouseCount, isCourierAllowed}`, a warehouse is `{number, label}` — and capped, so a big city's
 full branch list never crosses the wire. The last two settlement fields are what lets a screen say honestly which
 delivery methods a place actually has: Нова Пошта reports settlements with no pickup points at all, and courier delivery
@@ -152,9 +152,14 @@ city/method/query for warehouses.
 
 These routes get their own limiter bucket (60 requests per 60 seconds per server instance) because autocomplete fires far
 more often than an order does. Every failure — missing key, timeout, carrier error, a response we cannot decode —
-collapses to a single 503, which is the signal the checkout will key its free-text fallback on once it adopts these
-routes. A search that simply finds nothing is not a failure: it answers 200 with an empty list, because a place with no
-поштомат is a fact about the place, not an outage.
+collapses to a single 503, and that is what the checkout keys its fallback on: the affected field turns into a plain text
+box with a short hint, keeping whatever was already typed, and the order still goes through. A search that simply finds
+nothing is not a failure: it answers 200 with an empty list, because a place with no поштомат is a fact about the place,
+not an outage, and the form must not degrade over a fact.
+
+Nothing about the delivery block can leave a buyer stuck. If the directory is unreachable the fields are free text; if it
+is reachable but has no entry for somewhere real, a hand-typed city or warehouse is still accepted, and the order records
+that it was typed rather than chosen so the operator knows to confirm it on the call they already make.
 
 ### SEO
 

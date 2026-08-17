@@ -1,9 +1,10 @@
 import type { Locale } from "@root/data";
 import { normalizePhone } from "@root/utils/phone";
 
+import type { NpMethod } from "./delivery";
 import {
   FIELD_ORDER,
-  REQUIRED_FIELDS,
+  requiredFieldsFor,
   type CheckoutFieldName,
   type CheckoutFormValues,
 } from "./fields";
@@ -26,11 +27,12 @@ const PHONE_FIELD: CheckoutFieldName = "telephone";
 
 export const validateCheckout = (
   values: CheckoutFormValues,
-  locale: Locale
+  locale: Locale,
+  method: NpMethod
 ): CheckoutVerdict => {
   const errors: CheckoutErrors = {};
 
-  for (const name of REQUIRED_FIELDS) {
+  for (const name of requiredFieldsFor(locale, method)) {
     if (values[name] === "") {
       errors[name] = "required";
     }

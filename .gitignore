@@ -27,6 +27,9 @@
 /.feature-dev/
 /.upgrade/
 
+# agent worktrees: a nested checkout, never part of this one
+/.claude/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

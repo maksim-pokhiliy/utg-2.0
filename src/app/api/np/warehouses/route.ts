@@ -7,7 +7,7 @@ import {
 } from "@root/app/api/rate-limit";
 import { stripInvisibles } from "@root/utils/invisibles";
 
-import { isDeliveryMethod, listWarehouses } from "./directory";
+import { isCityRef, isDeliveryMethod, listWarehouses } from "./directory";
 
 const MAX_CITY_REF_LENGTH = 64;
 
@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
   if (
     city === "" ||
     city.length > MAX_CITY_REF_LENGTH ||
+    !isCityRef(city) ||
     !isDeliveryMethod(method)
   ) {
     return NextResponse.json(INVALID_REQUEST_BODY, { status: 400 });

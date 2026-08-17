@@ -1,6 +1,6 @@
 import { stripInvisibles } from "@root/utils/invisibles";
 
-import { createDirectoryCache } from "../cache";
+import { composeCacheKey, createDirectoryCache } from "../cache";
 import {
   callNpDirectory,
   capIdentifier,
@@ -8,10 +8,11 @@ import {
   isRecord,
   readString,
 } from "../client";
+import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
-const WAREHOUSE_CACHE_MAX_ENTRIES = 500;
+const WAREHOUSE_CACHE_MAX_ENTRIES = 250;
 const WAREHOUSE_ROW_LIMIT = 30;
 const WAREHOUSE_PAGE_SIZE = 500;
 const WAREHOUSE_REQUEST_TIMEOUT_MS = 7000;
@@ -26,7 +27,7 @@ const NUMBER_PREFIX = "№";
 const WHITESPACE_PATTERN = /\s+/g;
 const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
-const CACHE_KEY_SEPARATOR = "|";
+const CITY_REF_PATTERN = /^[0-9a-f-]+$/i;
 
 export type DeliveryMethod = "branch" | "postomat";
 
@@ -45,6 +46,11 @@ export interface WarehouseItem {
   label: string;
 }
 
+interface WarehousePage {
+  branch: readonly WarehouseItem[];
+  postomat: readonly WarehouseItem[];
+}
+
 const METHOD_CATEGORIES = {
   branch: "Branch",
   postomat: "Postomat",
@@ -53,6 +59,9 @@ const METHOD_CATEGORIES = {
 export const isDeliveryMethod = (
   value: string | null
 ): value is DeliveryMethod => value === "branch" || value === "postomat";
+
+export const isCityRef = (value: string): boolean =>
+  CITY_REF_PATTERN.test(value);
 
 const isDeniedValue = (value: unknown): boolean => {
   if (typeof value === "boolean") {
@@ -162,11 +171,11 @@ const rankWarehouses = (
   return [...exactMatches, ...prefixMatches, ...labelMatches];
 };
 
-const cache = createDirectoryCache<readonly WarehouseItem[]>({
+const cache = createDirectoryCache<WarehousePage>({
   ttlMs: WAREHOUSE_CACHE_TTL_MS,
   negativeTtlMs: WAREHOUSE_NEGATIVE_CACHE_TTL_MS,
   maxEntries: WAREHOUSE_CACHE_MAX_ENTRIES,
-  isCacheable: (items) => items.length > 0,
+  isCacheable: (page) => page.branch.length > 0 || page.postomat.length > 0,
 });
 
 const buildMethodProperties = (
@@ -184,18 +193,31 @@ const buildMethodProperties = (
     : { ...properties, FindByString: query };
 };
 
-const loadWarehouses = async (
+const selectCategory = (
+  ranked: readonly DecodedWarehouse[],
+  category: WarehouseCategory
+): readonly WarehouseItem[] =>
+  dedupeByNumber(
+    ranked.filter((warehouse) => isSelectable(warehouse, category))
+  )
+    .slice(0, WAREHOUSE_ROW_LIMIT)
+    .map(({ number, label }) => ({ number, label }));
+
+const loadWarehousePage = async (
   cityRef: string,
-  method: DeliveryMethod,
   query: string
-): Promise<readonly WarehouseItem[] | null> => {
+): Promise<WarehousePage | null | CarrierRefused> => {
   const result = await callNpDirectory(
     WAREHOUSES_METHOD,
     buildMethodProperties(cityRef, query),
     AbortSignal.timeout(WAREHOUSE_REQUEST_TIMEOUT_MS)
   );
 
-  if (!result.isSuccess) {
+  if (isCarrierRefused(result)) {
+    return result;
+  }
+
+  if (result.kind !== "rows") {
     return null;
   }
 
@@ -212,14 +234,12 @@ const loadWarehouses = async (
     return null;
   }
 
-  const category = METHOD_CATEGORIES[method];
-  const selectable = dedupeByNumber(
-    decoded.filter((warehouse) => isSelectable(warehouse, category))
-  );
+  const ranked = rankWarehouses(decoded, query);
 
-  return rankWarehouses(selectable, query)
-    .slice(0, WAREHOUSE_ROW_LIMIT)
-    .map(({ number, label }) => ({ number, label }));
+  return {
+    branch: selectCategory(ranked, METHOD_CATEGORIES.branch),
+    postomat: selectCategory(ranked, METHOD_CATEGORIES.postomat),
+  };
 };
 
 export const listWarehouses = async (
@@ -229,7 +249,9 @@ export const listWarehouses = async (
 ): Promise<readonly WarehouseItem[] | null> => {
   const cityKey = cityRef.toLowerCase();
   const query = normalizeQuery(rawQuery);
-  const cacheKey = [cityKey, method, query].join(CACHE_KEY_SEPARATOR);
+  const page = await cache.resolve(composeCacheKey(cityKey, query), () =>
+    loadWarehousePage(cityKey, query)
+  );
 
-  return cache.resolve(cacheKey, () => loadWarehouses(cityKey, method, query));
+  return page === null || isCarrierRefused(page) ? null : page[method];
 };

@@ -10,12 +10,42 @@ import {
 } from "@root/design-system";
 
 const LABEL = "Contact channel";
+const METHOD_LABEL = "Delivery method";
+const HELPER = "Nova Poshta has no branches or parcel lockers here";
 const OPTIONS: readonly ChoiceChipOption[] = [
   { id: "phone", label: "Phone" },
   { id: "viber", label: "Viber" },
   { id: "telegram", label: "Telegram" },
 ];
+const METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch" },
+  { id: "locker", label: "Parcel locker", disabled: true },
+  { id: "courier", label: "Courier" },
+];
+const COURIER_ONLY_METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch", disabled: true },
+  { id: "locker", label: "Parcel locker", disabled: true },
+  { id: "courier", label: "Courier" },
+];
+const HEAD_DISABLED_METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch", disabled: true },
+  { id: "locker", label: "Parcel locker" },
+  { id: "courier", label: "Courier" },
+];
+const TAIL_DISABLED_METHODS: readonly ChoiceChipOption[] = [
+  { id: "branch", label: "Branch" },
+  { id: "locker", label: "Parcel locker" },
+  { id: "courier", label: "Courier", disabled: true },
+];
+const SERVED_METHOD = "locker";
+const UNSERVED_METHODS: readonly ChoiceChipOption[] = METHODS.map((option) => ({
+  ...option,
+  disabled: true,
+}));
 const MIDDLE = OPTIONS[1].id;
+const FIRST_METHOD = METHODS[0].id;
+const LAST_METHOD = METHODS[2].id;
+const UNKNOWN_VALUE = "carrier-pigeon";
 const MODIFIERS = [
   { ctrlKey: true },
   { altKey: true },
@@ -44,17 +74,16 @@ const CHIP_CHROME = [
   "disabled:opacity-55",
   "disabled:cursor-not-allowed",
   "disabled:pointer-events-none",
+  "aria-disabled:opacity-55",
+  "aria-disabled:cursor-not-allowed",
 ];
+
+const HOVER_INVERSION = ["hover:bg-ink", "hover:text-paper"];
 
 const EXPECTED_CHIP = {
   selected: [...CHIP_CHROME, "bg-ink", "text-paper"],
-  unselected: [
-    ...CHIP_CHROME,
-    "bg-paper",
-    "text-ink",
-    "hover:bg-ink",
-    "hover:text-paper",
-  ],
+  unselected: [...CHIP_CHROME, "bg-paper", "text-ink", ...HOVER_INVERSION],
+  unavailable: [...CHIP_CHROME, "bg-paper", "text-ink"],
 };
 
 const EXPECTED_ROW = ["flex", "flex-wrap", "gap-2"];
@@ -63,8 +92,11 @@ const EXPECTED_CAPTION = ["type-caption", "text-ink"];
 const EXPECTED_ERROR = ["type-small", "font-medium", "text-destructive"];
 
 interface ChipsOverrides {
+  label?: string;
   value?: string;
   onChange?: (id: string) => void;
+  options?: readonly ChoiceChipOption[];
+  helper?: string;
   required?: boolean;
   disabled?: boolean;
   className?: string;
@@ -78,8 +110,11 @@ const exactly = (utilities: readonly string[]): string[] =>
 
 const renderChips = (overrides: ChipsOverrides = {}): HTMLElement[] => {
   const {
+    label = LABEL,
     value = MIDDLE,
     onChange = vi.fn(),
+    options = OPTIONS,
+    helper,
     required,
     disabled,
     className,
@@ -87,10 +122,11 @@ const renderChips = (overrides: ChipsOverrides = {}): HTMLElement[] => {
 
   render(
     <ChoiceChips
-      label={LABEL}
+      label={label}
       value={value}
       onChange={onChange}
-      options={OPTIONS}
+      options={options}
+      helper={helper}
       required={required}
       disabled={disabled}
       className={className}
@@ -98,6 +134,21 @@ const renderChips = (overrides: ChipsOverrides = {}): HTMLElement[] => {
   );
 
   return screen.getAllByRole("radio");
+};
+
+const renderMethods = (overrides: ChipsOverrides = {}): HTMLElement[] =>
+  renderChips({
+    label: METHOD_LABEL,
+    value: FIRST_METHOD,
+    options: METHODS,
+    helper: HELPER,
+    ...overrides,
+  });
+
+const describedNodeOf = (chip: HTMLElement): HTMLElement | null => {
+  const id = chip.getAttribute("aria-describedby");
+
+  return id === null ? null : document.getElementById(id);
 };
 
 const group = (): HTMLElement => screen.getByRole("radiogroup");
@@ -200,7 +251,7 @@ describe("the roving tabindex that keeps the group one tab stop", () => {
 
 describe("a value matching no option, which an async default or a consumer bug produces", () => {
   it("checks nothing", () => {
-    const chips = renderChips({ value: "carrier-pigeon" });
+    const chips = renderChips({ value: UNKNOWN_VALUE });
 
     expect(chips.map((chip) => chip.getAttribute("aria-checked"))).toEqual([
       "false",
@@ -211,7 +262,7 @@ describe("a value matching no option, which an async default or a consumer bug p
 
   it("still hands the first chip the tab stop so the group stays keyboard-reachable", () => {
     expect(
-      renderChips({ value: "carrier-pigeon" }).map((chip) => chip.tabIndex)
+      renderChips({ value: UNKNOWN_VALUE }).map((chip) => chip.tabIndex)
     ).toEqual([0, -1, -1]);
   });
 });
@@ -239,6 +290,36 @@ describe("the arrow, Home and End matrix from the middle chip", () => {
 
   it("jumps to the last option on End", () => {
     expect(press("End", 1)).toEqual([[OPTIONS[2].id]]);
+  });
+});
+
+describe("Home and End over a row whose edge chip the carrier does not serve", () => {
+  it("walks Home forward off a disabled first chip onto the first one the carrier does serve", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({
+      options: HEAD_DISABLED_METHODS,
+      value: LAST_METHOD,
+      onChange,
+    });
+
+    fireEvent.keyDown(chips[2], { key: "Home" });
+
+    expect(onChange.mock.calls).toEqual([[SERVED_METHOD]]);
+    expect(document.activeElement).toBe(chips[1]);
+  });
+
+  it("walks End backward off a disabled last chip onto the last one the carrier does serve", () => {
+    const onChange = vi.fn();
+    const chips = renderChips({
+      options: TAIL_DISABLED_METHODS,
+      value: FIRST_METHOD,
+      onChange,
+    });
+
+    fireEvent.keyDown(chips[0], { key: "End" });
+
+    expect(onChange.mock.calls).toEqual([[SERVED_METHOD]]);
+    expect(document.activeElement).toBe(chips[1]);
   });
 });
 
@@ -420,6 +501,127 @@ describe("the disabled group", () => {
     renderChips();
 
     expect(group().getAttribute("aria-disabled")).toBe("false");
+  });
+});
+
+describe("a method the carrier does not offer here, which the checkout disables rather than hides", () => {
+  it("marks it aria-disabled and never natively disabled, because a real disabled attribute strands the focus already on it", () => {
+    const chips = renderMethods();
+
+    expect(chips[1].getAttribute("aria-disabled")).toBe("true");
+    expect(chips[1].hasAttribute("disabled")).toBe(false);
+    expect(chips[0].hasAttribute("aria-disabled")).toBe(false);
+    expect(chips[2].hasAttribute("aria-disabled")).toBe(false);
+  });
+
+  it("reports nothing when the pointer lands on it anyway", () => {
+    const onChange = vi.fn();
+    const chips = renderMethods({ onChange });
+
+    fireEvent.click(chips[1]);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("holds the hover inversion back, so the pointer can never paint a refused method like a live one", () => {
+    const chips = renderMethods();
+
+    expect(classesOf(chips[1])).toEqual(exactly(EXPECTED_CHIP.unavailable));
+    expect(classesOf(chips[2])).toEqual(exactly(EXPECTED_CHIP.unselected));
+  });
+
+  it("skips it on ArrowRight and lands on the next method the carrier does offer", () => {
+    const onChange = vi.fn();
+    const chips = renderMethods({ onChange });
+
+    chips[0].focus();
+
+    const isDefaultAllowed = fireEvent.keyDown(chips[0], { key: "ArrowRight" });
+
+    expect(isDefaultAllowed).toBe(false);
+    expect(onChange.mock.calls).toEqual([[LAST_METHOD]]);
+    expect(document.activeElement).toBe(chips[2]);
+  });
+
+  it("skips it on ArrowLeft too, wrapping straight past it to the last live method", () => {
+    const onChange = vi.fn();
+    const chips = renderMethods({ onChange });
+
+    fireEvent.keyDown(chips[0], { key: "ArrowLeft" });
+
+    expect(onChange.mock.calls).toEqual([[LAST_METHOD]]);
+    expect(document.activeElement).toBe(chips[2]);
+  });
+
+  it("hands the tab stop to a live chip when every method above the chosen one is refused", () => {
+    expect(
+      renderMethods({
+        options: COURIER_ONLY_METHODS,
+        value: LAST_METHOD,
+      }).map((chip) => chip.tabIndex)
+    ).toEqual([-1, -1, 0]);
+  });
+
+  it("hands it to the first live chip when the value matches no option at all", () => {
+    expect(
+      renderMethods({
+        options: COURIER_ONLY_METHODS,
+        value: UNKNOWN_VALUE,
+      }).map((chip) => chip.tabIndex)
+    ).toEqual([-1, -1, 0]);
+  });
+
+  it("keeps the group in the tab order even where the carrier offers nothing, so the shopper is never trapped past it", () => {
+    const onChange = vi.fn();
+    const chips = renderMethods({
+      options: UNSERVED_METHODS,
+      value: UNKNOWN_VALUE,
+      onChange,
+    });
+
+    expect(chips.map((chip) => chip.tabIndex)).toEqual([0, -1, -1]);
+
+    const isDefaultAllowed = fireEvent.keyDown(chips[0], { key: "ArrowRight" });
+
+    expect(isDefaultAllowed).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("the reason line under a refused chip", () => {
+  it("renders the reason with an id and points the refused chip at it, so the refusal is spoken and not only greyed", () => {
+    const chips = renderMethods();
+    const reason = describedNodeOf(chips[1]);
+
+    expect(reason).not.toBeNull();
+    expect(reason?.id.length).toBeGreaterThan(0);
+    expect(reason?.textContent).toBe(HELPER);
+    expect(screen.getByText(HELPER)).toBe(reason);
+  });
+
+  it("leaves every live chip undescribed, because the reason is not about them", () => {
+    const chips = renderMethods();
+
+    expect(chips[0].hasAttribute("aria-describedby")).toBe(false);
+    expect(chips[2].hasAttribute("aria-describedby")).toBe(false);
+  });
+
+  it("points two refused chips at the one line rather than repeating it under each", () => {
+    const chips = renderMethods({ options: COURIER_ONLY_METHODS });
+
+    expect(chips[0].getAttribute("aria-describedby")).toBe(
+      chips[1].getAttribute("aria-describedby")
+    );
+    expect(describedNodeOf(chips[0])).toBe(describedNodeOf(chips[1]));
+    expect(screen.getAllByText(HELPER)).toHaveLength(1);
+  });
+
+  it("points at nothing when the consumer gave no reason, rather than at an id that renders nothing", () => {
+    const chips = renderMethods({ helper: undefined });
+
+    expect(chips[1].getAttribute("aria-disabled")).toBe("true");
+    expect(chips[1].hasAttribute("aria-describedby")).toBe(false);
+    expect(screen.queryByText(HELPER)).toBeNull();
   });
 });
 

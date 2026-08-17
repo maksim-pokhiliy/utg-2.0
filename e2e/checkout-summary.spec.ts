@@ -16,7 +16,7 @@ import {
   confirmCancelButton,
   confirmDialog,
   confirmRemoveButton,
-  fillCheckoutForm,
+  fillUkCheckoutForm,
   firstNameInput,
   orderToast,
   submitButton,
@@ -207,7 +207,7 @@ test.describe("the editable order summary", () => {
     await fillCart(page);
 
     await expect(firstNameInput(page)).toBeVisible();
-    await fillCheckoutForm(page);
+    await fillUkCheckoutForm(page);
     await submitButton(page).click();
 
     const increment = summaryIncrementButton(page, UK_PRODUCT.title);

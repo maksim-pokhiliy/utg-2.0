@@ -12,6 +12,7 @@ interface FieldProps {
   required?: boolean;
   disabled?: boolean;
   helper?: string;
+  helperId?: string;
   error?: string;
   className?: string;
   children: ReactNode;
@@ -25,6 +26,7 @@ export function Field({
   required = false,
   disabled = false,
   helper,
+  helperId,
   error,
   className,
   children,
@@ -58,7 +60,9 @@ export function Field({
       {children}
 
       {helper && !error ? (
-        <span className="type-small text-ink-faint">{helper}</span>
+        <span id={helperId} className="type-small text-ink-faint">
+          {helper}
+        </span>
       ) : null}
 
       {error ? (

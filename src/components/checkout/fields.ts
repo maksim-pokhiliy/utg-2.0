@@ -1,4 +1,7 @@
+import type { Locale } from "@root/data";
 import type { Dictionary } from "@root/i18n";
+
+import { requiredDeliveryFields, type NpMethod } from "./delivery";
 
 export const INITIAL_FORM = {
   last_name: "",
@@ -9,6 +12,11 @@ export const INITIAL_FORM = {
   state: "",
   city: "",
   address: "",
+  np_city: "",
+  np_warehouse: "",
+  street: "",
+  building: "",
+  apartment: "",
   comment: "",
 };
 
@@ -21,6 +29,11 @@ export const FIELD_ORDER: readonly CheckoutFieldName[] = [
   "first_name",
   "patronymic",
   "telephone",
+  "np_city",
+  "np_warehouse",
+  "street",
+  "building",
+  "apartment",
   "country",
   "state",
   "city",
@@ -28,7 +41,7 @@ export const FIELD_ORDER: readonly CheckoutFieldName[] = [
   "comment",
 ];
 
-export const REQUIRED_FIELDS: readonly CheckoutFieldName[] = [
+const EN_REQUIRED_FIELDS: readonly CheckoutFieldName[] = [
   "last_name",
   "first_name",
   "telephone",
@@ -37,8 +50,19 @@ export const REQUIRED_FIELDS: readonly CheckoutFieldName[] = [
   "address",
 ];
 
-export const isRequiredField = (name: CheckoutFieldName): boolean =>
-  REQUIRED_FIELDS.includes(name);
+const UK_REQUIRED_CONTACT_FIELDS: readonly CheckoutFieldName[] = [
+  "last_name",
+  "first_name",
+  "telephone",
+];
+
+export const requiredFieldsFor = (
+  locale: Locale,
+  method: NpMethod
+): readonly CheckoutFieldName[] =>
+  locale === "uk"
+    ? [...UK_REQUIRED_CONTACT_FIELDS, ...requiredDeliveryFields(method)]
+    : EN_REQUIRED_FIELDS;
 
 export type AutofillToken =
   | "given-name"
@@ -48,7 +72,9 @@ export type AutofillToken =
   | "country-name"
   | "address-level1"
   | "address-level2"
-  | "street-address";
+  | "street-address"
+  | "address-line1"
+  | "address-line2";
 
 export const AUTOFILL_TOKENS: Record<
   CheckoutFieldName,
@@ -62,6 +88,11 @@ export const AUTOFILL_TOKENS: Record<
   state: "address-level1",
   city: "address-level2",
   address: "street-address",
+  np_city: "address-level2",
+  np_warehouse: undefined,
+  street: "address-line1",
+  building: undefined,
+  apartment: "address-line2",
   comment: undefined,
 };
 
@@ -76,6 +107,11 @@ export const trimFormValues = (
   state: values.state.trim(),
   city: values.city.trim(),
   address: values.address.trim(),
+  np_city: values.np_city.trim(),
+  np_warehouse: values.np_warehouse.trim(),
+  street: values.street.trim(),
+  building: values.building.trim(),
+  apartment: values.apartment.trim(),
   comment: values.comment.trim(),
 });
 

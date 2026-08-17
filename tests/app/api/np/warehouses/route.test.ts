@@ -38,6 +38,8 @@ const UNKNOWN_METHOD = "garbage";
 const MAX_CITY_REF_LENGTH = 64;
 const BLANK_CITY = "   ";
 const OVERLONG_CITY = "c".repeat(MAX_CITY_REF_LENGTH + 1);
+const SEPARATOR_CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626|12";
+const DAMPER_FAILURE_THRESHOLD = 3;
 
 const FIRST_PAGE = "1";
 const PAGE_LIMIT = 500;
@@ -48,7 +50,7 @@ const CLIENT_DEFAULT_TIMEOUT_MS = 2500;
 
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
-const CACHE_MAX_ENTRIES = 500;
+const CACHE_MAX_ENTRIES = 250;
 const CACHED_QUERY_COUNT = CACHE_MAX_ENTRIES + 1;
 const EVICTION_RELOAD_COUNT = CACHED_QUERY_COUNT + 1;
 const EVICTED_QUERY_INDEX = 0;
@@ -56,7 +58,7 @@ const RETAINED_QUERY_INDEX = 1;
 const INDEXED_QUERY_PREFIX = "q";
 const TTL_RELOAD_COUNT = 2;
 const NEGATIVE_TTL_RETRY_COUNT = 2;
-const SEPARATE_METHOD_CALL_COUNT = 2;
+const SHARED_PAGE_CALL_COUNT = 1;
 const SEPARATE_QUERY_CALL_COUNT = 2;
 const SEPARATE_CITY_CALL_COUNT = 2;
 const EMPTY_ANSWER_RELOAD_COUNT = 2;
@@ -111,6 +113,8 @@ const EMPTY_TEXT = "";
 const BULK_ROW_COUNT = 60;
 const CAP_OVERFLOW_ROW_COUNT = 119;
 const CROWDED_ROW_COUNT = 40;
+const BRANCH_HEAVY_ROW_COUNT = 40;
+const TRAILING_POSTOMAT_NUMBER = "9001";
 const NUMERIC_NUMBER = 1;
 
 const CAPTURED_NUMBER = "1";
@@ -291,6 +295,19 @@ const POLICY_REJECTED_ROWS: readonly WarehouseRow[] = [
   buildRow(CARGO_NUMBER, { CategoryOfWarehouse: CARGO_CATEGORY }),
 ];
 
+const BRANCH_HEAVY_ROWS: readonly WarehouseRow[] = [
+  ...buildAscendingPage(BRANCH_HEAVY_ROW_COUNT, 1),
+  buildRow(TRAILING_POSTOMAT_NUMBER, {
+    CategoryOfWarehouse: POSTOMAT_CATEGORY,
+  }),
+];
+
+const BOTH_METHODS_REJECTED_ROWS: readonly WarehouseRow[] = [
+  buildRow(DENIED_NUMBER, { DenyToSelect: DENIED_FLAG }),
+  buildRow(CLOSED_NUMBER, { WarehouseStatus: CLOSED_STATUS }),
+  buildRow(CARGO_NUMBER, { CategoryOfWarehouse: CARGO_CATEGORY }),
+];
+
 const CROWDED_DENIED_ROWS: readonly WarehouseRow[] = buildAscendingPage(
   CROWDED_ROW_COUNT,
   1,
@@ -414,12 +431,24 @@ const SECOND_CITY_PARAMS = {
   [METHOD_PARAM]: BRANCH_METHOD,
 };
 
+const OUT_OF_SHAPE_CITY_REFS: readonly string[] = [
+  SEPARATOR_CITY_REF,
+  "8d5a980d 391c 11dd 90d9 001a92567626",
+  "8d5a980d-391c-11dd-90d9-00za92567626",
+  "../../etc/passwd",
+  "Київ",
+];
+
 const INVALID_PARAMS: readonly Record<string, string>[] = [
   { [METHOD_PARAM]: BRANCH_METHOD },
   { [CITY_PARAM]: BLANK_CITY, [METHOD_PARAM]: BRANCH_METHOD },
   { [CITY_PARAM]: OVERLONG_CITY, [METHOD_PARAM]: BRANCH_METHOD },
   { [CITY_PARAM]: CITY_REF },
   { [CITY_PARAM]: CITY_REF, [METHOD_PARAM]: UNKNOWN_METHOD },
+  ...OUT_OF_SHAPE_CITY_REFS.map((city) => ({
+    [CITY_PARAM]: city,
+    [METHOD_PARAM]: BRANCH_METHOD,
+  })),
 ];
 
 const npResponse = (rows: readonly unknown[]): Response =>
@@ -670,6 +699,36 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).not.toHaveBeenCalled();
   });
 
+  it("refuses an out-of-shape city ref with 400, never 503, and never lets it arm the damper", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const statuses: number[] = [];
+
+    for (let attempt = 0; attempt < DAMPER_FAILURE_THRESHOLD; attempt += 1) {
+      const response = await GET(
+        buildRequest({
+          [CITY_PARAM]: SEPARATOR_CITY_REF,
+          [METHOD_PARAM]: BRANCH_METHOD,
+        })
+      );
+
+      statuses.push(response.status);
+    }
+
+    expect(statuses).toEqual(
+      Array(DAMPER_FAILURE_THRESHOLD).fill(INVALID_REQUEST_STATUS)
+    );
+    expect(statuses).not.toContain(UNAVAILABLE_STATUS);
+    expect(fetchStub).not.toHaveBeenCalled();
+
+    const served = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(served.status).toBe(OK_STATUS);
+    expect(readNumbers(await readItems(served))).toEqual([CAPTURED_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
   it("answers 503 without touching the network when the api key is absent", async () => {
     vi.stubEnv(NP_API_KEY_NAME, undefined);
 
@@ -687,12 +746,14 @@ describe("GET /api/np/warehouses", () => {
     silenceErrorLog();
 
     const fetchStub = stubSequence(UPSTREAM_FAILURES);
-    const { GET } = await loadRoute();
 
     const statuses: number[] = [];
     const bodies: string[] = [];
 
     for (let index = 0; index < UPSTREAM_FAILURES.length; index += 1) {
+      vi.resetModules();
+
+      const { GET } = await loadRoute();
       const response = await GET(
         buildRequest(buildQueryParams(buildIndexedQuery(index)))
       );
@@ -772,9 +833,9 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps no cache entry for an empty answer so the next request asks np again", async () => {
+  it("keeps no cache entry for a page that is empty for both methods so the next request asks np again", async () => {
     const fetchStub = stubSequence([
-      okRows(POLICY_REJECTED_ROWS),
+      okRows(BOTH_METHODS_REJECTED_ROWS),
       okRows(MIXED_ROWS),
     ]);
     const { GET } = await loadRoute();
@@ -1058,10 +1119,7 @@ describe("GET /api/np/warehouses", () => {
   });
 
   it("keeps a branch and a locker that share one number, because np numbers the two categories apart", async () => {
-    const fetchStub = stubSequence([
-      okRows(SHARED_NUMBER_ROWS),
-      okRows(SHARED_NUMBER_ROWS),
-    ]);
+    const fetchStub = stubSequence([okRows(SHARED_NUMBER_ROWS)]);
     const { GET } = await loadRoute();
 
     const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
@@ -1070,7 +1128,7 @@ describe("GET /api/np/warehouses", () => {
     expect(readNumbers(branches)).toEqual([CAPTURED_NUMBER]);
     expect(readNumbers(postomats)).toEqual([CAPTURED_NUMBER]);
     expect(readLabels(postomats)).toEqual([SHARED_POSTOMAT_LABEL]);
-    expect(fetchStub).toHaveBeenCalledTimes(2);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
   });
 
   it("ranks a number match without regard to the letter case np spelled it in", async () => {
@@ -1124,7 +1182,7 @@ describe("GET /api/np/warehouses", () => {
     expectNoInternals(body);
   });
 
-  it("asks np once per method and never serves a postomat as a branch", async () => {
+  it("asks np once for both methods and never serves a postomat as a branch", async () => {
     const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
@@ -1133,11 +1191,51 @@ describe("GET /api/np/warehouses", () => {
 
     expect(readNumbers(branches)).toEqual([CAPTURED_NUMBER]);
     expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
-    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_METHOD_CALL_COUNT);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
     expectUpstreamOnly(fetchStub.mock.calls, NP_API_URL);
   });
 
-  it("serves a repeated triple from the cache and asks np again for a new query", async () => {
+  it("carries no method in the upstream body, which is why one page serves both chips", async () => {
+    const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    await GET(buildRequest({ ...BRANCH_PARAMS, [QUERY_PARAM]: BARE_QUERY }));
+    await GET(buildRequest({ ...POSTOMAT_PARAMS, [QUERY_PARAM]: BARE_QUERY }));
+
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+    expect(readMethodProperties(fetchStub, 0)).toEqual({
+      CityRef: CITY_REF,
+      Page: FIRST_PAGE,
+      Limit: String(PAGE_LIMIT),
+      [FIND_BY_STRING_KEY]: BARE_QUERY,
+    });
+  });
+
+  it("serves the branch its empty answer from the page it already holds for the lockers", async () => {
+    const fetchStub = stubSequence([okRows(POLICY_REJECTED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(branches).toEqual([]);
+    expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("caps each method after the split, so a page whose first rows are all branches still yields its lockers", async () => {
+    const fetchStub = stubSequence([okRows(BRANCH_HEAVY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(branches).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(postomats)).toEqual([TRAILING_POSTOMAT_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("serves a repeated city and query pair from the cache and asks np again for a new query", async () => {
     const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
@@ -1153,7 +1251,7 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
   });
 
-  it("collapses two concurrent requests for one triple into a single upstream call", async () => {
+  it("collapses two concurrent requests for one city and query pair into a single upstream call", async () => {
     const gate = createResponseGate(MIXED_ROWS);
     const fetchStub = stubUpstream(gate.respond);
     const { GET } = await loadRoute();
@@ -1262,7 +1360,7 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).toHaveBeenCalledTimes(TTL_RELOAD_COUNT);
   });
 
-  it("remembers five hundred triples and drops the least recent when the next arrives", async () => {
+  it("remembers two hundred fifty city and query pairs and drops the least recent when the next arrives", async () => {
     const fetchStub = stubSequence([okRows(MIXED_ROWS)]);
     const { GET } = await loadRoute();
 
