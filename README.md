@@ -148,7 +148,15 @@ process, which cannot work: Київ alone reports over twelve thousand pickup p
 biggest cities silently lost their directory. Now one query goes to the carrier's own search and comes back in a single
 page. What stays ours is the policy — the branch/поштомат split, the refusal to offer a point the carrier marks closed or
 unselectable, and the row caps. Answers are cached in process for five minutes, keyed per settlement query and per
-city/method/query for warehouses.
+city and query for warehouses — the branch and the поштомат lists come out of one and the same downloaded page, split
+when it is read.
+
+Two things bound what that layer can spend. After three consecutive signals that the carrier itself is in distress we
+stop calling it for thirty seconds, and no more than twelve calls are ever in flight at once; a call over that ceiling is
+refused on the spot rather than queued behind a deadline it would miss anyway. Distress means the carrier's own error
+code, not our own bad request: asking about a city that does not exist is answered honestly and never counts toward that
+tally, so one malformed query cannot darken the directory for everyone else. And a refusal we invented ourselves is
+never remembered as though the carrier had said it.
 
 These routes get their own limiter bucket (60 requests per 60 seconds per server instance) because autocomplete fires far
 more often than an order does. Every failure — missing key, timeout, carrier error, a response we cannot decode —

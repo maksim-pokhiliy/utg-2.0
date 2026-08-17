@@ -469,7 +469,9 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 - **Decision.**
   1. **The warehouse proxy stops owning the corpus.** Delete the page-merge and the ~24h
      whole-city cache; delegate the substring match to NP via `FindByString`; cache by
-     `(city, method, query)` with a short TTL.
+     `(city, method, query)` with a short TTL. **Superseded in part by D-18**: `method`
+     was never in the upstream body, so the key dropped to `(city, query)` and one cached
+     page now serves both chips.
   2. **D-7 stands and is not weakened.** The category filter, the row cap, the
      `DenyToSelect` refusal and every failure decision stay in our code. What moves to
      the carrier is the SEARCH, not the policy. The original D-7 rationale "no dependence
@@ -535,3 +537,110 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   429 with `retry-after: 34`.
 - **Links.** PR #22; D-14, D-7, D-8; UAC-1 (corrected), UAC-10/13/17 (closed),
   UAC-11 (rescheduled), UAC-18, UAC-19; journal 2026-08-08.
+
+### D-16 — The negative cache stores the carrier's word, never our own
+
+- **Context.** PR B's first fix round made an over-cap or damped refusal answer with the
+  same value a real carrier failure carries. It became a 30s negative cache entry, so our
+  own load-shedding was served back as "Нова Пошта is down" — while the carrier sat idle
+  and healthy. Three amplifications nobody had priced: it crossed routes (a warehouse
+  burst black-holed the settlements route's hottest query), it outlived the damper by up
+  to 30s, and two to three concurrent buyers reach the fan-out cap at the measured 3.2s
+  upstream latency. The client's one-way latch turned that into a whole session in free
+  text.
+- **This overturns a planner ruling made one round earlier.** At the plan gate the
+  planner accepted negative-cached refusals on the reasoning that a refusal correlates
+  with an outage. For the fan-out cap that is simply false — there is no outage at all,
+  only us declining to spend. The reviewer did not re-litigate the ruling; it brought new
+  information, which is the right way to reopen one.
+- **Decision.** The negative cache stores what the CARRIER said about a key. It must
+  never store what WE decided about ourselves. An over-cap refusal, a damped refusal and
+  the missing-key path answer 503 and write nothing. A genuine carrier verdict about that
+  key — "City not found" included — and a transport failure stay negative-cacheable,
+  because both reached the wire and taught us something.
+- **Made structural, not remembered.** Refusal is a distinct `CARRIER_REFUSED` symbol
+  (`src/app/api/np/refusal.ts`) that the cache is type-incapable of storing; the
+  directories collapse it to `null` only AFTER the cache has been passed. Verified by the
+  re-reviewer: deleting the `isCarrierRefused` guard in `cache.ts` is a compile error
+  (TS2345), so this is enforced by the compiler rather than by discipline.
+- **And the client must be able to recover.** The hook latched `source` to `"manual"`
+  with no path back — and the literal fix was dead code, because `onSearch` is wired only
+  into the combobox, so a field that has flipped to free text can never issue another
+  request. Three seams close it: the transport retries ONCE on a 503 or a connection that
+  never landed (never on a 429 or an abort); a free-text field probes on blur; and a
+  search that returns ROWS un-latches its own channel. Rows, not merely a 200 — in free
+  text the buyer has usually typed a whole address that matches nothing, and an empty
+  answer proves the route replied, not that the directory can serve them.
+- **Cost, stated rather than discovered later.** During an outage the retry doubles load
+  on OUR route and spends the buyer's 60/60s bucket twice as fast. Bounded, because those
+  retries are answered locally by the damper or the negative cache — the carrier sees no
+  amplification at all.
+- **Links.** PR #23; RF-1a/RF-1b; D-17, D-18; UAC-23; journal 2026-08-11.
+
+### D-17 — Only the carrier's own distress may damp our calls, and it is read by error code
+
+- **Context.** `NpResult.isSuccess` collapsed transport failure and *the carrier
+  rejecting our own input* into one flag, so three bogus-but-well-shaped city refs armed
+  a global 30s blackout of both routes. Worse, because no attempt runs while damped, no
+  success could reset it — roughly six requests a minute held the whole directory dark
+  indefinitely. The commit message already claimed "three consecutive TRANSPORT failures";
+  the code could not mean it.
+- **This overturns a second planner ruling from the same gate.** The planner approved
+  arming on `success:false` because it was "the one outage signal we have actually
+  measured". A live probe then found we do not have to guess.
+- **Measured live, 2026-08-11, production API with the operator's key.** A well-shaped
+  bogus `CityRef` answers `success:false` / `errors:["City not found"]` /
+  **`errorCodes:["20000900768"]`**. The very next call ~1s later answers `success:false` /
+  `errors:["To many requests"]` / **`errorCodes:["20000401501"]`** — the carrier throttles
+  from the SECOND rapid call, confirming UAC-13's measurement, and it returns
+  machine-readable codes.
+- **Decision.** Classify on the code, never on English prose. `NpResult` is three-way —
+  rows, **distress**, **rejected** — and only distress arms the damper. Distress:
+  timeout, network throw, any 5xx, HTTP 429, an unparseable payload, and `success:false`
+  carrying `20000401501` (code primary, its literal accepted as a fallback). Rejected:
+  every other `success:false`, `20000900768` included, **and every non-429 4xx** — a 4xx
+  about our own request is the same class in HTTP form. A rejected answer resets the
+  consecutive count, because a carrier that answers us is demonstrably not down.
+- **The conservative direction is mandatory.** An unknown throttle code means we fail to
+  arm and keep hammering — bounded by the fan-out cap, which is merely the pre-damper
+  behaviour. The opposite error blacks out the directory for every buyer. **Never widen
+  this classifier to "unknown code ⇒ outage".**
+- **One residue, ruled and recorded rather than quietly taken.** `success:true` with a
+  `data` we cannot parse stays distress: a carrier whose successful responses we cannot
+  parse is one we cannot serve any buyer from, so damping costs nothing and saves calls we
+  could not have used. The re-reviewer disagreed, holding that the conservative direction
+  admits no exception. Kept as a decision with the disagreement attached — see UAC-23(1),
+  which is the row to re-read the day Нова Пошта changes a response shape.
+- **Links.** PR #23; RF-2; D-16, D-18; UAC-13, UAC-23; requirements §4; journal 2026-08-11.
+
+### D-18 — `method` leaves the cache key, and the option id stops being the carrier's ref
+
+- **Context.** Two independent findings, both about identity.
+- **Decision 1 — the warehouse cache keys on `(city, query)`.** `method` was in the key
+  but never in the upstream body, so flipping the delivery chip re-downloaded a
+  byte-identical page. One cached entry now holds both categories' final answers and the
+  split happens on read; the row cap applies PER CATEGORY after the split, so a city whose
+  first rows are all branches still yields its lockers. Entry cap 500 → 250, because an
+  entry doubles from ≤30 rows to ≤60 — the worst-case footprint is unchanged.
+- **Decision 2 — the cache key is length-prefixed.** Dropping `method` did not merely void
+  UAC-19(4)'s separator proof, it opened a real attacker↔BUYER collision: a buyer
+  searching `q=a|b` in city `uuid` and an attacker sending `city=uuid|a&q=b` produce the
+  same joined key. `composeCacheKey` now length-prefixes every component, injective by
+  construction — verified by the re-reviewer by constructing a decoder over 1 126 366
+  round trips. The `city` shape guard is the second, independent barrier.
+- **Decision 3 — a settlement row's option id is not its carrier ref.** `ref` is
+  `DeliveryCity`, a CITY-level id several settlements can legitimately share, and the
+  click was resolved by it — first match wins. A review captured a courier order posted to
+  the wrong OBLAST carrying `source: "np_directory"`, i.e. "no need to verify". Fixed at
+  the UI seam with one shared encoder composing the id from row index and ref, never by
+  deduping: deduping would drop a legitimately distinct settlement, and the shared ref is
+  CORRECT for the warehouse lookup, which is city-level.
+- **Reachability measured, and it is not observed.** `searchSettlements` at the production
+  `Limit:10` over eight of Ukraine's most common village names — Іванівка, Новоселівка,
+  Мирне, Степове, Петрівка, Романівка, Богданівка, Слобідка — returned **80 rows with
+  `DeliveryCity` distinct in every one**, including two rows carrying `Warehouses: 0`
+  (the only shape that could collide). `Ref != DeliveryCity` in all 80. The fix ships as
+  precautionary: the mechanism is proven even where the trigger is not, and the downside
+  is a wrong-oblast order that looks verified.
+- **Links.** PR #23; RF-3, UAC-18(3), UAC-19(4); D-14 (superseded in part); journal
+  2026-08-11.

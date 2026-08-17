@@ -320,3 +320,67 @@ Append-only. One entry per session/step.
   with `node_modules` symlinked. Also: a mutation must be valid TypeScript — a sloppy one
   reddened 33 tests and proved nothing, while the surgical one reddened exactly one test
   whose name states the intent.
+
+## 2026-08-11 — U5b PR B: the uk checkout gets its carrier, and two planner rulings get overturned
+
+- **Shipped.** PR #23 squash-merged as `4348455` — 54 files, +7491/−614. Method chips,
+  settlement and warehouse comboboxes on our own proxy, courier fields, the runtime
+  free-text fallback, the three `np_*` payload variants. Two independent reviews, four
+  fix rounds, **25 mutation proofs**, battery 1163 unit tests / 37 files and 30 e2e.
+- **Prod-smoked end to end.** The live directory answers Київ with 12 380 points, finds
+  locker `55124` by number in one call, and caps a branch page at 30 rows; a live
+  `np_postomat` envelope through the real route returned `{"status":"success"}` 200.
+  The owner ran the browser gate locally against the live carrier first and the captured
+  payload was textbook — `source: "np_directory"`, `city` rejoined with its region per
+  UAC-9, `warehouse_number` extracted, `total` arithmetically right.
+- **The two reviews, by their own pre-cap numbers.** First (whole PR, xhigh): 111 pooled
+  → 26 distinct → 15 reported, 11 below the cut NAMED not hidden; 12 findings went to
+  adversarial verifiers, 9 confirmed / 2 refuted / 1 unproven; verdict REQUEST CHANGES on
+  four blockers. Re-review (the fix delta): 25 pooled → 22 distinct → 8 survived → 8
+  reported, cap did not bind, so no hidden tail; one new blocker.
+- **Two of the four blockers were consequences of PLANNER rulings, and both rulings were
+  withdrawn.** (1) The planner accepted negative-cached refusals on the reasoning that a
+  refusal correlates with an outage — false for the fan-out cap, where there is no outage
+  at all, and the reviewer measured it poisoning the OTHER route and outliving the damper
+  (D-16). (2) The planner approved arming the damper on `success:false` without checking
+  that the code could distinguish the carrier's distress from the carrier rejecting our
+  own input; a live probe then showed NP returns machine-readable `errorCodes`, so we
+  never had to guess (D-17). **The reviewer did not re-litigate either ruling — it brought
+  new information, which is the right way to reopen one.**
+- **The measurement that keeps overturning things also overturned the reviewer's own
+  ledger.** UAC-18 said "(1) pairs with PR B's debounce". Measured against the real DS
+  `Combobox`: a 250ms trailing debounce collapses BURSTS, not SESSIONS — at any cadence
+  slower than ~4 chars/s, i.e. anyone typing Cyrillic on a phone, it dispatches one
+  search per keystroke. The damper carries it alone.
+- **UAC-11 closed, and the planner's first reading of it was wrong.** The initial probe
+  showed a forged identity taking 62 × 200 while an honest run was throttled at 21, and
+  the planner announced the hole was live. The pacing-immune rerun (70 URLs through ONE
+  curl invocation, 65s drain between runs) returned **60 × 200 then 10 × 429 for BOTH**
+  identities. Two sequential serial-curl runs share one sliding 60s window, so the
+  "control" was contaminated by the treatment, and serial curl at ~1 req/s never fills a
+  60/60s bucket at all. **A control that runs after the treatment inside the same window
+  is not a control.**
+- **A test's name is a claim, again, and this time the environment was the culprit.** The
+  planner mutated the one line the executor called load-bearing —
+  `wasFocusedRef.current = !event.currentTarget.isConnected` — and all 1163 tests stayed
+  green. Probing jsdom directly explained it: it does not fire `blur` when a focused node
+  is removed, so the guarded branch and the mutation compute the identical value in every
+  reachable scenario. The planner then asked for a Chromium proof; the executor measured
+  and **refused to write it, because Chromium does not fire it either.** The line stays
+  for Firefox and is documented as unprovable (UAC-24). Adjacent: five mutations had left
+  the battery green because both DOM suites stubbed fetch ignoring the abort signal and
+  never held two requests in flight; the fix built a double that can, and all five now
+  redden.
+- **RF-3, the finding worth the whole review.** `ref` is `DeliveryCity`, a CITY-level id
+  several settlements can share, and the click was resolved by it — first match wins, so a
+  courier order could post to the wrong OBLAST stamped `source: "np_directory"`, i.e. "no
+  need to verify". Reachability measured across eight of the commonest village names: 80
+  rows, `DeliveryCity` distinct in every one, including the two `Warehouses: 0` rows that
+  are the only shape that could collide. Fixed anyway — proven mechanism, one seam, and a
+  wrong-oblast order that looks verified is not a risk worth carrying (D-18).
+- **Process notes.** The executor reported its own process failure unprompted: a mutation
+  driver ran `git checkout -- src/` over an UNCOMMITTED tree and wiped five source files
+  while the battery stayed green — a false proof, had it not been caught. Mutations run on
+  committed trees only. And a docs commit landed on the PR branch again because the tree
+  was left there; the fix is `git branch --show-current` before ANY docs commit, always,
+  not "when an agent is live".

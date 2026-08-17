@@ -119,8 +119,15 @@ response fields there when implementing (UAC-2).
   (fail-open); `DenyToSelect`/non-selectable warehouses filtered out; postomat-vs-branch
   filtering by `CategoryOfWarehouse` server-side via a `method` query param (D-7).
   **The warehouse SEARCH delegates to the carrier via `FindByString` (D-14)** — one
-  page per query, no page-merge, no 24h whole-city corpus. Caching moves to
-  `(city, method, query)` with a short TTL; settlement searches stay minutes-cached.
+  page per query, no page-merge, no 24h whole-city corpus. Caching is keyed
+  `(city, query)` with a short TTL — `method` never entered the upstream body, so ONE
+  cached page holds both chips' answers and the category split happens on read (D-18);
+  settlement searches stay minutes-cached. The key is length-prefixed, hence injective by
+  construction, and `city` is shape-guarded to a conservative charset before it can reach
+  the carrier. **The carrier returns machine-readable `errorCodes`** — measured
+  2026-08-11: `20000401501` is its throttle ("To many requests", drawn from the SECOND
+  rapid call), `20000900768` is it rejecting a well-shaped but bogus `CityRef` ("City not
+  found"). Only the carrier's own distress may damp our calls (D-17).
   D-7 is unchanged in substance: the category filter, the row cap and every failure
   decision remain OUR code — what we delegate is the search, not the policy.
 - **Failure budget**: settlement calls ~2.5s; a warehouse query gets the single-page
