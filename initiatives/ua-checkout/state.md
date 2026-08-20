@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-20 (U6 merged as a pair and prod-smoked — the relay knows only v2 and
-the order forward is bounded on both sides. **Only U7 remains, and it is the owner's gate**)
+**Updated:** 2026-08-20 (U7 gate RUN and passed with one finding, which became U8. **U8 is
+PARKED MID-STEP on two pushed branches** — read the Next action block before touching anything)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -22,42 +22,72 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-**ONE STEP REMAINS, AND IT IS YOURS: U7.**
+> **PARKED MID-STEP 2026-08-20.** The owner stopped the round to move the machine. Both
+> executors were killed in flight and both halves of U8 are preserved on pushed branches.
+> **Read this whole block before touching either repo.**
 
-U6 merged as a pair on 2026-08-20 and is live. The relay accepts exactly one payload shape —
-its v1 decoder, renderer and golden corpus are deleted, so a versionless or `version: 1` body
-is now an ordinary 400. The shop's order forward is bounded on both sides: a 20s deadline
-derived from the CALLEE's budgets, a 64 KiB inbound cap answering 413, `new URL()` instead of
-string surgery, and the relay's STATUS mirrored while its body never is (D-19).
+### Where U8 stands, exactly
 
-**Verified by real requests, twice.** Before the merge, both services were stood up locally —
-the relay's compiled deploy entrypoint hosted on a port, the shop's built server pointed at it —
-and curled: 401 without a secret, **400 on `version: 1` AND on a real versionless legacy body**,
-200 on v2 with a Neon row at `schema_version = 2` and a Telegram message delivered. After the
-merge, a live order through `www.ua-tactical-gear.com` returned 200 in **2.32 s** carrying
-`application/json` + `nosniff` and a body of `{}`, with its Neon row confirmed and then deleted.
+**U8 exists because the U7 browser gate found a live defect.** The owner ran the full gate on
+production and reported one finding: settlements whose only Нова Пошта presence is a pickup
+point are told the directory is unavailable. Reproduced against prod — `с. Романівка,
+Бердичівський р-н` reports `warehouseCount: 3` and our warehouse route answers 503, because its
+page is `{DropOff: 1, Store: 1}` and `KNOWN_CATEGORIES` held only `["Branch","Postomat","Cargo"]`.
+**2 of 10 sampled villages** hit this. Owner ruled: offer them («мы делаем честный и чистый
+сервис»). Everything else in the gate passed.
 
-### U7 — prod verify + close-out (the only remaining step)
+| half | branch | HEAD | state |
+| --- | --- | --- | --- |
+| shop — pickup-point categories | `feat/np-pickup-points` | `8928b3f` | 3 commits, tree CLEAN, pushed, **no PR opened**. Killed just after "all 18 mutations proven, verifying the tree is restored" — the tree IS clean, so the mutations were reverted. Remaining: the heavy gates (`yarn build`, `yarn e2e`) and opening the PR. |
+| relay — Ukrainian labels | `feat/ukrainian-operator-labels` | `65594da` | 2 commits, tree CLEAN, pushed, **no PR opened**. The second commit is a planner-authored WIP holding nine files that were uncommitted when the machine went down — **the executor is expected to reshape that history**, its plan puts a green-on-master commit first (`f8efcb2`, landed), then the substitution, then the goldens. |
 
-The owner's browser gate on ua-tactical-gear.com against the charter's eight acceptance
-criteria, then `/initiative-close`. **Criteria 1–6 and 8 are already satisfied** by shipped,
-prod-smoked work; **criterion 7 IS the gate** — "prod live-verified by a user browser gate" is
-the one thing a planner cannot do on the owner's behalf. **UAC-7** is explicitly a browser-gate
-watch-list and is what this gate exists to settle.
+**Both executors are dead.** Do not try to resume them — spawn fresh ones with continuation
+prompts, and per the recovery protocol make each inspect what actually landed before it writes
+anything. The step prompts are committed and current: `step-u8-pickup-points-prompt.md` here and
+`initiatives/bot-polish/step-u8-ukrainian-labels-prompt.md` in the relay.
 
-Worth watching in the Vercel logs during the gate, because it is the one thing no test can
-reach: the pairing of "no `FUNCTION_INVOCATION_TIMEOUT`" with "no deadline log line for an order
-that actually arrived" is the signal that 20s is not squeezing anyone. The single live data
-point so far is 2.32 s against a 14.5 s theoretical worst case.
+### Rulings already given that must survive into the continuation prompts
 
-### Not blocking U7, but live
+**Shop.** Recognised vocabulary widens to six (`Branch, Postomat, DropOff, Store, Fulfillment,
+Cargo`); the `Відділення` chip serves `Branch + DropOff + Store`, `Поштомат` serves `Postomat`,
+and `Cargo`/`Fulfillment` are recognised-and-never-offered. **D-15's "a page where NO category is
+recognised ⇒ 503" arm is retired** — a page that yields rows is a successful page, and drift
+detection stays with the arm that means it (a container decoding to zero rows). **Dedupe stays
+PER CATEGORY and the categories merge after it** — the carrier reuses `Number` across categories,
+so a cross-category dedupe would silently drop a real point; ordering is (exact-match rank, then
+the category's index in the chip's array). Chip copy unchanged, zero new dictionary strings.
+**The trap the executor found and that must not be undone: `DecodedWarehouse.category` stays a
+bare `string`.** Moving recognition into `decodeWarehouse` makes an unknown category fail to
+decode, which trips the SURVIVING drift arm and re-creates the 503 through the other door.
+
+**Relay.** 21 labels + 12 further strings, all confirmed, apostrophe **U+2019**. Contact channels
+map `call → Дзвінок`, `telegram → Telegram`, `viber → Viber`, any other value printed verbatim —
+the shop's set is `["call","telegram","viber"] as const` (`fields.ts:118`), closed. The relay's
+README currently documents the opposite ("rendered verbatim — the relay does not second-guess
+it") and is rewritten in the same PR; the test `accepts a contact channel nobody pinned` is KEPT
+and re-purposed as the fail-open proof. The omitted marker becomes `ще позицій: +N` — **it must
+not decline**, because `omittedMarkerAllowance` measures the marker at n=0 and assumes only digit
+count varies; a declining form under-reserves, the message passes 4096, Telegram rejects it and
+the order is lost. `Відділення Нової Пошти` stays as the mode label (today's English
+over-specifies identically, so the translation conserves rather than introduces).
+
+**A correction to this initiative's own prompt, worth keeping:** the labels do NOT go through
+`generatedField` — that wraps values only, and the labels are raw literals outside the
+interpolation. Nothing escapes or clamps them, so a label containing `&`, `<` or `>` would corrupt
+Telegram's HTML rather than be escaped, and labels have no length ceiling at all.
+
+### After U8
+
+**U7 is otherwise satisfied** — the owner ran the whole gate and reported no other finding, so
+criterion 7 is met and this defect is the only debt it produced. When both U8 halves are merged
+and prod-smoked, the initiative closes with `/initiative-close`. Nothing else remains.
+
+### Not blocking, still live
 
 Relay-side, planner-owned: **BDEF-11** (the relay authenticates to Neon as the schema owner and
-could `drop table orders`; it needs INSERT/SELECT/UPDATE only — an env update plus a redeploy of
-the SERVING deployment, per the BDEF-1 lesson) and **BDEF-10** (B5 created a PII datastore with
-no retention policy). **BDEF-8** (which Telegram width metric is actually enforced; ~980 units of
-cart room) is a direct Bot API probe, any time. Owner-owned and unscheduled: the `DATABASE_URL`
-password rotation — BDEF-11 retires that credential from the relay anyway.
+could `drop table orders` — an env update plus a redeploy of the SERVING deployment resolved by id
+from its logs, per the BDEF-1 lesson), **BDEF-10** (PII datastore with no retention), **BDEF-8**
+(which Telegram width metric is enforced; ~980 units of cart room).
 
 ## Open decisions awaiting ratification
 
