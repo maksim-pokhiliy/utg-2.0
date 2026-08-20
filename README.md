@@ -153,7 +153,11 @@ The warehouse search is the carrier's, not ours. We used to page through a whole
 process, which cannot work: Київ alone reports over twelve thousand pickup points, so the merge never completed and the
 biggest cities silently lost their directory. Now one query goes to the carrier's own search and comes back in a single
 page. What stays ours is the policy — the branch/поштомат split, the refusal to offer a point the carrier marks closed or
-unselectable, and the row caps. Answers are cached in process for five minutes, keyed per settlement query and per
+unselectable, and the row caps. Відділення covers more than a branch: Нова Пошта also runs pickup points and
+shop counters that take parcels up to thirty kilos, and a village often has nothing else, so all three sit under that
+chip. The freight terminal and the carrier's own fulfilment warehouse are recognised and never offered — neither is a
+place a shopper collects a t-shirt from. Every row keeps the carrier's own wording, which is what tells the shopper
+which of the three they just picked. Answers are cached in process for five minutes, keyed per settlement query and per
 city and query for warehouses — the branch and the поштомат lists come out of one and the same downloaded page, split
 when it is read.
 
@@ -169,7 +173,8 @@ more often than an order does. Every failure — missing key, timeout, carrier e
 collapses to a single 503, and that is what the checkout keys its fallback on: the affected field turns into a plain text
 box with a short hint, keeping whatever was already typed, and the order still goes through. A search that simply finds
 nothing is not a failure: it answers 200 with an empty list, because a place with no поштомат is a fact about the place,
-not an outage, and the form must not degrade over a fact.
+not an outage, and the form must not degrade over a fact. A category we have never seen is a fact about the place too, and
+is answered the same way; only a page we could not read at all is treated as the carrier changing under us.
 
 Nothing about the delivery block can leave a buyer stuck. If the directory is unreachable the fields are free text; if it
 is reachable but has no entry for somewhere real, a hand-typed city or warehouse is still accepted, and the order records
