@@ -26,6 +26,7 @@ const CONTENT_TYPE_HEADER = "Content-Type";
 
 const JSON_HEADERS = { [CONTENT_TYPE_HEADER]: JSON_CONTENT_TYPE };
 const PLAIN_HEADERS = { [CONTENT_TYPE_HEADER]: PLAIN_CONTENT_TYPE };
+const UNLABELLED_HEADERS: Record<string, string> = {};
 
 const ACCEPTED_STATUS = 200;
 const REJECTED_STATUS = 422;
@@ -135,6 +136,24 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
     expect(body).toBe(SUBSTITUTE_BODY);
     expect(body).not.toContain(REJECTED_BODY);
+  });
+
+  it("replaces a relay answer that declares no media type at all, because an unlabelled body is not json", async () => {
+    const relay = await trackLocalRelay(() =>
+      replyWith(ACCEPTED_STATUS, UNLABELLED_HEADERS, ACCEPTED_BODY)
+    );
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+    const body = await response.text();
+
+    expect(response.status).toBe(ACCEPTED_STATUS);
+    expect(response.headers.get(CONTENT_TYPE_HEADER)).toBe(JSON_CONTENT_TYPE);
+    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
+    expect(body).toBe(SUBSTITUTE_BODY);
+    expect(body).not.toContain(ACCEPTED_BODY);
   });
 
   it("stops reading a relay body past the cap and still mirrors the relay's verdict", async () => {
