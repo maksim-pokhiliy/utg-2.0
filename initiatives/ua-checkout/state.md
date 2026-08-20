@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-18 (B5 shipped in the relay repo — orders are durable. Every BUILD
-step of this initiative is done; what remains is U6, the paired contract close, and U7)
+**Updated:** 2026-08-20 (U6 merged as a pair and prod-smoked — the relay knows only v2 and
+the order forward is bounded on both sides. **Only U7 remains, and it is the owner's gate**)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -17,53 +17,51 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 | U4  | NP proxy route + caching + env plumbing                  | ✅ done — PR #19 squash-merged `a17aa30` incl. the D-8 fix round; prod fail-open verified (503 + 400) | PR #19 · D-7 · D-8 · journal 2026-08-06 |
 | U5a | Contacts + copy + editable summary; payload flips to v2   | ✅ done — PR #21 `9099402`, prod-smoked end to end through the live shop route | PR #21 · D-13 · journal 2026-08-08 |
 | U5b | Delivery: method chips, NP comboboxes, courier fields     | ✅ done — PR A `25c58d7` (carrier layer) + PR B `4348455` (the flow, 54 files); two independent reviews, four fix rounds, 25 mutation proofs; prod-smoked end to end | PR #22 · PR #23 · D-14…D-18 · journal 2026-08-11 |
-| U6  | Contract close-out (bot drops v1, tests pin v2)          | ⬜ pending                     | plan.md · D-3                                         |
+| U6  | Contract close-out (bot drops v1, tests pin v2)          | ✅ done — merged as a PAIR: relay `a81fa1e` (#5) + shop `700fca0` (#24); local end-to-end smoke BEFORE merge, prod smoke after | PR #5 · PR #24 · D-19…D-21 · journal 2026-08-20 |
 | U7  | Prod verify + close-out                                  | ⬜ pending                     | charter acceptance criteria                           |
 
 ## Next action
 
-**Every build step is done. Two steps remain, and both are close-out work.**
+**ONE STEP REMAINS, AND IT IS YOURS: U7.**
 
-U0–U5b are shipped and prod-verified, and the relay's B5 landed 2026-08-18 (bot PR #4
-`1d31e20`): every decoded order is written to Neon BEFORE the Telegram send, confirmed
-retry-duplicates are suppressed by content identity per D-13/BDEF-9, and a dead database
-provably costs an audit row rather than an order. **The buyer-facing feature set of this
-initiative is complete and live.**
+U6 merged as a pair on 2026-08-20 and is live. The relay accepts exactly one payload shape —
+its v1 decoder, renderer and golden corpus are deleted, so a versionless or `version: 1` body
+is now an ordinary 400. The shop's order forward is bounded on both sides: a 20s deadline
+derived from the CALLEE's budgets, a 64 KiB inbound cap answering 413, `new URL()` instead of
+string surgery, and the relay's STATUS mirrored while its body never is (D-19).
 
-### U6 — the paired contract close (shop + relay, one window)
+**Verified by real requests, twice.** Before the merge, both services were stood up locally —
+the relay's compiled deploy entrypoint hosted on a port, the shop's built server pointed at it —
+and curled: 401 without a secret, **400 on `version: 1` AND on a real versionless legacy body**,
+200 on v2 with a Neon row at `schema_version = 2` and a Telegram message delivered. After the
+merge, a live order through `www.ua-tactical-gear.com` returned 200 in **2.32 s** carrying
+`application/json` + `nosniff` and a body of `{}`, with its Neon row confirmed and then deleted.
 
-The bot drops v1 and both repos pin v2 in the same step: the shop's half is
-`tests/components/checkout/payload.test.ts`, the relay's is
-`../utg-tg-order-bot/tests/support/contract.ts`. Change one side and the other must move
-in the same paired step. Riding along, already scheduled here: **DEF-37** (the relay
-forwarding path is still never exercised e2e — the contract flip is what proves it),
-**UAC-20** (the client's abort is never linked to the upstream directory fetch),
-**UAC-25** (the forwarding route is public, secret-attaching, unbounded in time and
-rate-limited per lambda — promoted from the relay's BDEF-12), and **UAC-12** (that same
-route buffers the whole upstream body and forwards `Content-Type` verbatim with no
-`nosniff`). Relay-side riders for the same window: BDEF-6, BDEF-7 and the BDEF-2 hygiene
-batch, all of which resolve as a side effect of deleting the v1 path.
-
-### U7 — prod verify + close-out
+### U7 — prod verify + close-out (the only remaining step)
 
 The owner's browser gate on ua-tactical-gear.com against the charter's eight acceptance
-criteria, then `/initiative-close`. **UAC-7** is explicitly a browser-gate watch-list and
-is what U7's gate exists to settle. Criteria 1–6 and 8 are already satisfied by shipped,
-prod-smoked work; criterion 7 IS the gate itself.
+criteria, then `/initiative-close`. **Criteria 1–6 and 8 are already satisfied** by shipped,
+prod-smoked work; **criterion 7 IS the gate** — "prod live-verified by a user browser gate" is
+the one thing a planner cannot do on the owner's behalf. **UAC-7** is explicitly a browser-gate
+watch-list and is what this gate exists to settle.
 
-### Not blocking either step, but live
+Worth watching in the Vercel logs during the gate, because it is the one thing no test can
+reach: the pairing of "no `FUNCTION_INVOCATION_TIMEOUT`" with "no deadline log line for an order
+that actually arrived" is the signal that 20s is not squeezing anyone. The single live data
+point so far is 2.32 s against a 14.5 s theoretical worst case.
 
-Relay-side, planner-owned: **BDEF-11** (the relay authenticates to Neon as the schema
-owner and could `drop table orders`; it needs INSERT/SELECT/UPDATE only — an env update
-plus a redeploy of the SERVING deployment, per the BDEF-1 lesson) and **BDEF-10** (B5
-created a PII datastore with no retention policy). **BDEF-8** (which Telegram width metric
-is actually enforced; ~980 units of cart room) is a direct Bot API probe, any time.
-Owner-owned and unscheduled: the `DATABASE_URL` password rotation — note BDEF-11 retires
-that credential from the relay anyway.
+### Not blocking U7, but live
+
+Relay-side, planner-owned: **BDEF-11** (the relay authenticates to Neon as the schema owner and
+could `drop table orders`; it needs INSERT/SELECT/UPDATE only — an env update plus a redeploy of
+the SERVING deployment, per the BDEF-1 lesson) and **BDEF-10** (B5 created a PII datastore with
+no retention policy). **BDEF-8** (which Telegram width metric is actually enforced; ~980 units of
+cart room) is a direct Bot API probe, any time. Owner-owned and unscheduled: the `DATABASE_URL`
+password rotation — BDEF-11 retires that credential from the relay anyway.
 
 ## Open decisions awaiting ratification
 
-(none — D-1…D-18 ratified)
+(none — D-1…D-21 ratified)
 
 ## Live carry-forwards
 

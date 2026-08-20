@@ -23,6 +23,16 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-9 | Bot-first sequencing; U5 splits into U5a (contacts) + U5b (delivery) | RATIFIED |
 | D-10 | U0/B2 rulings: the relay fetch refuses redirects; secret scope Production-only | RATIFIED |
 | D-11 | Orders become durable: relay persistence (bot B4) + `idempotency_key` from U5a | RATIFIED |
+| D-12 | B4 closed on a falsified premise; probe external ceilings before speccing | RATIFIED |
+| D-13 | U5a rulings: payload truth ships, and three tests that lied get killed | RATIFIED |
+| D-14 | U5b contour: the warehouse search delegates to the carrier | RATIFIED |
+| D-15 | U5b PR A: split the step, strip at the boundary, recognise ≠ offer | RATIFIED |
+| D-16 | The negative cache stores the carrier's word, never our own | RATIFIED |
+| D-17 | Carrier distress is read by `errorCode`, never by English prose | RATIFIED |
+| D-18 | `method` leaves the cache key; an option id is not the carrier's ref | RATIFIED |
+| D-19 | The forwarding route mirrors the relay's STATUS and never its body | RATIFIED |
+| D-20 | A read may inherit the client's abort; a write may not | RATIFIED |
+| D-21 | A deletion is authorised structurally; a bound comes from the callee | RATIFIED |
 
 ---
 
@@ -644,3 +654,57 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   is a wrong-oblast order that looks verified.
 - **Links.** PR #23; RF-3, UAC-18(3), UAC-19(4); D-14 (superseded in part); journal
   2026-08-11.
+
+### D-19 — The forwarding route mirrors the relay's STATUS and never its body
+
+- **Context.** U6's shop half bounded `POST /api/place_order` with a deadline, a body cap and a
+  sealed content type, and to do it grew a hand-rolled streaming reader over the relay's answer.
+  The independent review then asked one question nobody had: **who reads that body?**
+- **Measured answer: nobody.** `CheckoutForm.tsx` is the only caller and reads `response.ok`
+  alone — no `.json()`, no `.text()`, no header. No e2e asserts on it. Nothing in either repo
+  consumes it.
+- **Decision.** The status is the relay's to give; the body is always ours. The relay's body is
+  never read — it is cancelled on the spot. Every answer the route emits carries
+  `application/json` + `X-Content-Type-Options: nosniff`.
+- **What that deleted.** Nine of the review's twenty-seven findings existed only because we read
+  a body nobody looks at — including a real defect where a body-read rejection unwound past an
+  already-captured `status`, so a relay that had **explicitly accepted the order with 200** was
+  reported to the buyer as a failure (5/5 reproducible). With the reader gone the defect is
+  unreachable, along with the multi-chunk assembly, the content-type allowlist and the whole
+  "we print a JSON label over someone else's bytes" class.
+- **Consistency, not novelty.** `CLAUDE.md` already said this route's 500 body "carries no
+  internal details". D-19 makes the posture total instead of partial.
+- **Links.** PR #24; RF-1, RF-2, RF-8, RF-12…RF-14, RF-17…RF-20, RF-26; journal 2026-08-20.
+
+### D-20 — A read may inherit the client's abort; a write may not
+
+- **Decision.** The buyer's `request.signal` is deliberately NOT chained into the order forward.
+  A buyer who closes the tab has not said "cancel my order" — and since B5 the relay persists
+  every decoded order BEFORE its Telegram send, so an abort mid-forward would abandon work that
+  is already durable on the other side.
+- **The symmetry is the point.** UAC-20 records the OPPOSITE disposition for the Нова Пошта
+  directory reads, where an abandoned keystroke SHOULD stop costing a carrier call. One rule,
+  two directions: cancelling a lookup loses nothing, cancelling a write loses an order.
+- **Links.** PR #24; UAC-20; D-11, D-13; journal 2026-08-20.
+
+### D-21 — A deletion is authorised structurally; a number that bounds a call comes from the callee
+
+- **Context.** U6 deleted the relay's v1 path outright — no shim, no deprecation window, no
+  "v1 answers an error for a while" phase (owner ruling: *«удаляй агрессивно и сразу»*).
+- **What authorised it, and what did NOT.** The safety argument is structural: `isAuthorized`
+  runs BEFORE `readBody`, `ORDER_RELAY_SECRET` is set in production, and the one secret-holder
+  has sent v2 only since U5a. **The `orders` table was NOT evidence** — it holds zero rows by
+  design (B5 deleted its smoke rows), and forensic counters confirm it: identity high-water 9,
+  lifetime 6 inserts / 6 deletes. An empty audit table is not evidence of absence, and the step
+  prompt says so in as many words.
+- **The invariant a deletion leans on must be pinned in the tree that deletes.** "Auth precedes
+  the body" was unpinned: moving `isAuthorized` below the decode left 389/389 green. It is now
+  a test (`never reads the body of a caller it is about to reject`).
+- **Numbers come from the callee.** The forward's deadline was first set at 10s from "a buyer's
+  patience". Measured against the relay's own constants — store 2 000 + Telegram 10 000 +
+  mark 2 500 ≈ **14 500 ms worst-case SUCCESSFUL path** under its own `maxDuration: 30` — 10s
+  would have converted slow successes into false failures. Ruled to 20s with `maxDuration` 25,
+  strictly above, so the party that knows the work is the one that gives up on it. Live
+  confirmation after merge: a real prod order round-tripped in **2.32 s**.
+- **Links.** PR #5, PR #24; D-19, D-20; BDEF-9; journal 2026-08-20.
+

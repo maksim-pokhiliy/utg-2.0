@@ -384,3 +384,64 @@ Append-only. One entry per session/step.
   committed trees only. And a docs commit landed on the PR branch again because the tree
   was left there; the fix is `git branch --show-current` before ANY docs commit, always,
   not "when an agent is live".
+
+## 2026-08-20 — U6: the relay forgets v1, the forward gets bounds, and a deletion is authorised structurally
+
+- **Shipped as a PAIR, which was binding rather than tidy.** Relay `a81fa1e` (PR #5, 41 files,
+  +2981/−4794) and shop `700fca0` (PR #24, 9 files, +1209/−224). The relay's rename retires five
+  identifiers the shop's contract test names, so the two could not land apart.
+- **What it deletes.** The v1 decoder, renderer and golden corpus are gone; a versionless or
+  `version: 1` body is now an ordinary 400 through the normal path. BDEF-6, BDEF-7 and the BDEF-2
+  batch resolved as the side effect they were always waiting to be.
+- **What it bounds.** A 20s forward deadline, `maxDuration = 25`, a 64 KiB inbound cap answering
+  413, `new URL()` in place of string surgery, and the relay's STATUS mirrored while its body
+  never is.
+- **The step's most valuable question came from a reviewer and was not a finding: "who reads that
+  body?"** Nobody — `CheckoutForm` reads `response.ok` alone, no e2e asserts on it, nothing in
+  either repo consumes it. Answering it deleted NINE of that review's twenty-seven findings along
+  with the hand-rolled reader that produced them, including a real defect where a body-read
+  rejection unwound past an already-captured status, so a relay that had explicitly accepted an
+  order with 200 was reported to the buyer as a failure (5/5 reproducible). D-19.
+- **The planner was wrong twice, both caught by the executor.** (1) The step prompt ordered the
+  deletion of `src/payload.ts` and `src/message.ts` — read from file NAMES without reading the
+  modules. B3 had made them the shared library BOTH versions read (10 of 14 and 17 of 18 exports
+  load-bearing for v2), so a literal `rm` would have deleted the working relay; caught at the plan
+  gate. (2) The ruling "assert the cancellation as a bound, not a constant" did not discriminate —
+  both the real code and the drain-and-discard mutant write less than the total. The executor
+  found the axis that does: whether the sender observes the client's departure.
+- **Three guards had their only end-to-end pin riding on a v1 carrier**, and a fourth was never
+  pinned at all. Cart-line HTML escaping (strip it and the suite stayed 384/384 green while master
+  caught it with four failures), the 600-char comment clamp, and `payloadField`'s normalise-then-
+  escape ordering — swap it and a fullwidth `＜a href=…＞` renders as a live anchor in the
+  operators' chat. The fourth is "auth precedes the body", **the very invariant the planner's
+  authorisation to delete v1 rested on**: moving `isAuthorized` below the decode left 389/389
+  green. The lesson generalises: when a deletion removes a version, it also removes whichever
+  guards were observable only through it, and those are invisible by construction.
+- **The deadline was nearly wrong in the dangerous direction.** The executor set 10s from "a
+  buyer's patience" and flagged it as unmeasured — the right instinct. Measured against the
+  relay's own constants (store 2 000 + Telegram 10 000 + mark 2 500 ≈ 14 500 ms worst-case
+  SUCCESSFUL path under its own `maxDuration: 30`), 10s would have converted slow successes into
+  false failures. Ruled to 20s. D-21: a number that bounds a call comes from the callee's budgets.
+- **The audit table could not testify, and the prompt said so.** The obvious probe — "does any v1
+  traffic exist?" — is answerable in principle now that `orders.schema_version` exists, and is
+  useless in practice: the table holds zero rows by design (B5 deleted its smoke rows), confirmed
+  forensically by identity high-water 9 against lifetime 6 inserts and 6 deletes. **An empty audit
+  table is not evidence of absence.** The authorisation is structural instead: auth precedes the
+  body, the secret is set in production, and the one secret-holder has sent v2 only since U5a.
+- **The owner asked the question that changed the verification: "what stops us standing the hosts
+  up locally and curling them?"** Nothing did. Before the merge, the relay's compiled deploy
+  entrypoint was hosted on a local port with real Telegram credentials and the real database, the
+  shop's built server was pointed at it, and the chain was curled end to end: 401 without a
+  secret, 401 with a wrong one, **400 on `version: 1` and on a genuine versionless legacy body**,
+  200 on v2 with `order_stored`, a Neon row at `schema_version = 2` and a delivered Telegram
+  message; through the shop route, 200 under `application/json` + `nosniff` with a body of `{}` —
+  ours, not the relay's — and 413 on a 200 KB inbound body. Both preview routes were unavailable
+  for this (the shop builds no previews at all; the relay's are behind Deployment Protection,
+  302-ing to SSO), so without that question the first real request would have been the post-merge
+  smoke. It was not.
+- **Prod smoke after merge:** a live order through `www.ua-tactical-gear.com` → 200 in **2.32 s**,
+  `application/json` + `nosniff`, body `{}`, Neon row `schema_version = 2` delivered as message
+  16, row then deleted. The 2.32 s is the first live data point against the 14.5 s worst case.
+- **Review counts, both halves, pre-cap as the rule requires.** Relay: 218 pooled → 31 distinct →
+  31 reported, no cap, 31 CONFIRMED / 0 UNPROVEN. Shop: ~111 pooled → 27 distinct → 27 reported,
+  no cap, five candidates explicitly refuted. Neither review had an invisible tail.
