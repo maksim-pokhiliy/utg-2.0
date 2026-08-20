@@ -91,3 +91,26 @@ never a build concurrently with a test run.
 - Never stage `CLAUDE.md` or anything under `initiatives/`.
 - **Never POST to the deployed relay, the shop, any Vercel URL or the Нова Пошта API.** Tests run
   against local stubs; the planner owns every live probe.
+
+---
+
+## Added after the relay's half was reviewed — RF-4, the paired-step break
+
+The relay's PR #5 renames the five identifiers this repo's contract test points at. Verified in
+both trees: `tests/components/checkout/payload.test.ts:336` — the `describe` block's own NAME
+cites `ORDER_V2_KEYS`, `ORDER_V2_CUSTOMER_KEYS`, `ORDER_V2_DELIVERY_BRANCH_KEYS`,
+`ORDER_V2_DELIVERY_COURIER_KEYS` and `ORDER_V2_DELIVERY_GENERIC_KEYS`, and **after that merge none
+of the five resolves.** The relay dropped the `V2` suffixes precisely because they only ever meant
+"not v1", and v1 no longer exists.
+
+Nothing fails — it is a pointer, not an assertion, and the key VALUES match perfectly on both
+halves (9 / 5 / 5 / 6 / 5). That is exactly what makes it worth fixing now: a stale pointer inside
+a passing test is the cheapest possible lie, and this repo's own `CLAUDE.md` states the rule it
+breaks — "change one side and the other must move in the same paired step".
+
+Repoint the block at the relay's post-merge names, and fix the stale case name in the same place
+("stamps version 2 so the relay can tell it from the v1 body" — after that merge there is no v1
+body to tell it from; the assertion is right and stays, the name has expired).
+
+**Sequencing this creates, and it is binding:** the relay's PR must not land alone. Your PR is the
+paired half. Open it, then the planner merges the two together.
