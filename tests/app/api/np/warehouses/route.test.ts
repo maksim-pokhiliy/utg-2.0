@@ -1079,14 +1079,14 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
-  it("answers 503 when np renames every category it sends, instead of serving an empty list forever", async () => {
+  it("serves an empty list rather than an outage when it recognises no category on the page, because an unlisted category is a fact about the settlement", async () => {
     const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
 
     const response = await GET(buildRequest(BRANCH_PARAMS));
 
-    expect(response.status).toBe(UNAVAILABLE_STATUS);
-    expect(await response.text()).toBe(UNAVAILABLE_BODY);
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 

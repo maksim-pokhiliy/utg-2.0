@@ -264,13 +264,11 @@ describe("the carrier outage damper", () => {
     expect(fetchStub).toHaveBeenCalledTimes(SESSION_QUERY_COUNT);
   });
 
-  it("is never armed by a page whose categories it does not recognise", async () => {
+  it("is never armed by a page whose categories it does not recognise, which the route now answers rather than refuses", async () => {
     const fetchStub = stubRows(UNKNOWN_CATEGORY_ROWS);
     const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
 
-    expect(statuses).toEqual(
-      Array(SESSION_QUERY_COUNT).fill(UNAVAILABLE_STATUS)
-    );
+    expect(statuses).toEqual(Array(SESSION_QUERY_COUNT).fill(OK_STATUS));
     expect(fetchStub).toHaveBeenCalledTimes(SESSION_QUERY_COUNT);
   });
 

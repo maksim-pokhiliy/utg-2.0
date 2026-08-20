@@ -21,17 +21,31 @@ const FIRST_PAGE = "1";
 const WORKING_STATUS = "Working";
 const DENIED_FLAGS = ["1", "true"];
 const DENIED_CODE = 1;
-const KNOWN_CATEGORIES = ["Branch", "Postomat", "Cargo"];
+const KNOWN_CATEGORIES = [
+  "Branch",
+  "Postomat",
+  "DropOff",
+  "Store",
+  "Fulfillment",
+  "Cargo",
+] as const;
 const MAX_QUERY_LENGTH = 64;
 const NUMBER_PREFIX = "№";
 const WHITESPACE_PATTERN = /\s+/g;
 const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
 const CITY_REF_PATTERN = /^[0-9a-f-]+$/i;
+const EXACT_RANK = 0;
+const PREFIX_RANK = 1;
+const RESIDUAL_RANK = 2;
 
 export type DeliveryMethod = "branch" | "postomat";
 
-type WarehouseCategory = "Branch" | "Postomat";
+type WarehouseCategory = (typeof KNOWN_CATEGORIES)[number];
+
+type NeverOfferedCategory = "Cargo" | "Fulfillment";
+
+type OfferableCategory = Exclude<WarehouseCategory, NeverOfferedCategory>;
 
 interface DecodedWarehouse {
   number: string;
@@ -39,6 +53,10 @@ interface DecodedWarehouse {
   category: string;
   isWorking: boolean;
   isDenied: boolean;
+}
+
+interface RankedWarehouse extends DecodedWarehouse {
+  rank: number;
 }
 
 export interface WarehouseItem {
@@ -52,9 +70,9 @@ interface WarehousePage {
 }
 
 const METHOD_CATEGORIES = {
-  branch: "Branch",
-  postomat: "Postomat",
-} as const satisfies Record<DeliveryMethod, WarehouseCategory>;
+  branch: ["Branch", "DropOff", "Store"],
+  postomat: ["Postomat"],
+} as const satisfies Record<DeliveryMethod, readonly OfferableCategory[]>;
 
 export const isDeliveryMethod = (
   value: string | null
@@ -74,9 +92,6 @@ const isDeniedValue = (value: unknown): boolean => {
 
   return DENIED_FLAGS.includes(readString(value).toLowerCase());
 };
-
-const isKnownCategory = (category: string): boolean =>
-  KNOWN_CATEGORIES.includes(category);
 
 const decodeWarehouse = (row: unknown): DecodedWarehouse | null => {
   if (!isRecord(row)) {
@@ -106,21 +121,25 @@ const decodeRows = (rows: readonly unknown[]): readonly DecodedWarehouse[] =>
 
 const isSelectable = (
   warehouse: DecodedWarehouse,
-  category: WarehouseCategory
+  categories: readonly OfferableCategory[]
 ): boolean =>
-  warehouse.isWorking && !warehouse.isDenied && warehouse.category === category;
+  warehouse.isWorking &&
+  !warehouse.isDenied &&
+  categories.some((category) => category === warehouse.category);
 
-const dedupeByNumber = (
-  warehouses: readonly DecodedWarehouse[]
-): readonly DecodedWarehouse[] => {
-  const seenNumbers = new Set<string>();
+const dedupeByCategoryNumber = (
+  warehouses: readonly RankedWarehouse[]
+): RankedWarehouse[] => {
+  const seenPoints = new Set<string>();
 
   return warehouses.filter((warehouse) => {
-    if (seenNumbers.has(warehouse.number)) {
+    const point = composeCacheKey(warehouse.category, warehouse.number);
+
+    if (seenPoints.has(point)) {
       return false;
     }
 
-    seenNumbers.add(warehouse.number);
+    seenPoints.add(point);
 
     return true;
   });
@@ -137,38 +156,31 @@ const normalizeQuery = (rawQuery: string | null): string => {
   return unprefixed.slice(0, MAX_QUERY_LENGTH);
 };
 
+const rankNumber = (number: string, needle: string): number => {
+  if (number === needle) {
+    return EXACT_RANK;
+  }
+
+  return number.startsWith(needle) ? PREFIX_RANK : RESIDUAL_RANK;
+};
+
 const rankWarehouses = (
   warehouses: readonly DecodedWarehouse[],
   query: string
-): readonly DecodedWarehouse[] => {
+): readonly RankedWarehouse[] => {
   if (query === EMPTY_TEXT) {
-    return warehouses;
+    return warehouses.map((warehouse) => ({
+      ...warehouse,
+      rank: RESIDUAL_RANK,
+    }));
   }
 
   const needle = query.toLowerCase();
-  const exactMatches: DecodedWarehouse[] = [];
-  const prefixMatches: DecodedWarehouse[] = [];
-  const labelMatches: DecodedWarehouse[] = [];
 
-  for (const warehouse of warehouses) {
-    const number = warehouse.number.toLowerCase();
-
-    if (number === needle) {
-      exactMatches.push(warehouse);
-
-      continue;
-    }
-
-    if (number.startsWith(needle)) {
-      prefixMatches.push(warehouse);
-
-      continue;
-    }
-
-    labelMatches.push(warehouse);
-  }
-
-  return [...exactMatches, ...prefixMatches, ...labelMatches];
+  return warehouses.map((warehouse) => ({
+    ...warehouse,
+    rank: rankNumber(warehouse.number.toLowerCase(), needle),
+  }));
 };
 
 const cache = createDirectoryCache<WarehousePage>({
@@ -193,13 +205,29 @@ const buildMethodProperties = (
     : { ...properties, FindByString: query };
 };
 
+const categoryPriority = (
+  categories: readonly OfferableCategory[],
+  category: string
+): number => categories.findIndex((offered) => offered === category);
+
+const compareRanked = (
+  categories: readonly OfferableCategory[],
+  first: RankedWarehouse,
+  second: RankedWarehouse
+): number =>
+  first.rank === second.rank
+    ? categoryPriority(categories, first.category) -
+      categoryPriority(categories, second.category)
+    : first.rank - second.rank;
+
 const selectCategory = (
-  ranked: readonly DecodedWarehouse[],
-  category: WarehouseCategory
+  ranked: readonly RankedWarehouse[],
+  categories: readonly OfferableCategory[]
 ): readonly WarehouseItem[] =>
-  dedupeByNumber(
-    ranked.filter((warehouse) => isSelectable(warehouse, category))
+  dedupeByCategoryNumber(
+    ranked.filter((warehouse) => isSelectable(warehouse, categories))
   )
+    .sort((first, second) => compareRanked(categories, first, second))
     .slice(0, WAREHOUSE_ROW_LIMIT)
     .map(({ number, label }) => ({ number, label }));
 
@@ -224,13 +252,6 @@ const loadWarehousePage = async (
   const decoded = decodeRows(result.rows);
 
   if (result.rows.length > 0 && decoded.length === 0) {
-    return null;
-  }
-
-  if (
-    decoded.length > 0 &&
-    !decoded.some((warehouse) => isKnownCategory(warehouse.category))
-  ) {
     return null;
   }
 
