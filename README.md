@@ -130,12 +130,14 @@ ordinary primitives to build with: `Typography`, `Container`, `Button`, `IconBut
 `POST /api/place_order` forwards the checkout payload to an external relay and passes the upstream status through; its 500
 body carries nothing internal. A per-IP in-memory limiter (5 requests per 60 seconds) runs before the body is even parsed,
 and it fails **open** when no client identity is available — a false 429 costs a real volunteer order, which is the worse
-outcome. The forward is bounded: a twenty-second deadline covers the connect, the headers and the body, and the shop
-answers **504** on its own rather than letting the platform kill the request out from under a buyer; at most 64 KiB of the
-relay's answer is ever read, and a longer one is cut off mid-stream. Whatever media type the relay claims, the shop serves
-its own — always `application/json` with `nosniff` — while still mirroring the relay's **status**, because the verdict on
-an order is the relay's to give and the shape of the body is ours. The payload field names are a fixed contract with the
-receiving bot, pinned by a test on this side and by the bot's own contract test on the other.
+outcome. The forward is bounded on both sides. Inbound, an order body past 64 KiB is refused with **413** before anything
+leaves the shop — a sixty-line cart weighs about sixteen kilobytes, so the ceiling is generous and still finite. Outbound,
+a twenty-second deadline covers the connect and the relay's answering headers, and the shop replies **504** itself rather
+than letting the platform kill the request out from under a buyer. The relay's answer body is never read at all: the shop
+takes its **status**, drops the rest mid-stream, and replies with its own `application/json` and `nosniff`. Mirroring the
+status leaves the verdict on an order where it belongs — with the relay — while the bytes a browser receives stay ours.
+The payload field names are a fixed contract with the receiving bot, pinned by a test on this side and by the bot's own
+contract test on the other.
 
 ### Delivery directory
 
