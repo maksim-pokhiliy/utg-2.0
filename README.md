@@ -65,7 +65,7 @@ flowchart TD
     C --> D["Server component page — reads the static catalog, resolves localized view objects"]
     D --> E["Screen client component — useDictionary, useMoney, useLocale"]
     E --> F["Zustand cart — persisted to localStorage"]
-    F --> G["POST /api/place_order — rate limiter, then the external order relay"]
+    F --> G["POST /api/place_order — rate limiter, then the bounded forward to the external order relay"]
 ```
 
 ```
@@ -130,8 +130,12 @@ ordinary primitives to build with: `Typography`, `Container`, `Button`, `IconBut
 `POST /api/place_order` forwards the checkout payload to an external relay and passes the upstream status through; its 500
 body carries nothing internal. A per-IP in-memory limiter (5 requests per 60 seconds) runs before the body is even parsed,
 and it fails **open** when no client identity is available — a false 429 costs a real volunteer order, which is the worse
-outcome. The payload field names are a fixed contract with the receiving bot, pinned by a test against the recovered bot
-source.
+outcome. The forward is bounded: a twenty-second deadline covers the connect, the headers and the body, and the shop
+answers **504** on its own rather than letting the platform kill the request out from under a buyer; at most 64 KiB of the
+relay's answer is ever read, and a longer one is cut off mid-stream. Whatever media type the relay claims, the shop serves
+its own — always `application/json` with `nosniff` — while still mirroring the relay's **status**, because the verdict on
+an order is the relay's to give and the shape of the body is ours. The payload field names are a fixed contract with the
+receiving bot, pinned by a test on this side and by the bot's own contract test on the other.
 
 ### Delivery directory
 
