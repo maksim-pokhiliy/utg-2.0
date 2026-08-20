@@ -1,7 +1,7 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-11 (U5b DONE — the uk checkout ships its Нова Пошта delivery flow,
-merged and prod-smoked end to end; UAC-11 closed by measurement, the hole is not live)
+**Updated:** 2026-08-18 (B5 shipped in the relay repo — orders are durable. Every BUILD
+step of this initiative is done; what remains is U6, the paired contract close, and U7)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -22,38 +22,44 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-**U5b IS DONE AND LIVE. The next step is B5, and it is in the OTHER repo.**
+**Every build step is done. Two steps remain, and both are close-out work.**
 
-The uk checkout now asks the carrier instead of asking the buyer to type: settlement and
-warehouse comboboxes on our own proxy, a three-way method chip row, courier fields, and a
-runtime fallback to free text that no directory failure can defeat. Prod-smoked end to end
-2026-08-11 — a live `np_postomat` envelope through the real route returned
-`{"status":"success"}` 200, and the live directory answers Київ with 12 380 points, the
-exact locker by number, and a 30-row capped branch page. Rulings: **D-16** (the negative
-cache stores the carrier's word, never our own), **D-17** (distress is read by `errorCode`,
-never by prose), **D-18** (`method` leaves the cache key; an option id is not the carrier's
-ref).
+U0–U5b are shipped and prod-verified, and the relay's B5 landed 2026-08-18 (bot PR #4
+`1d31e20`): every decoded order is written to Neon BEFORE the Telegram send, confirmed
+retry-duplicates are suppressed by content identity per D-13/BDEF-9, and a dead database
+provably costs an audit row rather than an order. **The buyer-facing feature set of this
+initiative is complete and live.**
 
-**UAC-11 is CLOSED and the answer is "no hole"** — see its ledger row for the probe and,
-more usefully, for how the FIRST probe was misread. It no longer gates anything.
+### U6 — the paired contract close (shop + relay, one window)
 
-### Next: B5 — orders become durable (bot repo `../utg-tg-order-bot`, initiative bot-polish)
+The bot drops v1 and both repos pin v2 in the same step: the shop's half is
+`tests/components/checkout/payload.test.ts`, the relay's is
+`../utg-tg-order-bot/tests/support/contract.ts`. Change one side and the other must move
+in the same paired step. Riding along, already scheduled here: **DEF-37** (the relay
+forwarding path is still never exercised e2e — the contract flip is what proves it),
+**UAC-20** (the client's abort is never linked to the upstream directory fetch),
+**UAC-25** (the forwarding route is public, secret-attaching, unbounded in time and
+rate-limited per lambda — promoted from the relay's BDEF-12), and **UAC-12** (that same
+route buffers the whole upstream body and forwards `Content-Type` verbatim with no
+`nosniff`). Relay-side riders for the same window: BDEF-6, BDEF-7 and the BDEF-2 hygiene
+batch, all of which resolve as a side effect of deleting the v1 path.
 
-Nothing in the shop repo blocks it. `DATABASE_URL` is already live on the bot's Vercel
-project (Neon pooler) and nothing reads it yet. The hard constraint is **D-13 / BDEF-9**:
-the shop mints `idempotency_key` on first submit and resets it only on success, so the key
-deliberately SPANS an order the buyer EDITED between retries. **Dedupe on a content hash
-within a time window; treat the key as a hint, never as an identity.** Key-only dedupe
-would answer 200 to an order that was never delivered, and the shop would show the success
-screen and clear the cart — the buyer loses their cart believing the corrected order was
-accepted. Also live in that repo: BDEF-8 (the enforced Telegram metric is still unknown
-between raw code points and parsed length; settling it needs a direct Bot API call and
-would reclaim ~980 units of cart room) and BDEF-6/7 (structural tails that resolve as a
-side effect of the step that DROPS v1).
+### U7 — prod verify + close-out
 
-Then **U6** — contract close-out, the bot drops v1 and the tests pin v2 on both sides in
-one paired step; UAC-20 and the UAC-21/23 polish sets are scheduled into that window.
-Then **U7** — prod verify and close-out.
+The owner's browser gate on ua-tactical-gear.com against the charter's eight acceptance
+criteria, then `/initiative-close`. **UAC-7** is explicitly a browser-gate watch-list and
+is what U7's gate exists to settle. Criteria 1–6 and 8 are already satisfied by shipped,
+prod-smoked work; criterion 7 IS the gate itself.
+
+### Not blocking either step, but live
+
+Relay-side, planner-owned: **BDEF-11** (the relay authenticates to Neon as the schema
+owner and could `drop table orders`; it needs INSERT/SELECT/UPDATE only — an env update
+plus a redeploy of the SERVING deployment, per the BDEF-1 lesson) and **BDEF-10** (B5
+created a PII datastore with no retention policy). **BDEF-8** (which Telegram width metric
+is actually enforced; ~980 units of cart room) is a direct Bot API probe, any time.
+Owner-owned and unscheduled: the `DATABASE_URL` password rotation — note BDEF-11 retires
+that credential from the relay anyway.
 
 ## Open decisions awaiting ratification
 
@@ -64,7 +70,7 @@ Then **U7** — prod verify and close-out.
 - Inherited: DEF-36 — CLOSED by U4 (per-spec limiter identities); DEF-37 (relay
   forwarding e2e, → U6); DEF-39 (cart decoder, → U5). DEF-41 — CLOSED by U3.
   Both closures also recorded in the production-polish canonical ledger.
-- **CLOSED by U5b** — UAC-9, UAC-10, UAC-13, UAC-17 and UAC-18 (all three debts of
+- **CLOSED by U5b** — UAC-9, UAC-10, UAC-13, UAC-15, UAC-17 and UAC-18 (all three debts of
   delegating the search), UAC-19(4), and **UAC-11**, whose answer is that the limiter
   is NOT bypassable: a pacing-immune probe returned 60 × 200 then 10 × 429 for a forged
   identity and byte-identically for an honest one, because Vercel overwrites
@@ -82,8 +88,15 @@ Then **U7** — prod verify and close-out.
   neither jsdom nor Chromium fires `blur` on node removal, only Firefox does).
 - **UAC-4** (OPEN) — the Claude Design kit lags the repo DS; one `/design-sync`
   backport pass after U3 merges (delta audit incl. 4d-era additions).
-- **UAC-5/6/7** (SCHEDULED) + **UAC-8** (OPEN) — review riders: NP-proxy row cap (→ U4), drawer
-  `sizes` hint + combobox adoption notes (→ U5).
+- **UAC-7** (SCHEDULED → U7's browser gate) — the combobox adoption watch-list, plus the
+  D-6.2 consumer contract. **UAC-8** (OPEN) pairs with UAC-4 in one DS-hygiene window.
+- **UAC-25** (OPEN → U6) — promoted from the relay's BDEF-12 and re-verified in this repo:
+  `/api/place_order` is public, attaches the relay secret for any caller, forwards with no
+  abort signal and no duration bound, and its limiter is a per-lambda Map. Distinct from
+  UAC-11, which asked whether the limiter's identity could be forged (no) — this asks
+  whether a per-instance counter is a limit at all.
+- **UAC-12**, **UAC-14**, **UAC-16**, **UAC-19**(1)(2)(3)(5) — open review sets from U0/U4/
+  U5a and PR A, none a defect today; U6 is the natural window for the route-level ones.
 
 ## Gotchas a resuming session must know
 
