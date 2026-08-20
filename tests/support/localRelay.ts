@@ -41,6 +41,7 @@ export interface LocalRelay {
   origin: string;
   received: ReceivedRequest[];
   bytesWritten: () => number;
+  isClosed: () => boolean;
   close: () => Promise<void>;
 }
 
@@ -69,7 +70,7 @@ const pumpBody = (
   response: ServerResponse,
   chunk: string,
   totalBytes: number,
-  written: { bytes: number }
+  written: { bytes: number; isClosed: boolean }
 ): void => {
   const chunkBytes = Buffer.byteLength(chunk, BODY_ENCODING);
 
@@ -77,6 +78,7 @@ const pumpBody = (
 
   response.on("close", () => {
     isStopped = true;
+    written.isClosed = true;
   });
 
   const pump = (): void => {
@@ -102,7 +104,7 @@ const startLocalRelay = async (
   answer: () => RelayAnswer
 ): Promise<LocalRelay> => {
   const received: ReceivedRequest[] = [];
-  const written = { bytes: 0 };
+  const written = { bytes: 0, isClosed: false };
   const server = createServer((request, response) => {
     const chunks: Buffer[] = [];
 
@@ -157,6 +159,7 @@ const startLocalRelay = async (
     origin: `http://${LOOPBACK_HOST}:${address.port}`,
     received,
     bytesWritten: () => written.bytes,
+    isClosed: () => written.isClosed,
     close: () =>
       new Promise<void>((resolve, reject) => {
         server.closeAllConnections();

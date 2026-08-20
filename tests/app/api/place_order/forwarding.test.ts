@@ -184,6 +184,7 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
 
     expect(response.status).toBe(ACCEPTED_STATUS);
     expect(await response.text()).toBe(SUBSTITUTE_BODY);
+    expect(relay.isClosed()).toBe(true);
     expect(relay.bytesWritten()).toBeLessThan(PUMP_TOTAL_BYTES);
   });
 

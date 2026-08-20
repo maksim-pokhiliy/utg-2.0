@@ -65,8 +65,6 @@ const buildRelayTarget = (placeOrderUrl: string): string | null => {
   try {
     const base = new URL(placeOrderUrl);
 
-    base.search = "";
-    base.hash = "";
     base.pathname = `${base.pathname.replace(TRAILING_SLASHES, "")}${PATH_SEPARATOR}`;
 
     return new URL(RELAY_PATH_SEGMENT, base).toString();
