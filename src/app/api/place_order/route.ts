@@ -6,15 +6,30 @@ import {
   resolveClientKey,
 } from "@root/app/api/rate-limit";
 
-const RELAY_SECRET_HEADER = "x-relay-secret";
+import { forwardOrder } from "./relay";
+
 const SENDABLE_SECRET_PATTERN = /^[\x20-\x7e]+$/;
 const TRAILING_SLASHES = /\/+$/;
 
+const NOT_CONFIGURED_BODY = { error: "Order service is not configured" };
+const FAILED_BODY = { error: "Failed to place order" };
+
+const NOT_CONFIGURED_STATUS = 503;
+const FAILED_STATUS = 500;
+const GATEWAY_TIMEOUT_STATUS = 504;
+
+const SEALED_HEADERS = {
+  "Content-Type": "application/json",
+  "X-Content-Type-Options": "nosniff",
+};
+
+export const maxDuration = 25;
+
+const buildSealedJson = (body: unknown, status: number) =>
+  NextResponse.json(body, { status, headers: SEALED_HEADERS });
+
 const buildNotConfiguredResponse = () =>
-  NextResponse.json(
-    { error: "Order service is not configured" },
-    { status: 503 }
-  );
+  buildSealedJson(NOT_CONFIGURED_BODY, NOT_CONFIGURED_STATUS);
 
 export async function POST(request: NextRequest) {
   const verdict = consumeRateLimit(resolveClientKey(request));
@@ -44,41 +59,28 @@ export async function POST(request: NextRequest) {
     console.error("Order relay secret is blank; sending the order unsigned");
   }
 
-  const relayOrigin = placeOrderUrl.replace(TRAILING_SLASHES, "");
-
   try {
-    const body = await request.json();
-
-    const response = await fetch(`${relayOrigin}/place_order`, {
-      method: "POST",
-      redirect: "error",
-      headers: {
-        "Content-Type": "application/json",
-        ...(relaySecret ? { [RELAY_SECRET_HEADER]: relaySecret } : {}),
-      },
-      body: JSON.stringify(body),
+    const outcome = await forwardOrder({
+      relayOrigin: placeOrderUrl.replace(TRAILING_SLASHES, ""),
+      relaySecret,
+      payload: await request.json(),
     });
 
-    const responseBody = await response.text();
+    if (outcome.kind === "timed_out") {
+      return buildSealedJson(FAILED_BODY, GATEWAY_TIMEOUT_STATUS);
+    }
 
-    const isNullBodyStatus =
-      response.status === 204 ||
-      response.status === 205 ||
-      response.status === 304;
+    if (outcome.kind === "failed") {
+      return buildSealedJson(FAILED_BODY, FAILED_STATUS);
+    }
 
-    return new NextResponse(isNullBodyStatus ? null : responseBody, {
-      status: response.status,
-      headers: {
-        "Content-Type":
-          response.headers.get("Content-Type") ?? "application/json",
-      },
+    return new NextResponse(outcome.body, {
+      status: outcome.status,
+      headers: SEALED_HEADERS,
     });
   } catch (error) {
-    console.error("Error placing order:", error);
+    console.error("The checkout sent a body the route could not read:", error);
 
-    return NextResponse.json(
-      { error: "Failed to place order" },
-      { status: 500 }
-    );
+    return buildSealedJson(FAILED_BODY, FAILED_STATUS);
   }
 }
