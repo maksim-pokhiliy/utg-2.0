@@ -333,8 +333,8 @@ const CROSS_MODE_ENVELOPE: OrderPayloadV2 = {
   currency: "UAH",
 };
 
-describe("the v2 order envelope — the shop's half of the contract in initiatives/ua-checkout/requirements.md §5, whose other half is pinned by the relay in ../utg-tg-order-bot/tests/support/contract.ts (ORDER_V2_KEYS, ORDER_V2_CUSTOMER_KEYS, ORDER_V2_DELIVERY_BRANCH_KEYS, ORDER_V2_DELIVERY_COURIER_KEYS, ORDER_V2_DELIVERY_GENERIC_KEYS)", () => {
-  it("stamps version 2 so the relay can tell it from the v1 body", () => {
+describe("the v2 order envelope — the shop's half of the contract in initiatives/ua-checkout/requirements.md §5, whose other half is pinned by the relay in ../utg-tg-order-bot/tests/support/contract.ts (ORDER_KEYS, ORDER_CUSTOMER_KEYS, ORDER_DELIVERY_BRANCH_KEYS, ORDER_DELIVERY_COURIER_KEYS, ORDER_DELIVERY_GENERIC_KEYS)", () => {
+  it("stamps version 2, the only envelope the relay still decodes", () => {
     expect(compose().version).toBe(2);
     expect(composeNp().version).toBe(2);
   });
