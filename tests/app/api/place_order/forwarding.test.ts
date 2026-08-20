@@ -2,10 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NextRequest } from "next/server";
 
+import { RELAY_REQUEST_TIMEOUT_MS } from "@root/app/api/place_order/relay";
+
 import {
   SILENCE,
   closeLocalRelays,
   dripWith,
+  pumpWith,
   replyWith,
   trackLocalRelay,
 } from "../../../support/localRelay";
@@ -14,9 +17,7 @@ const ROUTE_URL = "https://example.test/api/place_order";
 const CLIENT_IP = "203.0.113.11";
 const RELAY_SECRET = "s3cret-relay-token";
 
-const RELAY_REQUEST_TIMEOUT_MS = 20_000;
 const SHORT_DEADLINE_MS = 40;
-const MAX_RELAY_BODY_BYTES = 65_536;
 
 const JSON_CONTENT_TYPE = "application/json";
 const PLAIN_CONTENT_TYPE = "text/plain; charset=utf-8";
@@ -26,17 +27,36 @@ const CONTENT_TYPE_HEADER = "Content-Type";
 
 const JSON_HEADERS = { [CONTENT_TYPE_HEADER]: JSON_CONTENT_TYPE };
 const PLAIN_HEADERS = { [CONTENT_TYPE_HEADER]: PLAIN_CONTENT_TYPE };
-const UNLABELLED_HEADERS: Record<string, string> = {};
+
+const RELAY_OWN_HEADERS = {
+  ...JSON_HEADERS,
+  "X-Powered-By": "relay",
+  "Set-Cookie": "relay_session=abc; Path=/",
+  "X-Relay-Echo": "leaked",
+};
+const RELAY_OWN_HEADER_NAMES = [
+  "x-powered-by",
+  "set-cookie",
+  "x-relay-echo",
+] as const;
 
 const ACCEPTED_STATUS = 200;
 const REJECTED_STATUS = 422;
+const RESET_CONTENT_STATUS = 205;
+const UNCARRIABLE_STATUS = 999;
+const FAILED_STATUS = 500;
 const GATEWAY_TIMEOUT_STATUS = 504;
 
-const ACCEPTED_BODY = '{"status":"success"}';
+const ACCEPTED_BODY = '{"status":"success","orderId":"77"}';
 const REJECTED_BODY = "order rejected";
 const SUBSTITUTE_BODY = "{}";
 const FAILED_BODY = '{"error":"Failed to place order"}';
 const DRIPPED_HEAD = '{"status":';
+
+const PUMP_CHUNK_BYTES = 64 * 1024;
+const PUMP_TOTAL_BYTES = 4 * 1024 * 1024;
+const PUMP_CHUNK = "x".repeat(PUMP_CHUNK_BYTES);
+const PUMP_SETTLE_MS = 150;
 
 const RELAY_PATH = "/place_order";
 const SINGLE_REQUEST = 1;
@@ -48,26 +68,18 @@ const ORDER_PAYLOAD = {
   cart: [{ title: "«Waiting» · L", quantity: 2 }],
 };
 
-const OVERSIZED_BODY = JSON.stringify({
-  padding: "x".repeat(MAX_RELAY_BODY_BYTES),
-});
-
 interface TimeoutRecorder {
   delays: number[];
-  signals: AbortSignal[];
 }
 
 const recordShortTimeoutSignals = (): TimeoutRecorder => {
-  const recorder: TimeoutRecorder = { delays: [], signals: [] };
+  const recorder: TimeoutRecorder = { delays: [] };
   const realTimeout = AbortSignal.timeout.bind(AbortSignal);
 
   vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
-    const signal = realTimeout(SHORT_DEADLINE_MS);
-
     recorder.delays.push(milliseconds);
-    recorder.signals.push(signal);
 
-    return signal;
+    return realTimeout(SHORT_DEADLINE_MS);
   });
 
   return recorder;
@@ -76,6 +88,11 @@ const recordShortTimeoutSignals = (): TimeoutRecorder => {
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 };
+
+const settle = (milliseconds: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
 
 const loadRoute = () => import("@root/app/api/place_order/route");
 
@@ -112,7 +129,6 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     const response = await POST(buildOrderRequest());
 
     expect(response.status).toBe(ACCEPTED_STATUS);
-    expect(await response.text()).toBe(ACCEPTED_BODY);
     expect(relay.received).toHaveLength(SINGLE_REQUEST);
     expect(relay.received[0]?.url).toBe(RELAY_PATH);
     expect(relay.received[0]?.body).toBe(JSON.stringify(ORDER_PAYLOAD));
@@ -120,7 +136,23 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     expect(relay.received[0]?.secret).toBe(RELAY_SECRET);
   });
 
-  it("mirrors a relay rejection over a real socket and answers it sealed as our own json", async () => {
+  it("answers an accepted order with our own json body, never the bytes the relay chose", async () => {
+    const relay = await trackLocalRelay(() =>
+      replyWith(ACCEPTED_STATUS, JSON_HEADERS, ACCEPTED_BODY)
+    );
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+    const body = await response.text();
+
+    expect(response.status).toBe(ACCEPTED_STATUS);
+    expect(body).toBe(SUBSTITUTE_BODY);
+    expect(body).not.toContain("orderId");
+  });
+
+  it("mirrors a relay rejection over a real socket and still answers our own sealed json", async () => {
     const relay = await trackLocalRelay(() =>
       replyWith(REJECTED_STATUS, PLAIN_HEADERS, REJECTED_BODY)
     );
@@ -138,27 +170,26 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     expect(body).not.toContain(REJECTED_BODY);
   });
 
-  it("replaces a relay answer that declares no media type at all, because an unlabelled body is not json", async () => {
+  it("stops a relay that keeps sending instead of draining a body nobody reads", async () => {
     const relay = await trackLocalRelay(() =>
-      replyWith(ACCEPTED_STATUS, UNLABELLED_HEADERS, ACCEPTED_BODY)
+      pumpWith(ACCEPTED_STATUS, JSON_HEADERS, PUMP_CHUNK, PUMP_TOTAL_BYTES)
     );
 
     vi.stubEnv("PLACE_ORDER_URL", relay.origin);
 
     const { POST } = await loadRoute();
     const response = await POST(buildOrderRequest());
-    const body = await response.text();
+
+    await settle(PUMP_SETTLE_MS);
 
     expect(response.status).toBe(ACCEPTED_STATUS);
-    expect(response.headers.get(CONTENT_TYPE_HEADER)).toBe(JSON_CONTENT_TYPE);
-    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
-    expect(body).toBe(SUBSTITUTE_BODY);
-    expect(body).not.toContain(ACCEPTED_BODY);
+    expect(await response.text()).toBe(SUBSTITUTE_BODY);
+    expect(relay.bytesWritten()).toBeLessThan(PUMP_TOTAL_BYTES);
   });
 
-  it("stops reading a relay body past the cap and still mirrors the relay's verdict", async () => {
+  it("answers as soon as the relay's headers land, without waiting for a body it will never read", async () => {
     const relay = await trackLocalRelay(() =>
-      replyWith(ACCEPTED_STATUS, JSON_HEADERS, OVERSIZED_BODY)
+      dripWith(ACCEPTED_STATUS, JSON_HEADERS, DRIPPED_HEAD)
     );
 
     vi.stubEnv("PLACE_ORDER_URL", relay.origin);
@@ -166,11 +197,61 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     const { POST } = await loadRoute();
     const response = await POST(buildOrderRequest());
 
-    expect(OVERSIZED_BODY.length).toBeGreaterThan(MAX_RELAY_BODY_BYTES);
     expect(response.status).toBe(ACCEPTED_STATUS);
-    expect(response.headers.get(CONTENT_TYPE_HEADER)).toBe(JSON_CONTENT_TYPE);
-    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
     expect(await response.text()).toBe(SUBSTITUTE_BODY);
+  });
+
+  it("lets none of the relay's own response headers reach the buyer", async () => {
+    const relay = await trackLocalRelay(() =>
+      replyWith(ACCEPTED_STATUS, RELAY_OWN_HEADERS, ACCEPTED_BODY)
+    );
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+
+    expect(response.status).toBe(ACCEPTED_STATUS);
+
+    for (const header of RELAY_OWN_HEADER_NAMES) {
+      expect(response.headers.get(header)).toBeNull();
+    }
+
+    expect([...response.headers.keys()].sort()).toEqual([
+      "content-type",
+      "x-content-type-options",
+    ]);
+  });
+
+  it("answers a relay 205 with no body at all, because a reset status can carry none", async () => {
+    const relay = await trackLocalRelay(() =>
+      replyWith(RESET_CONTENT_STATUS, JSON_HEADERS, "")
+    );
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+
+    expect(response.status).toBe(RESET_CONTENT_STATUS);
+    expect(response.body).toBeNull();
+    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
+  });
+
+  it("refuses a relay status no response of ours could carry, instead of throwing on it", async () => {
+    silenceErrorLog();
+
+    const relay = await trackLocalRelay(() =>
+      replyWith(UNCARRIABLE_STATUS, JSON_HEADERS, ACCEPTED_BODY)
+    );
+
+    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
+
+    const { POST } = await loadRoute();
+    const response = await POST(buildOrderRequest());
+
+    expect(response.status).toBe(FAILED_STATUS);
+    expect(await response.text()).toBe(FAILED_BODY);
   });
 
   it("answers 504 when a relay accepts the connection and then never says anything", async () => {
@@ -190,23 +271,5 @@ describe("POST /api/place_order forwarding over a real relay socket", () => {
     expect(await response.text()).toBe(FAILED_BODY);
     expect(recorder.delays).toEqual([RELAY_REQUEST_TIMEOUT_MS]);
     expect(relay.received).toHaveLength(SINGLE_REQUEST);
-  });
-
-  it("stops reading a relay that answers its headers and then drips its body past the deadline", async () => {
-    silenceErrorLog();
-
-    const recorder = recordShortTimeoutSignals();
-    const relay = await trackLocalRelay(() =>
-      dripWith(ACCEPTED_STATUS, JSON_HEADERS, DRIPPED_HEAD)
-    );
-
-    vi.stubEnv("PLACE_ORDER_URL", relay.origin);
-
-    const { POST } = await loadRoute();
-    const response = await POST(buildOrderRequest());
-
-    expect(response.status).toBe(GATEWAY_TIMEOUT_STATUS);
-    expect(await response.text()).toBe(FAILED_BODY);
-    expect(recorder.delays).toEqual([RELAY_REQUEST_TIMEOUT_MS]);
   });
 });

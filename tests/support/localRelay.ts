@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer, type ServerResponse } from "node:http";
 
 const LOOPBACK_HOST = "127.0.0.1";
 const EPHEMERAL_PORT = 0;
@@ -28,11 +28,19 @@ export type RelayAnswer =
       headers: Record<string, string>;
       body: string;
     }
+  | {
+      kind: "pump";
+      status: number;
+      headers: Record<string, string>;
+      chunk: string;
+      totalBytes: number;
+    }
   | { kind: "silence" };
 
 export interface LocalRelay {
   origin: string;
   received: ReceivedRequest[];
+  bytesWritten: () => number;
   close: () => Promise<void>;
 }
 
@@ -48,12 +56,53 @@ export const dripWith = (
   body: string
 ): RelayAnswer => ({ kind: "drip", status, headers, body });
 
+export const pumpWith = (
+  status: number,
+  headers: Record<string, string>,
+  chunk: string,
+  totalBytes: number
+): RelayAnswer => ({ kind: "pump", status, headers, chunk, totalBytes });
+
 export const SILENCE: RelayAnswer = { kind: "silence" };
+
+const pumpBody = (
+  response: ServerResponse,
+  chunk: string,
+  totalBytes: number,
+  written: { bytes: number }
+): void => {
+  const chunkBytes = Buffer.byteLength(chunk, BODY_ENCODING);
+
+  let isStopped = false;
+
+  response.on("close", () => {
+    isStopped = true;
+  });
+
+  const pump = (): void => {
+    while (!isStopped && written.bytes < totalBytes) {
+      written.bytes += chunkBytes;
+
+      if (!response.write(chunk)) {
+        response.once("drain", pump);
+
+        return;
+      }
+    }
+
+    if (!isStopped) {
+      response.end();
+    }
+  };
+
+  pump();
+};
 
 const startLocalRelay = async (
   answer: () => RelayAnswer
 ): Promise<LocalRelay> => {
   const received: ReceivedRequest[] = [];
+  const written = { bytes: 0 };
   const server = createServer((request, response) => {
     const chunks: Buffer[] = [];
 
@@ -78,6 +127,12 @@ const startLocalRelay = async (
 
       response.writeHead(outcome.status, outcome.headers);
 
+      if (outcome.kind === "pump") {
+        pumpBody(response, outcome.chunk, outcome.totalBytes, written);
+
+        return;
+      }
+
       if (outcome.kind === "drip") {
         response.write(outcome.body);
 
@@ -101,6 +156,7 @@ const startLocalRelay = async (
   return {
     origin: `http://${LOOPBACK_HOST}:${address.port}`,
     received,
+    bytesWritten: () => written.bytes,
     close: () =>
       new Promise<void>((resolve, reject) => {
         server.closeAllConnections();

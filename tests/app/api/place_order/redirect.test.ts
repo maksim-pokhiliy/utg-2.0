@@ -18,6 +18,7 @@ const REDIRECT_STATUS = 307;
 const ACCEPTED_STATUS = 200;
 const FAILED_STATUS = 500;
 const ACCEPTED_BODY = '{"status":"success"}';
+const SUBSTITUTE_BODY = "{}";
 const FAILED_BODY = '{"error":"Failed to place order"}';
 const EMPTY_BODY = "";
 const SINGLE_REQUEST = 1;
@@ -65,7 +66,7 @@ describe("POST /api/place_order against a real relay socket", () => {
     const response = await POST(buildOrderRequest());
 
     expect(response.status).toBe(ACCEPTED_STATUS);
-    expect(await response.text()).toBe(ACCEPTED_BODY);
+    expect(await response.text()).toBe(SUBSTITUTE_BODY);
     expect(relay.received).toHaveLength(SINGLE_REQUEST);
     expect(relay.received[0]?.url).toBe("/place_order");
     expect(relay.received[0]?.secret).toBe(RELAY_SECRET);

@@ -1,19 +1,22 @@
 import "server-only";
 
-const RELAY_PATH = "/place_order";
 const RELAY_SECRET_HEADER = "x-relay-secret";
-const RELAY_REQUEST_TIMEOUT_MS = 20_000;
-const MAX_RELAY_BODY_BYTES = 65_536;
-const JSON_MEDIA_TYPE = "application/json";
 const CONTENT_TYPE_HEADER = "Content-Type";
-const MEDIA_TYPE_SEPARATOR = ";";
-const SUBSTITUTE_BODY = "{}";
-const NO_CONTENT_STATUS = 204;
-const RESET_CONTENT_STATUS = 205;
-const NOT_MODIFIED_STATUS = 304;
+const JSON_MEDIA_TYPE = "application/json";
+
+const NULL_BODY_STATUSES = [204, 205, 304] as const;
+const MIN_FORWARDABLE_STATUS = 200;
+const MAX_FORWARDABLE_STATUS = 599;
+
+export const RELAY_REQUEST_TIMEOUT_MS = 20_000;
+
+type NullBodyStatus = (typeof NULL_BODY_STATUSES)[number];
+
+export type BodyStatus = number & { readonly __brand: "BodyStatus" };
 
 export type RelayOutcome =
-  | { kind: "answered"; status: number; body: string | null }
+  | { kind: "empty"; status: NullBodyStatus }
+  | { kind: "answered"; status: BodyStatus }
   | { kind: "timed_out" }
   | { kind: "failed" };
 
@@ -21,83 +24,43 @@ const TIMED_OUT = Object.freeze<RelayOutcome>({ kind: "timed_out" });
 const FAILED = Object.freeze<RelayOutcome>({ kind: "failed" });
 
 interface ForwardOrderInput {
-  relayOrigin: string;
+  relayTarget: string;
   relaySecret: string | undefined;
   payload: unknown;
 }
 
-const isNullBodyStatus = (status: number): boolean =>
-  status === NO_CONTENT_STATUS ||
-  status === RESET_CONTENT_STATUS ||
-  status === NOT_MODIFIED_STATUS;
+const isNullBodyStatus = (status: number): status is NullBodyStatus =>
+  NULL_BODY_STATUSES.some((known) => known === status);
 
-const isJsonContentType = (contentType: string | null): boolean => {
-  if (contentType === null) {
-    return false;
+const classifyStatus = (status: number): RelayOutcome => {
+  if (isNullBodyStatus(status)) {
+    return { kind: "empty", status };
   }
 
-  const [essence] = contentType.split(MEDIA_TYPE_SEPARATOR);
+  if (status < MIN_FORWARDABLE_STATUS || status > MAX_FORWARDABLE_STATUS) {
+    return FAILED;
+  }
 
-  return essence.trim().toLowerCase() === JSON_MEDIA_TYPE;
+  return { kind: "answered", status: status as BodyStatus };
 };
 
-const readCappedText = async (response: Response): Promise<string | null> => {
-  const stream = response.body;
-
-  if (stream === null) {
-    return null;
-  }
-
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-
-  let text = "";
-  let size = 0;
-
-  for (;;) {
-    const chunk = await reader.read();
-
-    if (chunk.done) {
-      return text + decoder.decode();
-    }
-
-    size += chunk.value.byteLength;
-
-    if (size > MAX_RELAY_BODY_BYTES) {
-      await reader.cancel();
-
-      return null;
-    }
-
-    text += decoder.decode(chunk.value, { stream: true });
-  }
-};
-
-const readAnsweredBody = async (response: Response): Promise<string | null> => {
-  if (isNullBodyStatus(response.status)) {
+const cancelBody = async (response: Response): Promise<void> => {
+  try {
     await response.body?.cancel();
-
-    return null;
+  } catch (error) {
+    console.error("The order relay body could not be dropped:", error);
   }
-
-  if (!isJsonContentType(response.headers.get(CONTENT_TYPE_HEADER))) {
-    await response.body?.cancel();
-
-    return SUBSTITUTE_BODY;
-  }
-
-  return (await readCappedText(response)) ?? SUBSTITUTE_BODY;
 };
 
 export const forwardOrder = async ({
-  relayOrigin,
+  relayTarget,
   relaySecret,
   payload,
 }: ForwardOrderInput): Promise<RelayOutcome> => {
   const deadline = AbortSignal.timeout(RELAY_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${relayOrigin}${RELAY_PATH}`, {
+    const response = await fetch(relayTarget, {
       method: "POST",
       redirect: "error",
       headers: {
@@ -108,11 +71,11 @@ export const forwardOrder = async ({
       signal: deadline,
     });
 
-    return {
-      kind: "answered",
-      status: response.status,
-      body: await readAnsweredBody(response),
-    };
+    const outcome = classifyStatus(response.status);
+
+    await cancelBody(response);
+
+    return outcome;
   } catch (error) {
     if (deadline.aborted) {
       console.error(

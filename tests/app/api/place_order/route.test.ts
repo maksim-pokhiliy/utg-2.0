@@ -3,6 +3,8 @@ import type { Mock } from "vitest";
 
 import { NextRequest } from "next/server";
 
+import { RELAY_REQUEST_TIMEOUT_MS } from "@root/app/api/place_order/relay";
+
 import type { FetchStub } from "../../../support/apiTest";
 import { expectUpstreamOnly, stubUpstream } from "../../../support/apiTest";
 
@@ -12,17 +14,16 @@ const RELAY_HOST = "relay.invalid";
 const UPSTREAM_URL = `${FAKE_RELAY_ORIGIN}/place_order`;
 
 const CLIENT_IP = "203.0.113.5";
-const BODY_TRAP_MESSAGE = "request.json() ran before the guards";
 
 const RATE_LIMIT_MAX_REQUESTS = 5;
 const MIN_RETRY_AFTER_SECONDS = 1;
 const MAX_RETRY_AFTER_SECONDS = 60;
 
-const RELAY_REQUEST_TIMEOUT_MS = 20_000;
+const EXPECTED_TIMEOUT_MS = 20_000;
 const SHORT_DEADLINE_MS = 40;
 const MAX_DURATION_SECONDS = 25;
 const MS_PER_SECOND = 1000;
-const MAX_RELAY_BODY_BYTES = 65_536;
+const MAX_ORDER_BODY_BYTES = 65_536;
 
 const CONTENT_TYPE_HEADER = "Content-Type";
 const NOSNIFF_HEADER = "X-Content-Type-Options";
@@ -39,14 +40,15 @@ const REJECTED_STATUS = 422;
 const NO_CONTENT_STATUS = 204;
 const NOT_CONFIGURED_STATUS = 503;
 const FAILED_STATUS = 500;
+const PAYLOAD_TOO_LARGE_STATUS = 413;
 const GATEWAY_TIMEOUT_STATUS = 504;
 const TOO_MANY_REQUESTS_STATUS = 429;
 
 const NOT_CONFIGURED_BODY = '{"error":"Order service is not configured"}';
 const TOO_MANY_REQUESTS_BODY = '{"error":"Too many requests"}';
 const FAILED_BODY = '{"error":"Failed to place order"}';
-const ACCEPTED_UPSTREAM_BODY = "{}";
 const SUBSTITUTE_BODY = "{}";
+const UPSTREAM_ACCEPTED_BODY = '{"status":"success","orderId":"77"}';
 const REJECTED_UPSTREAM_BODY = "order rejected";
 
 const TIMEOUT_ERROR_NAME = "TimeoutError";
@@ -56,7 +58,6 @@ const RELAY_SECRET_NAME = "ORDER_RELAY_SECRET";
 const RELAY_SECRET = "s3cret-relay-token";
 const PADDED_RELAY_SECRET = `  ${RELAY_SECRET}  `;
 const BLANK_RELAY_SECRETS = ["", "   "] as const;
-const RELAY_ORIGIN_SUFFIXES = ["/", "//", "///"] as const;
 const UNSENDABLE_RELAY_SECRETS = [
   `${RELAY_SECRET}\nx-injected: 1`,
   `${RELAY_SECRET}\rx-injected: 1`,
@@ -71,6 +72,24 @@ const SENDABLE_RELAY_SECRETS = [
   "pass phrase with spaces ~ and !punctuation!",
 ] as const;
 
+const RELAY_ORIGINS: readonly (readonly [string, string])[] = [
+  [FAKE_RELAY_ORIGIN, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}/`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}//`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}///`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}\\`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}?q=1`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}#fragment`, UPSTREAM_URL],
+  [`${FAKE_RELAY_ORIGIN}/api`, `${FAKE_RELAY_ORIGIN}/api/place_order`],
+  [`${FAKE_RELAY_ORIGIN}/api/`, `${FAKE_RELAY_ORIGIN}/api/place_order`],
+];
+
+const UNUSABLE_RELAY_ORIGINS = [
+  "relay.invalid",
+  "/place_order",
+  "not a url at all",
+] as const;
+
 const AUTHENTICATED_HEADERS = {
   "Content-Type": "application/json",
   "x-relay-secret": RELAY_SECRET,
@@ -82,9 +101,19 @@ const ORDER_PAYLOAD = {
   cart: [{ title: "«Waiting»", quantity: 2 }],
 };
 
-const OVERSIZED_UPSTREAM_BODY = JSON.stringify({
-  padding: "x".repeat(MAX_RELAY_BODY_BYTES),
+const OVERSIZED_ORDER_BODY = JSON.stringify({
+  padding: "x".repeat(MAX_ORDER_BODY_BYTES),
 });
+
+const MULTIBYTE_PAYLOAD = {
+  first_name: "Олександра",
+  comment: "«Waiting» · Мультибайтовий коментар",
+  cart: [{ title: "Набір із «Waiting, Welcome, Death» · XXL", quantity: 3 }],
+};
+
+type StreamedInit = NonNullable<
+  ConstructorParameters<typeof NextRequest>[1]
+> & { duplex: "half" };
 
 interface TimeoutRecorder {
   delays: number[];
@@ -99,20 +128,47 @@ interface SealedAnswer {
 
 const loadRoute = () => import("@root/app/api/place_order/route");
 
+const buildRequestHeaders = (): Record<string, string> => ({
+  "content-type": "application/json",
+  "x-forwarded-for": CLIENT_IP,
+});
+
 const buildOrderRequest = (): NextRequest =>
   new NextRequest(ROUTE_URL, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-forwarded-for": CLIENT_IP,
-    },
+    headers: buildRequestHeaders(),
     body: JSON.stringify(ORDER_PAYLOAD),
   });
 
-const trapRequestBody = (request: NextRequest) =>
-  vi.spyOn(request, "json").mockImplementation(() => {
-    throw new Error(BODY_TRAP_MESSAGE);
+const buildRawRequest = (body: string): NextRequest =>
+  new NextRequest(ROUTE_URL, {
+    method: "POST",
+    headers: buildRequestHeaders(),
+    body,
   });
+
+const buildSplitRequest = (payload: unknown): NextRequest => {
+  const text = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(text);
+  const splitAt = bytes.indexOf(0xd0) + 1;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes.slice(0, splitAt));
+      controller.enqueue(bytes.slice(splitAt));
+      controller.close();
+    },
+  });
+
+  const init: StreamedInit = {
+    method: "POST",
+    headers: buildRequestHeaders(),
+    body: stream,
+    duplex: "half",
+  };
+
+  return new NextRequest(ROUTE_URL, init);
+};
 
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -126,7 +182,7 @@ const upstreamResponse = (
 
 const stubAcceptedUpstream = () =>
   stubUpstream(() =>
-    upstreamResponse(ACCEPTED_UPSTREAM_BODY, ACCEPTED_STATUS, {
+    upstreamResponse(UPSTREAM_ACCEPTED_BODY, ACCEPTED_STATUS, {
       ...JSON_UPSTREAM_HEADERS,
     })
   );
@@ -135,6 +191,11 @@ const readSignal = (
   fetchStub: Mock<FetchStub>,
   index: number
 ): AbortSignal | null | undefined => fetchStub.mock.calls[index]?.[1]?.signal;
+
+const readSentBody = (
+  fetchStub: Mock<FetchStub>,
+  index: number
+): BodyInit | null | undefined => fetchStub.mock.calls[index]?.[1]?.body;
 
 const recordTimeoutSignals = (deadlineMs?: number): TimeoutRecorder => {
   const recorder: TimeoutRecorder = { delays: [], signals: [] };
@@ -210,7 +271,7 @@ afterEach(() => {
 });
 
 describe("POST /api/place_order", () => {
-  it("answers 503 without reading the body when the relay is not configured", async () => {
+  it("answers 503 without touching the body when the relay is not configured", async () => {
     vi.stubEnv("PLACE_ORDER_URL", undefined);
 
     const errorSpy = vi
@@ -221,21 +282,42 @@ describe("POST /api/place_order", () => {
     );
     const { POST } = await loadRoute();
     const request = buildOrderRequest();
-    const bodyTrap = trapRequestBody(request);
 
     const response = await POST(request);
 
     expect(response.status).toBe(NOT_CONFIGURED_STATUS);
     expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
-    expect(bodyTrap).not.toHaveBeenCalled();
+    expect(request.bodyUsed).toBe(false);
     expect(fetchStub).not.toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
-  it.each(RELAY_ORIGIN_SUFFIXES)(
-    "trims a trailing %j off the configured relay origin before appending the path",
-    async (suffix) => {
-      vi.stubEnv("PLACE_ORDER_URL", `${FAKE_RELAY_ORIGIN}${suffix}`);
+  it.each(UNUSABLE_RELAY_ORIGINS)(
+    "answers 503 without touching the body when the configured relay address cannot be parsed: %j",
+    async (origin) => {
+      vi.stubEnv("PLACE_ORDER_URL", origin);
+
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const fetchStub = stubAcceptedUpstream();
+      const { POST } = await loadRoute();
+      const request = buildOrderRequest();
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(NOT_CONFIGURED_STATUS);
+      expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
+      expect(request.bodyUsed).toBe(false);
+      expect(fetchStub).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it.each(RELAY_ORIGINS)(
+    "resolves the configured relay address %j to the order endpoint at %j",
+    async (origin, expected) => {
+      vi.stubEnv("PLACE_ORDER_URL", origin);
 
       const fetchStub = stubAcceptedUpstream();
       const { POST } = await loadRoute();
@@ -243,11 +325,11 @@ describe("POST /api/place_order", () => {
       await POST(buildOrderRequest());
 
       expect(fetchStub).toHaveBeenCalledTimes(1);
-      expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+      expectUpstreamOnly(fetchStub.mock.calls, expected);
     }
   );
 
-  it("answers 429 with a Retry-After header on the sixth request from one client", async () => {
+  it("answers 429 with a Retry-After header, and no body read, on the sixth request from one client", async () => {
     const fetchStub = stubAcceptedUpstream();
     const { POST } = await loadRoute();
 
@@ -260,7 +342,6 @@ describe("POST /api/place_order", () => {
     }
 
     const blockedRequest = buildOrderRequest();
-    const bodyTrap = trapRequestBody(blockedRequest);
     const blocked = await POST(blockedRequest);
 
     expect(allowedStatuses).toEqual(
@@ -268,7 +349,7 @@ describe("POST /api/place_order", () => {
     );
     expect(blocked.status).toBe(TOO_MANY_REQUESTS_STATUS);
     expect(await blocked.text()).toBe(TOO_MANY_REQUESTS_BODY);
-    expect(bodyTrap).not.toHaveBeenCalled();
+    expect(blockedRequest.bodyUsed).toBe(false);
 
     const retryAfter = Number(blocked.headers.get("Retry-After"));
 
@@ -279,12 +360,14 @@ describe("POST /api/place_order", () => {
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
-  it("posts the order payload to the configured relay unchanged", async () => {
+  it("posts the order payload to the configured relay unchanged, and does read the body to do it", async () => {
     const fetchStub = stubAcceptedUpstream();
     const { POST } = await loadRoute();
+    const request = buildOrderRequest();
 
-    await POST(buildOrderRequest());
+    await POST(request);
 
+    expect(request.bodyUsed).toBe(true);
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expect(fetchStub).toHaveBeenCalledWith(UPSTREAM_URL, {
       method: "POST",
@@ -294,6 +377,57 @@ describe("POST /api/place_order", () => {
       signal: expect.any(AbortSignal),
     });
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
+  });
+
+  it("rebuilds an order whose bytes arrive split across a multibyte character", async () => {
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    const response = await POST(buildSplitRequest(MULTIBYTE_PAYLOAD));
+
+    expect(response.status).toBe(ACCEPTED_STATUS);
+    expect(readSentBody(fetchStub, 0)).toBe(JSON.stringify(MULTIBYTE_PAYLOAD));
+  });
+
+  it("answers 413 without calling the relay when the order body runs past the accepted size", async () => {
+    silenceErrorLog();
+
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    const response = await POST(buildRawRequest(OVERSIZED_ORDER_BODY));
+
+    expect(OVERSIZED_ORDER_BODY.length).toBeGreaterThan(MAX_ORDER_BODY_BYTES);
+    expect(response.status).toBe(PAYLOAD_TOO_LARGE_STATUS);
+    expect(await response.text()).toBe(FAILED_BODY);
+    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
+    expect(fetchStub).not.toHaveBeenCalled();
+  });
+
+  it("still forwards an order that sits just under the accepted size", async () => {
+    const padding = "y".repeat(MAX_ORDER_BODY_BYTES / 2);
+    const body = JSON.stringify({ ...ORDER_PAYLOAD, padding });
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    const response = await POST(buildRawRequest(body));
+
+    expect(body.length).toBeLessThan(MAX_ORDER_BODY_BYTES);
+    expect(response.status).toBe(ACCEPTED_STATUS);
+    expect(readSentBody(fetchStub, 0)).toBe(body);
+  });
+
+  it("answers 500 without calling the relay when the checkout body is not json", async () => {
+    silenceErrorLog();
+
+    const fetchStub = stubAcceptedUpstream();
+    const { POST } = await loadRoute();
+
+    const response = await POST(buildRawRequest("not json at all"));
+
+    expect(response.status).toBe(FAILED_STATUS);
+    expect(await response.text()).toBe(FAILED_BODY);
+    expect(fetchStub).not.toHaveBeenCalled();
   });
 
   it("presents the x-relay-secret header when a relay secret is configured", async () => {
@@ -337,7 +471,7 @@ describe("POST /api/place_order", () => {
   });
 
   it.each(UNSENDABLE_RELAY_SECRETS)(
-    "answers 503 without reading the body, calling the relay or logging the value when the relay secret cannot ride a header: %j",
+    "answers 503 without touching the body, calling the relay or logging the value when the relay secret cannot ride a header: %j",
     async (secret) => {
       vi.stubEnv(RELAY_SECRET_NAME, secret);
 
@@ -347,13 +481,12 @@ describe("POST /api/place_order", () => {
       const fetchStub = stubAcceptedUpstream();
       const { POST } = await loadRoute();
       const request = buildOrderRequest();
-      const bodyTrap = trapRequestBody(request);
 
       const response = await POST(request);
 
       expect(response.status).toBe(NOT_CONFIGURED_STATUS);
       expect(await response.text()).toBe(NOT_CONFIGURED_BODY);
-      expect(bodyTrap).not.toHaveBeenCalled();
+      expect(request.bodyUsed).toBe(false);
       expect(fetchStub).not.toHaveBeenCalled();
       expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy.mock.calls.flat().map(String).join(" ")).not.toContain(
@@ -429,25 +562,26 @@ describe("POST /api/place_order", () => {
     }
   );
 
-  it("mirrors the relay's accepted status and its json body, but serves them under our own content type", async () => {
-    const upstreamBody = '{"orderId":"77"}';
+  it("mirrors the relay's accepted status but answers with our own json body, never the relay's", async () => {
     const fetchStub = stubUpstream(() =>
-      upstreamResponse(upstreamBody, MIRRORED_ACCEPTED_STATUS, {
+      upstreamResponse(UPSTREAM_ACCEPTED_BODY, MIRRORED_ACCEPTED_STATUS, {
         [CONTENT_TYPE_HEADER]: "application/json; charset=utf-8",
       })
     );
     const { POST } = await loadRoute();
 
     const response = await POST(buildOrderRequest());
+    const body = await response.text();
 
     expect(response.status).toBe(MIRRORED_ACCEPTED_STATUS);
     expect(response.headers.get(CONTENT_TYPE_HEADER)).toBe(JSON_CONTENT_TYPE);
     expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
-    expect(await response.text()).toBe(upstreamBody);
+    expect(body).toBe(SUBSTITUTE_BODY);
+    expect(body).not.toContain("orderId");
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
-  it("mirrors a relay rejection but never re-emits the media type the relay chose", async () => {
+  it("mirrors a relay rejection but re-emits neither its media type nor its bytes", async () => {
     const fetchStub = stubUpstream(() =>
       upstreamResponse(REJECTED_UPSTREAM_BODY, REJECTED_STATUS, {
         ...PLAIN_UPSTREAM_HEADERS,
@@ -463,26 +597,6 @@ describe("POST /api/place_order", () => {
     expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
     expect(body).toBe(SUBSTITUTE_BODY);
     expect(body).not.toContain(REJECTED_UPSTREAM_BODY);
-    expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
-  });
-
-  it("replaces a relay body past the cap with its own json and still mirrors the relay's verdict", async () => {
-    const fetchStub = stubUpstream(() =>
-      upstreamResponse(OVERSIZED_UPSTREAM_BODY, ACCEPTED_STATUS, {
-        ...JSON_UPSTREAM_HEADERS,
-      })
-    );
-    const { POST } = await loadRoute();
-
-    const response = await POST(buildOrderRequest());
-
-    expect(OVERSIZED_UPSTREAM_BODY.length).toBeGreaterThan(
-      MAX_RELAY_BODY_BYTES
-    );
-    expect(response.status).toBe(ACCEPTED_STATUS);
-    expect(response.headers.get(CONTENT_TYPE_HEADER)).toBe(JSON_CONTENT_TYPE);
-    expect(response.headers.get(NOSNIFF_HEADER)).toBe(NOSNIFF_VALUE);
-    expect(await response.text()).toBe(SUBSTITUTE_BODY);
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
@@ -521,6 +635,10 @@ describe("POST /api/place_order", () => {
     expectUpstreamOnly(fetchStub.mock.calls, UPSTREAM_URL);
   });
 
+  it("pins the forward deadline at twenty seconds", async () => {
+    expect(RELAY_REQUEST_TIMEOUT_MS).toBe(EXPECTED_TIMEOUT_MS);
+  });
+
   it("declares a maxDuration the forward deadline can never outlast, so the platform never kills a buyer's order first", async () => {
     const { maxDuration } = await loadRoute();
 
@@ -530,7 +648,7 @@ describe("POST /api/place_order", () => {
     );
   });
 
-  it("hands fetch its own twenty second deadline so a hung relay can never hold the checkout open", async () => {
+  it("hands fetch the deadline the relay module declares, so a hung relay can never hold the checkout open", async () => {
     const recorder = recordTimeoutSignals();
 
     let abortedOnEntry = true;
@@ -538,7 +656,7 @@ describe("POST /api/place_order", () => {
     const fetchStub = stubUpstream((_input, init) => {
       abortedOnEntry = init?.signal?.aborted ?? true;
 
-      return upstreamResponse(ACCEPTED_UPSTREAM_BODY, ACCEPTED_STATUS, {
+      return upstreamResponse(UPSTREAM_ACCEPTED_BODY, ACCEPTED_STATUS, {
         ...JSON_UPSTREAM_HEADERS,
       });
     });
