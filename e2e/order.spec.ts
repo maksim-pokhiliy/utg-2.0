@@ -35,6 +35,10 @@ const UNCONFIGURED_RELAY_STATUS = 503;
 
 const ORDER_ROUTE_PATH = "/api/place_order";
 
+const NOSNIFF_HEADER = "x-content-type-options";
+
+const NOSNIFF_VALUE = "nosniff";
+
 const EMPTY_CART_STORAGE = "[]";
 
 const SINGLE_LINE_COUNT = 1;
@@ -166,13 +170,17 @@ test.describe("the order path", () => {
     await expect(firstNameInput(page)).toBeVisible();
     await fillUkCheckoutForm(page);
 
-    const orderResponse = page.waitForResponse((response) =>
+    const orderResponsePromise = page.waitForResponse((response) =>
       response.url().includes(ORDER_ROUTE_PATH)
     );
 
     await submitButton(page).click();
 
-    expect((await orderResponse).status()).toBe(UNCONFIGURED_RELAY_STATUS);
+    const orderResponse = await orderResponsePromise;
+    const orderHeaders = await orderResponse.allHeaders();
+
+    expect(orderResponse.status()).toBe(UNCONFIGURED_RELAY_STATUS);
+    expect(orderHeaders[NOSNIFF_HEADER]).toBe(NOSNIFF_VALUE);
 
     await expect(orderToast(page)).toContainText(
       UK_DICTIONARY.cart.order_error
