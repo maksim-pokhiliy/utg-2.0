@@ -445,3 +445,56 @@ Append-only. One entry per session/step.
 - **Review counts, both halves, pre-cap as the rule requires.** Relay: 218 pooled → 31 distinct →
   31 reported, no cap, 31 CONFIRMED / 0 UNPROVEN. Shop: ~111 pooled → 27 distinct → 27 reported,
   no cap, five candidates explicitly refuted. Neither review had an invisible tail.
+
+## 2026-08-21 — U7's gate found a real defect, U8 fixed it, and the operators got their language
+
+- **The browser gate earned its place.** The owner ran the whole of U7's checklist on production
+  and it produced exactly one finding — but that finding was invisible to 1209 tests, because
+  every warehouse fixture in the repo held only the two categories we had invented for ourselves.
+  Reproduced live: `с. Романівка, Бердичівський р-н` reports `warehouseCount: 3` and our route
+  answered **503**, because its page is `{DropOff: 1, Store: 1}`. **2 of 10 sampled villages** hit
+  it. Owner ruled: offer them — «мы делаем честный и чистый сервис». D-22.
+- **Shipped as a pair** — shop `e02797d` (#25) and relay `da2f9d6` (#6). Prod-verified: that same
+  settlement now answers 200 with both pickup points, the locker chip answers an honest 200-empty,
+  and a live order round-tripped in 2.36 s with its Neon row at `schema_version = 2`.
+- **The deeper fix outlives today's six categories.** Widening the list alone would have bought a
+  month. The rule that caused it — "a page where NO category is recognised is the carrier changing
+  format" — was retired: what it actually detected was a village using a category nobody had
+  enumerated. **A page that yields rows is a successful page.** Drift detection stays with the arm
+  that means it.
+- **The trap that would have silently reversed the whole step**, found by the executor at its plan
+  gate and independently confirmed by the reviewer and the planner: moving category recognition
+  into `decodeWarehouse` makes an unknown category fail to decode → `decoded.length === 0` with
+  `rows.length > 0` → the SURVIVING drift arm fires → the 503 comes back through the other door.
+  Guarded twice now — the naive half is a compile error, the full edit reddens two named tests.
+- **Two things the reviews caught that tests could not.** The `Поштомат` chip's 30-row cap was
+  pinned by nothing: removing it for lockers only left 1209/1209 green, because every locker
+  fixture in the file was a single row. And `categoryPriority` returned `-1` — an in-band sentinel
+  in a sort key, sorting AHEAD of every real category — which **contradicts D-15.4 of this very
+  initiative**, where we chose `number | null` for exactly that reason. A refuter loosened one
+  letter of case and got an inverted list with the whole battery green.
+- **The PR body claimed a failure the old code could not produce.** "The shopper picks the pickup
+  point and the order ships the branch" — executed under the reverted scheme, all three payload
+  fields were correct; the real cost is a duplicate React key and a redundant carrier call. It
+  mattered because this repo promotes PR bodies into `decisions.md`, so the claim would have been
+  ratified. Corrected before merge.
+- **The relay's own review found the mirror of the same disease.** Its free-form saturation test
+  sat **318 characters past its own edge** — a regression widening that header by ~300 units kept
+  it green; the label-coverage assertion was one-sided, so a label added to the code and not to the
+  list escaped; and the omitted-cart marker, the one bold run carrying a number the operator acts
+  on, was never probed for forgery. All three closed with mutation proofs.
+- **A process incident worth keeping.** Two executors in DIFFERENT repositories shared one
+  scratchpad path; one overwrote the other's mutation driver, and the second ran a foreign script
+  twice without a single complaint — because `python .replace()` with no occurrence assertion
+  "succeeds" on a file that is not yours. No damage (verified byte-identical), but it means
+  mutation results from that window were untrustworthy, so the planner re-verified the sharpest
+  claim independently. Drivers now live in each repo's gitignored `.feature-dev/`.
+- **Measurement settled two things the reviewer honestly could not.** It flagged as UNPROVEN
+  whether `Store` rows carry a usable `Number` — no public JSON exists. One live call: they do
+  (`Number: "1"`, `WarehouseStatus: "Working"`, `DenyToSelect: "0"`). And the `warehouseCount: 3`
+  against a two-row page is the carrier's own counter over-reporting, not our bug — which
+  incidentally confirms the gate item expecting an empty locker list there.
+- **Review counts, pre-cap as the rule requires.** Shop: 49 pooled → 24 distinct → 24 reported, no
+  cap, empty tail. Relay: 12 pooled → 12 reported, no tail. Neither review had a hidden remainder.
+- **U7 is satisfied and the initiative is ready to close.** Criteria 1–6 and 8 by shipped
+  prod-smoked work, criterion 7 by the owner's gate — which found the one thing worth finding.

@@ -33,6 +33,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
 | D-19 | The forwarding route mirrors the relay's STATUS and never its body | RATIFIED |
 | D-20 | A read may inherit the client's abort; a write may not | RATIFIED |
 | D-21 | A deletion is authorised structurally; a bound comes from the callee | RATIFIED |
+| D-22 | A page that yields rows is a successful page; pickup points are offered | RATIFIED |
 
 ---
 
@@ -530,7 +531,7 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   3. **Recognising a category and offering it are different things.** Offered stays
      `Branch` + `Postomat`. Recognised adds `Cargo`, attested by a repo fixture rather
      than invented. So a page of only-`Cargo` rows is an honest 200-empty, and a page
-     where NOTHING is recognised is a 503 — the carrier changed under us. Without that
+     where NOTHING is recognised is a 503 — the carrier changed under us. **RETIRED by D-22, 2026-08-21:** it was meant to detect the carrier changing its format, and what it actually detected was a settlement using a category nobody had enumerated — a normal fact about villages. It cost 2 of 10 sampled villages a false outage. The rest of item 3 stands: recognising and offering remain different things. Without that
      split, a vocabulary change would answer an empty list forever, with PR B's
      fallback never tripping because it keys on 503.
   4. **`number | null` over a `-1` sentinel** for the warehouse count: an in-band
@@ -707,4 +708,41 @@ execute past it) · `SUPERSEDED` (replaced — kept for the trail).
   strictly above, so the party that knows the work is the one that gives up on it. Live
   confirmation after merge: a real prod order round-tripped in **2.32 s**.
 - **Links.** PR #5, PR #24; D-19, D-20; BDEF-9; journal 2026-08-20.
+
+### D-22 — A page that yields rows is a successful page, and pickup points are offered
+
+- **Context.** The U7 browser gate found this on PRODUCTION, not in a test. Settlements whose only
+  Нова Пошта presence is a pickup point were told the directory is unavailable:
+  `с. Романівка, Бердичівський р-н` reports `warehouseCount: 3` from our settlements route while
+  our warehouse route answered **503**, because its page is `{DropOff: 1, Store: 1}` and the
+  recognised set held only `["Branch","Postomat","Cargo"]`. **2 of 10 sampled villages** hit it;
+  in 5 more, `Store`/`DropOff` rows were silently dropped from lists that did work.
+- **Owner ruling.** Offer them — «мы делаем честный и чистый сервис». Saying «нічого не знайдено»
+  where a pickup point exists is a lie to the buyer.
+- **Decision.** The recognised vocabulary is the six values measured live (`Branch, Postomat,
+  DropOff, Store, Fulfillment, Cargo`). `Відділення` serves **Branch + DropOff + Store**;
+  `Поштомат` serves `Postomat`; `Cargo` and `Fulfillment` are recognised-and-never-offered — a
+  freight terminal and a merchant warehouse are not where a buyer collects a t-shirt. Measured on
+  the live carrier: both `DropOff` and `Store` carry `DenyToSelect: "0"`,
+  `WarehouseStatus: "Working"`, a usable `Number` and a 30 kg cap.
+- **D-15 item 3's "nothing recognised ⇒ 503" arm is RETIRED, and that is what outlives today's six
+  values.** It was meant to catch format drift; it caught a village. **A page that yields rows is a
+  successful page** — if none are offerable, the honest answer is 200-empty. Drift detection stays
+  with the arm that means it: a container decoding to zero rows.
+- **Dedupe stays PER CATEGORY, the categories merge after it.** One chip serving three categories
+  makes `Branch №5` and `DropOff №5` meet for the first time; a cross-category dedupe would
+  silently drop a real point. Ordering is (exact-match rank, then the category's index in the
+  chip's array) — rank dominates, so an exact match on a `Store` outranks a non-matching `Branch`.
+- **The invariant that must not be undone.** `DecodedWarehouse.category` stays a bare `string`.
+  Narrowing it makes an unknown category fail to decode → `decoded.length === 0` with
+  `rows.length > 0` → the SURVIVING drift arm fires → the 503 returns through the other door,
+  silently reversing this decision. Guarded twice: the naive half is a compile error, and the full
+  edit reddens two named tests — verified independently by the planner and by the reviewer.
+- **Accepted residual, eyes open.** Retiring the arm removes the only detector of the carrier
+  RENAMING its vocabulary; a case-drift now yields a silent 200-empty where master gave a loud 503.
+  Accepted on D-17's asymmetry — a wrongly-armed detector blacks out the directory for every buyer,
+  a missing one costs bounded degradation to free text. The measured drift was an extension, not a
+  rename.
+- **Links.** PR #25; D-7, D-14, D-15 (item 3 partly superseded), D-17, D-18; UAC-27; journal
+  2026-08-21.
 

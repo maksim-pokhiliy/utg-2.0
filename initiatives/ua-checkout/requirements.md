@@ -101,7 +101,7 @@ response fields there when implementing (UAC-2).
   `CategoryOfWarehouse` (Branch/Postomat…), `WarehouseStatus`, `DenyToSelect`,
   schedules, limits. NP's docs mandate keeping a cached copy refreshed daily.
   Values are string-encoded (`Number` `"1"`, `DenyToSelect` `"0"|"1"`, categories
-  `"Branch"|"Postomat"`, `WarehouseStatus === "Working"`), and NP answers HTTP 200
+  `"Branch" | "Postomat" | "DropOff" | "Store" | "Fulfillment" | "Cargo"` (measured 2026-08-21; the first four are offerable, the last two never are — D-22), `WarehouseStatus === "Working"`), and NP answers HTTP 200
   even on `success: false` — `response.ok` alone proves nothing (D-8).
 - **MEASURED LIVE 2026-08-08 with the operator's key (D-14) — this supersedes the
   estimates below it.** Kyiv reports **12 298** warehouse points in its own
