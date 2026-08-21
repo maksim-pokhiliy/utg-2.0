@@ -35,6 +35,7 @@ const WHITESPACE_PATTERN = /\s+/g;
 const SINGLE_SPACE = " ";
 const EMPTY_TEXT = "";
 const CITY_REF_PATTERN = /^[0-9a-f-]+$/i;
+const NOT_FOUND_INDEX = -1;
 const EXACT_RANK = 0;
 const PREFIX_RANK = 1;
 const RESIDUAL_RANK = 2;
@@ -43,7 +44,12 @@ export type DeliveryMethod = "branch" | "postomat";
 
 type WarehouseCategory = (typeof KNOWN_CATEGORIES)[number];
 
-type NeverOfferedCategory = "Cargo" | "Fulfillment";
+const NEVER_OFFERED_CATEGORIES = [
+  "Cargo",
+  "Fulfillment",
+] as const satisfies readonly WarehouseCategory[];
+
+type NeverOfferedCategory = (typeof NEVER_OFFERED_CATEGORIES)[number];
 
 type OfferableCategory = Exclude<WarehouseCategory, NeverOfferedCategory>;
 
@@ -205,10 +211,19 @@ const buildMethodProperties = (
     : { ...properties, FindByString: query };
 };
 
+const findCategoryIndex = (
+  categories: readonly OfferableCategory[],
+  category: string
+): number | null => {
+  const index = categories.findIndex((offered) => offered === category);
+
+  return index === NOT_FOUND_INDEX ? null : index;
+};
+
 const categoryPriority = (
   categories: readonly OfferableCategory[],
   category: string
-): number => categories.findIndex((offered) => offered === category);
+): number => findCategoryIndex(categories, category) ?? categories.length;
 
 const compareRanked = (
   categories: readonly OfferableCategory[],
