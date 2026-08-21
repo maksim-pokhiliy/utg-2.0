@@ -1,7 +1,8 @@
 # ua-checkout — state (the board)
 
-**Updated:** 2026-08-21 (U8 merged as a pair and prod-verified — the villages have their pickup
-points and the operators read Ukrainian. **Every step is done; the initiative is ready to close**)
+**Updated:** 2026-08-21 — **INITIATIVE COMPLETE.** Every step shipped and prod-verified; the
+owner's browser gate ran end to end. Open carry-forwards moved to the production-polish
+canonical ledger (`../production-polish/deferred.md`), which is now their home
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -23,37 +24,33 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 ## Next action
 
-**EVERY STEP IS DONE. The only thing left is `/initiative-close`.**
+**None. The initiative is COMPLETE** (closed 2026-08-21).
 
-U8 merged as a pair on 2026-08-21 — shop `e02797d` (#25) and relay `da2f9d6` (#6) — and both
-halves are verified on production:
+The uk checkout asks the carrier instead of asking the buyer to type: settlement and warehouse
+comboboxes on our own proxy, method chips, courier fields, pickup points offered where a village
+has nothing else, and a runtime fallback to free text that no directory failure can defeat. The
+order travels as one v2 envelope over a forward bounded on both sides, the relay knows no other
+shape, every decoded order is durable in Neon before it is sent, and the operators read the whole
+message in Ukrainian.
 
-- **The defect the owner's gate found is gone.** `с. Романівка, Бердичівський р-н` answers **200
-  with two rows** («Пункт №51878 (до 30 кг)…» and «Пункт приймання-видачі (до 30 кг)…») where an
-  hour earlier both chips answered 503; the locker chip answers an honest **200-empty**, not an
-  outage. D-22.
-- **The operators read Ukrainian.** A live order through `www.ua-tactical-gear.com` returned 200
-  in 2.36 s, its Neon row carried `schema_version = 2` and it was delivered.
+All eight charter acceptance criteria are met — 1–6 and 8 by shipped, prod-smoked work, and
+**criterion 7 by the owner's own browser gate**, which was run end to end on production and
+produced exactly one finding. That finding became U8, and it was worth the whole gate: every
+warehouse fixture in the repo held only the two categories we had invented for ourselves, so
+2 of 10 sampled villages were told the directory was unavailable when it was answering fine.
 
-The charter's eight acceptance criteria are all met: 1–6 and 8 by shipped, prod-smoked work, and
-**criterion 7 by the owner's own browser gate**, which was run end to end and produced exactly one
-finding — the pickup-point defect, now fixed and shipped. Nothing is outstanding.
+**Where things live now.** Decisions D-1…D-22 stay in `decisions.md` — that file is the SSOT for
+why, and D-22's retirement of the "nothing recognised ⇒ 503" arm is the one most likely to be
+re-litigated by someone who has not read it. Open carry-forwards moved to
+`../production-polish/deferred.md`; the originals stay here with their measurements. The
+relay's board (`../utg-tg-order-bot/initiatives/bot-polish/state.md`) is also COMPLETE and
+carries the planner-ops tail: BDEF-11 (scoped Neon role), BDEF-10 (retention), BDEF-8 (the
+Telegram width metric).
 
-### Closing it
-
-Run `/initiative-close`. What that pass must carry: the open UAC rows below (they outlive the
-initiative and move to the production-polish canonical ledger), the bot-polish board's own
-planner-ops tail, and the one item worth naming out loud on the way out — **UAC-27's channel
-vocabulary**, because it is the exact class this initiative spent U6 and U8 hunting: a cross-repo
-agreement that nothing executable holds. `contract.ts` pins keys, not values, so a rename of
-`call` on either side reads through to the operator with no test reddening anywhere.
-
-### Not blocking the close, still live
-
-Relay-side, planner-owned: **BDEF-11** (the relay authenticates to Neon as the schema owner and
-could `drop table orders` — an env update plus a redeploy of the SERVING deployment resolved by id
-from its logs, per the BDEF-1 lesson), **BDEF-10** (PII datastore with no retention policy),
-**BDEF-8** (which Telegram width metric is enforced; ~980 units of cart room).
+**The one item worth naming on the way out** is UAC-27's channel vocabulary: `contract.ts` pins
+keys, not values, so `call | telegram | viber` is agreed in prose across two repositories and a
+rename on either side reaches the operator with nothing reddening. It is the exact failure class
+U6 and U8 spent themselves hunting, and it is now the first thing on the canonical ledger.
 
 ## Open decisions awaiting ratification
 

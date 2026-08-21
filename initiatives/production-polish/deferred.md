@@ -69,6 +69,28 @@ original, a full-res logo, and Firestore doc verification. Step 1 must not wait 
 but a bot/spam pass could flood the order channel. Options when scheduled: naive
 in-memory rate limit, Vercel WAF rule, or accept the risk and DROP.
 
+## Inherited from ua-checkout (COMPLETE 2026-08-21)
+
+`ua-checkout` closed with these still open. Their canonical home is now this ledger; the
+originals stay in `../ua-checkout/deferred.md` for the trail, with full dispositions and the
+measurements behind them.
+
+| ID | One-liner | Status |
+| --- | --- | --- |
+| UAC-27 | **The contact-channel vocabulary is a VALUE-level cross-repo coupling that nothing executable pins.** `../utg-tg-order-bot/tests/support/contract.ts` lists keys only; `call \| telegram \| viber` lives in the shop's prose. Rename `call` on either side and the operator quietly reads a raw code with **no test reddening anywhere**. This is the exact class U6 and U8 spent themselves hunting, and it is the one item here worth scheduling rather than filing. Fix: extend `contract.ts` to pin values — both U8 halves were deliberately fenced out of it. The row also carries both U8 reviews' tails | OPEN |
+| UAC-4 | The Claude Design kit lags the repo DS — one `/design-sync` backport pass | OPEN |
+| UAC-7 | Combobox adoption watch-list + the D-6.2 consumer contract; the U7 gate ran and raised nothing from it | OPEN |
+| UAC-8 | DS hygiene pair: the chip cva forked from `SizeSelector`, the duplicated 300ms settle fade — pairs with UAC-4 in one window | OPEN |
+| UAC-14 | The in-flight submit lock has a second, unlocked door: the header cart drawer is mounted in the root layout and live on `/checkout` | OPEN |
+| UAC-16 | Checkout polish pack from the U5a review, each verified unreachable or cosmetic | OPEN |
+| UAC-19 | PR A review set, items (1)(2)(3)(5); (3)'s cost ROSE once a page became often a single row | OPEN |
+| UAC-20 | The client's abort is never linked to the upstream directory fetch — every abandoned keystroke burns a carrier call to completion. **D-20 rules the opposite for the order WRITE on purpose**: a read may inherit the client's abort, a write may not | OPEN |
+| UAC-21 | First-review tail of PR #23: a 209-line hook, dead `INITIAL_DELIVERY` pinned by 7 assertions, duplicated `ERROR_KEYS`, no `maxLength` on free-text fields | OPEN |
+| UAC-22 | 11 below-the-cut items from the same review, named so the tail stays durable | OPEN |
+| UAC-23 | Re-review set — chiefly the ruling that an unparseable carrier success stays "distress", recorded WITH the reviewer's disagreement, to be re-read on carrier drift | OPEN |
+| UAC-24 | One focus guard **no environment we run can cover**: neither jsdom nor Chromium fires `blur` on node removal, only Firefox does. Deliberately kept and deliberately unprovable | OPEN |
+| UAC-25 | `/api/place_order` is public, attaches the relay secret for any caller, and its limiter is a per-lambda `Map`. The bounded half shipped in U6; what remains is POLICY — an origin check and a rate limit that is not per-instance | OPEN |
+
 ## Closed history
 
 (none yet)

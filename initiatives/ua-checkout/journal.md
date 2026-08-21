@@ -498,3 +498,29 @@ Append-only. One entry per session/step.
   cap, empty tail. Relay: 12 pooled → 12 reported, no tail. Neither review had a hidden remainder.
 - **U7 is satisfied and the initiative is ready to close.** Criteria 1–6 and 8 by shipped
   prod-smoked work, criterion 7 by the owner's gate — which found the one thing worth finding.
+
+## 2026-08-21 — initiative CLOSED
+
+- Ran `/initiative-close`. `plan.md` brought up to reality (U5a, U5b, U6, U7 were still marked
+  pending; U8 added), the board marked COMPLETE with no next action, and the open carry-forwards
+  promoted to `../production-polish/deferred.md`, which is now their canonical home — the
+  originals stay here with the measurements behind them.
+- `initiatives/ACTIVE` deliberately left on `ua-checkout`. The convention in this repo is that
+  ACTIVE moves when a new initiative STARTS, not when one ends — `production-polish` stayed in
+  place the same way. A resuming session gets a board that says COMPLETE and names where the
+  carry-forwards went, which beats loading nothing.
+- **What the initiative delivered:** a uk checkout that asks the carrier instead of asking the
+  buyer to type — settlement and warehouse comboboxes on our own proxy, method chips, courier
+  fields, pickup points offered where a village has nothing else, and a runtime fallback to free
+  text no directory failure can defeat. The order travels as one v2 envelope over a forward
+  bounded on both sides; the relay knows no other shape; every decoded order is durable in Neon
+  before it is sent; the operators read the whole message in Ukrainian.
+- **What it cost to be sure.** Twenty-two ratified decisions, eight steps, nine merged PRs across
+  two repositories, and the discipline that produced most of the value: probe the external system
+  BEFORE writing the step prompt (D-12), and treat a green test as a claim rather than a fact.
+  Four times a number derived by reasoning was wrong and a measurement fixed it — B4's width
+  premise, UAC-13's prescribed fix, the carrier key's real bind time, and U6's 10-second deadline
+  that would have converted slow successes into false failures.
+- **The single most useful hour** was the owner's browser gate. It found what 1209 tests could
+  not, because every fixture in the repo held only the categories we had invented for ourselves.
+  A test suite cannot tell you that your fixtures share your blind spot; a village can.
