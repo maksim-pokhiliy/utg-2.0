@@ -117,6 +117,7 @@ const BULK_ROW_COUNT = 60;
 const CAP_OVERFLOW_ROW_COUNT = 119;
 const CROWDED_ROW_COUNT = 40;
 const BRANCH_HEAVY_ROW_COUNT = 40;
+const POSTOMAT_HEAVY_ROW_COUNT = 40;
 const TRAILING_POSTOMAT_NUMBER = "9001";
 const NUMERIC_NUMBER = 1;
 
@@ -304,6 +305,16 @@ const BRANCH_HEAVY_ROWS: readonly WarehouseRow[] = [
     CategoryOfWarehouse: POSTOMAT_CATEGORY,
   }),
 ];
+
+const POSTOMAT_HEAVY_ROWS: readonly WarehouseRow[] = buildAscendingPage(
+  POSTOMAT_HEAVY_ROW_COUNT,
+  1,
+  { CategoryOfWarehouse: POSTOMAT_CATEGORY }
+);
+
+const POSTOMAT_HEAVY_NUMBERS = buildAscendingPage(POSTOMAT_HEAVY_ROW_COUNT, 1)
+  .slice(0, ROW_LIMIT)
+  .map((row) => row.Number);
 
 const BOTH_METHODS_REJECTED_ROWS: readonly WarehouseRow[] = [
   buildRow(DENIED_NUMBER, { DenyToSelect: DENIED_FLAG }),
@@ -1500,6 +1511,17 @@ describe("GET /api/np/warehouses", () => {
     expect(branches).toHaveLength(ROW_LIMIT);
     expect(readNumbers(postomats)).toEqual([TRAILING_POSTOMAT_NUMBER]);
     expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("caps the locker chip exactly as it caps the branch chip, because one city holds far more lockers than a list may carry", async () => {
+    const fetchStub = stubSequence([okRows(POSTOMAT_HEAVY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(postomats).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(postomats)).toEqual(POSTOMAT_HEAVY_NUMBERS);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
   it("serves a repeated city and query pair from the cache and asks np again for a new query", async () => {
