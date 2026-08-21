@@ -92,6 +92,9 @@ const HIDDEN_FIELDS = [
 const BRANCH_CATEGORY = "Branch";
 const POSTOMAT_CATEGORY = "Postomat";
 const CARGO_CATEGORY = "Cargo";
+const DROPOFF_CATEGORY = "DropOff";
+const STORE_CATEGORY = "Store";
+const FULFILLMENT_CATEGORY = "Fulfillment";
 const WORKING_STATUS = "Working";
 const CLOSED_STATUS = "Closed";
 const ALLOWED_FLAG = "0";
@@ -114,6 +117,7 @@ const BULK_ROW_COUNT = 60;
 const CAP_OVERFLOW_ROW_COUNT = 119;
 const CROWDED_ROW_COUNT = 40;
 const BRANCH_HEAVY_ROW_COUNT = 40;
+const POSTOMAT_HEAVY_ROW_COUNT = 40;
 const TRAILING_POSTOMAT_NUMBER = "9001";
 const NUMERIC_NUMBER = 1;
 
@@ -302,6 +306,16 @@ const BRANCH_HEAVY_ROWS: readonly WarehouseRow[] = [
   }),
 ];
 
+const POSTOMAT_HEAVY_ROWS: readonly WarehouseRow[] = buildAscendingPage(
+  POSTOMAT_HEAVY_ROW_COUNT,
+  1,
+  { CategoryOfWarehouse: POSTOMAT_CATEGORY }
+);
+
+const POSTOMAT_HEAVY_NUMBERS = buildAscendingPage(POSTOMAT_HEAVY_ROW_COUNT, 1)
+  .slice(0, ROW_LIMIT)
+  .map((row) => row.Number);
+
 const BOTH_METHODS_REJECTED_ROWS: readonly WarehouseRow[] = [
   buildRow(DENIED_NUMBER, { DenyToSelect: DENIED_FLAG }),
   buildRow(CLOSED_NUMBER, { WarehouseStatus: CLOSED_STATUS }),
@@ -356,7 +370,149 @@ const POSTOMAT_QUERY_ROWS: WarehouseRow[] = [
   buildRow(EXACT_NUMBER, { CategoryOfWarehouse: POSTOMAT_CATEGORY }),
 ];
 
+const DROPOFF_NUMBER = "51878";
+const STORE_NUMBER = "12043";
+const FULFILLMENT_NUMBER = "60001";
+const DROPOFF_LABEL = "Пункт №51878 (до 30 кг): вул. Шевченка, 4";
+const OTHER_DROPOFF_LABEL = "Пункт №51878 (до 30 кг): вул. Інша, 8";
+const STORE_LABEL = "Пункт приймання-видачі (до 30 кг): вул. Центральна, 12";
+const FULFILLMENT_LABEL = "Склад фулфілменту: вул. Промислова, 9";
+const COLLIDING_NUMBER = "5";
+const COLLIDING_BRANCH_LABEL = "Відділення №5: вул. Соборна, 1";
+const COLLIDING_PICKUP_LABEL = "Пункт №5 (до 30 кг): вул. Соборна, 40";
+const STORE_MATCH_NUMBER = "12";
+const STORE_MATCH_LABEL = "Пункт приймання-видачі (до 30 кг): вул. Лугова, 3";
+
 const SHARED_POSTOMAT_LABEL = "Поштомат №1: вул. Хрещатик, 22";
+
+const PICKUP_ONLY_ROWS: readonly WarehouseRow[] = [
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    Description: STORE_LABEL,
+  }),
+];
+
+const PICKUP_ONLY_NUMBERS = [DROPOFF_NUMBER, STORE_NUMBER];
+const PICKUP_ONLY_LABELS = [DROPOFF_LABEL, STORE_LABEL];
+
+const STORE_ONLY_ROWS: readonly WarehouseRow[] = [
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    Description: STORE_LABEL,
+  }),
+];
+
+const FULFILLMENT_ONLY_ROWS: readonly WarehouseRow[] = [
+  buildRow(FULFILLMENT_NUMBER, {
+    CategoryOfWarehouse: FULFILLMENT_CATEGORY,
+    Description: FULFILLMENT_LABEL,
+  }),
+];
+
+const SIX_CATEGORY_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: POSTOMAT_CATEGORY }),
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    Description: STORE_LABEL,
+  }),
+  buildRow(FULFILLMENT_NUMBER, {
+    CategoryOfWarehouse: FULFILLMENT_CATEGORY,
+    Description: FULFILLMENT_LABEL,
+  }),
+  buildRow(CARGO_NUMBER, { CategoryOfWarehouse: CARGO_CATEGORY }),
+];
+
+const OFFERED_BRANCH_NUMBERS = [CAPTURED_NUMBER, DROPOFF_NUMBER, STORE_NUMBER];
+
+const PICKUP_DENIED_ROWS: readonly WarehouseRow[] = [
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    DenyToSelect: DENIED_FLAG,
+  }),
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    DenyToSelect: DENIED_FLAG,
+  }),
+  buildRow(CAPTURED_NUMBER),
+];
+
+const CLOSED_STORE_ROWS: readonly WarehouseRow[] = [
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    WarehouseStatus: CLOSED_STATUS,
+  }),
+  buildRow(CAPTURED_NUMBER),
+];
+
+const REPEATED_PICKUP_ROWS: readonly WarehouseRow[] = [
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: OTHER_DROPOFF_LABEL,
+  }),
+];
+
+const COLLIDING_NUMBER_ROWS: readonly WarehouseRow[] = [
+  buildRow(COLLIDING_NUMBER, { Description: COLLIDING_BRANCH_LABEL }),
+  buildRow(COLLIDING_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: COLLIDING_PICKUP_LABEL,
+  }),
+];
+
+const COLLIDING_NUMBERS = [COLLIDING_NUMBER, COLLIDING_NUMBER];
+const COLLIDING_LABELS = [COLLIDING_BRANCH_LABEL, COLLIDING_PICKUP_LABEL];
+
+const REVERSED_ORDER_ROWS: readonly WarehouseRow[] = [
+  buildRow(STORE_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    Description: STORE_LABEL,
+  }),
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+];
+
+const PRIMARY_ORDER_NUMBERS = [CAPTURED_NUMBER, DROPOFF_NUMBER, STORE_NUMBER];
+
+const STORE_MATCH_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+  buildRow(STORE_MATCH_NUMBER, {
+    CategoryOfWarehouse: STORE_CATEGORY,
+    Description: STORE_MATCH_LABEL,
+  }),
+];
+
+const STORE_MATCH_NUMBERS = [STORE_MATCH_NUMBER, CAPTURED_NUMBER];
+
+const BRANCH_HEAVY_PICKUP_ROWS: readonly WarehouseRow[] = [
+  ...buildAscendingPage(BRANCH_HEAVY_ROW_COUNT, 1),
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+];
+
+const BRANCH_HEAVY_PICKUP_NUMBERS = buildAscendingPage(
+  BRANCH_HEAVY_ROW_COUNT,
+  1
+)
+  .slice(0, ROW_LIMIT)
+  .map((row) => row.Number);
 
 const SHARED_NUMBER_ROWS: WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
@@ -1079,14 +1235,14 @@ describe("GET /api/np/warehouses", () => {
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
-  it("answers 503 when np renames every category it sends, instead of serving an empty list forever", async () => {
+  it("serves an empty list rather than an outage when it recognises no category on the page, because an unlisted category is a fact about the settlement", async () => {
     const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
 
     const response = await GET(buildRequest(BRANCH_PARAMS));
 
-    expect(response.status).toBe(UNAVAILABLE_STATUS);
-    expect(await response.text()).toBe(UNAVAILABLE_BODY);
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
@@ -1099,6 +1255,128 @@ describe("GET /api/np/warehouses", () => {
     expect(response.status).toBe(OK_STATUS);
     expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves a settlement whose only points are a pickup point and a shop counter, instead of calling it an outage", async () => {
+    const fetchStub = stubSequence([okRows(PICKUP_ONLY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await GET(buildRequest(POSTOMAT_PARAMS));
+
+    expect(readNumbers(branches)).toEqual(PICKUP_ONLY_NUMBERS);
+    expect(postomats.status).toBe(OK_STATUS);
+    expect(await postomats.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("serves a page of nothing but shop counters under the branch chip, because a counter is a place a shopper can collect from", async () => {
+    const fetchStub = stubSequence([okRows(STORE_ONLY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([STORE_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the shopper np's own description of a pickup point, weight note and all", async () => {
+    stubSequence([okRows(PICKUP_ONLY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readLabels(items)).toEqual(PICKUP_ONLY_LABELS);
+  });
+
+  it("answers 200 with an empty list for a page of nothing but np's own fulfilment warehouses, which no shopper collects from", async () => {
+    const fetchStub = stubSequence([okRows(FULFILLMENT_ONLY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers neither the freight terminal nor the fulfilment warehouse under either chip, however many categories share the page", async () => {
+    const fetchStub = stubSequence([okRows(SIX_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(readNumbers(branches)).toEqual(OFFERED_BRANCH_NUMBERS);
+    expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("refuses a pickup point and a shop counter np marks unselectable, exactly as it refuses a branch", async () => {
+    stubSequence([okRows(PICKUP_DENIED_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
+  });
+
+  it("refuses a shop counter np does not list as working", async () => {
+    stubSequence([okRows(CLOSED_STORE_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual([CAPTURED_NUMBER]);
+  });
+
+  it("keeps both places when a branch and a pickup point share a number, because np numbers its categories apart", async () => {
+    stubSequence([okRows(COLLIDING_NUMBER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual(COLLIDING_NUMBERS);
+    expect(readLabels(items)).toEqual(COLLIDING_LABELS);
+  });
+
+  it("still drops a number np repeats inside one category, which is one place listed twice", async () => {
+    stubSequence([okRows(REPEATED_PICKUP_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readLabels(items)).toEqual([DROPOFF_LABEL]);
+  });
+
+  it("lists the branches before the pickup points inside one chip, whatever order np sent them in", async () => {
+    stubSequence([okRows(REVERSED_ORDER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual(PRIMARY_ORDER_NUMBERS);
+  });
+
+  it("puts an exact number match on a pickup point ahead of a branch that does not match, because the number the shopper typed wins", async () => {
+    stubSequence([okRows(STORE_MATCH_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(
+      await GET(buildRequest(buildQueryParams(BARE_QUERY)))
+    );
+
+    expect(readNumbers(items)).toEqual(STORE_MATCH_NUMBERS);
+  });
+
+  it("leaves a crowded city's branch list exactly as it was, because thirty branches fill the cap before a pickup point is reached", async () => {
+    stubSequence([okRows(BRANCH_HEAVY_PICKUP_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const items = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+
+    expect(readNumbers(items)).toEqual(BRANCH_HEAVY_PICKUP_NUMBERS);
+    expect(readNumbers(items)).not.toContain(DROPOFF_NUMBER);
   });
 
   it("asks np for the locker category alongside a real query, the pair a shopper hunting a locker number sends", async () => {
@@ -1233,6 +1511,17 @@ describe("GET /api/np/warehouses", () => {
     expect(branches).toHaveLength(ROW_LIMIT);
     expect(readNumbers(postomats)).toEqual([TRAILING_POSTOMAT_NUMBER]);
     expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+  });
+
+  it("caps the locker chip exactly as it caps the branch chip, because one city holds far more lockers than a list may carry", async () => {
+    const fetchStub = stubSequence([okRows(POSTOMAT_HEAVY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(postomats).toHaveLength(ROW_LIMIT);
+    expect(readNumbers(postomats)).toEqual(POSTOMAT_HEAVY_NUMBERS);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
   it("serves a repeated city and query pair from the cache and asks np again for a new query", async () => {

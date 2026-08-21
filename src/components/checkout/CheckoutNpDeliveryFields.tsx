@@ -58,8 +58,8 @@ export function CheckoutNpDeliveryFields({
 
   const warehouseOptions = useMemo<readonly ComboboxOption[]>(
     () =>
-      delivery.warehouse.options.map((warehouse) => ({
-        id: warehouse.number,
+      delivery.warehouse.options.map((warehouse, index) => ({
+        id: composeOptionId(index, warehouse.number),
         label: warehouse.label,
       })),
     [delivery.warehouse.options]
@@ -168,7 +168,7 @@ export function CheckoutNpDeliveryFields({
           onSearch={delivery.searchWarehouse}
           onSelect={(option) => {
             const warehouse = delivery.warehouse.options.find(
-              (row) => row.number === option.id
+              (row, index) => composeOptionId(index, row.number) === option.id
             );
 
             onValueChange("np_warehouse", option.label);

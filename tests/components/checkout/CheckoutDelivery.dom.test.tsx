@@ -129,6 +129,13 @@ const POSTOMAT_ROWS = [
   { number: "40100", label: "Поштомат №40100: вул. Лесі Українки, 7" },
 ];
 
+const TWINNED_NUMBER = "5";
+
+const TWINNED_NUMBER_ROWS = [
+  { number: TWINNED_NUMBER, label: "Відділення №5: вул. Хрещатик, 1" },
+  { number: TWINNED_NUMBER, label: "Пункт №5 (до 30 кг): вул. Хрещатик, 40" },
+];
+
 const LVIV_QUERY = "Льв";
 
 const KYIV_QUERY = "Киї";
@@ -521,6 +528,35 @@ describe("the warehouse field's dependence on the settlement above it", () => {
     expect(rowsIn(WAREHOUSE_FIELD).map((row) => row.textContent)).toEqual(
       POSTOMAT_ROWS.map((row) => row.label)
     );
+  });
+
+  it("selects the pickup point that shares a branch's number as itself, because two places on one number are two rows", async () => {
+    renderCheckout();
+    fillContact();
+    await pickCity(LVIV_QUERY, [LVIV]);
+
+    directory.queue("warehouses", [rowsReply(TWINNED_NUMBER_ROWS)]);
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(rowsIn(WAREHOUSE_FIELD).map((row) => row.textContent)).toEqual(
+      TWINNED_NUMBER_ROWS.map((row) => row.label)
+    );
+
+    pickRow(WAREHOUSE_FIELD, SECOND_ROW);
+    moveFocusTo(control(TELEPHONE_FIELD));
+    moveFocusTo(control(WAREHOUSE_FIELD));
+    await settle();
+
+    expect(directory.callsTo("warehouses")).toHaveLength(1);
+
+    await submit();
+
+    const delivery = readOrderGroup("delivery");
+
+    expect(delivery.warehouse).toBe(TWINNED_NUMBER_ROWS[SECOND_ROW].label);
+    expect(delivery.warehouse_number).toBe(TWINNED_NUMBER);
+    expect(delivery.source).toBe("np_directory");
   });
 });
 
