@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Mock } from "vitest";
+import type { Mock, MockInstance } from "vitest";
 
 import { NextRequest } from "next/server";
 
@@ -433,6 +433,48 @@ const SIX_CATEGORY_ROWS: readonly WarehouseRow[] = [
 
 const OFFERED_BRANCH_NUMBERS = [CAPTURED_NUMBER, DROPOFF_NUMBER, STORE_NUMBER];
 
+const SECOND_RENAMED_CATEGORY = "Postomat_v2";
+const REPEATED_UNKNOWN_NUMBER = "61";
+const OVERLONG_CATEGORY_LENGTH = 300;
+const OVERLONG_CATEGORY = "z".repeat(OVERLONG_CATEGORY_LENGTH);
+const CAPPED_CATEGORY = "z".repeat(IDENTIFIER_CAP);
+const UNKNOWN_CATEGORY_MESSAGE =
+  "Unrecognised Nova Poshta warehouse category, its points are never offered:";
+
+const TWO_UNKNOWN_CATEGORY_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: SECOND_RENAMED_CATEGORY }),
+  buildRow(REPEATED_UNKNOWN_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
+];
+
+const OVERLONG_CATEGORY_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
+];
+
+const MIXED_VOCABULARY_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
+  buildRow(DROPOFF_NUMBER, {
+    CategoryOfWarehouse: DROPOFF_CATEGORY,
+    Description: DROPOFF_LABEL,
+  }),
+  buildRow(POSTOMAT_NUMBER, {
+    CategoryOfWarehouse: POSTOMAT_CATEGORY,
+    Description: SHARED_POSTOMAT_LABEL,
+  }),
+  buildRow(NAMELESS_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
+];
+
+const MIXED_VOCABULARY_BRANCH_BODY = JSON.stringify({
+  items: [
+    { number: CAPTURED_NUMBER, label: CAPTURED_LABEL },
+    { number: DROPOFF_NUMBER, label: DROPOFF_LABEL },
+  ],
+});
+
+const MIXED_VOCABULARY_POSTOMAT_BODY = JSON.stringify({
+  items: [{ number: POSTOMAT_NUMBER, label: SHARED_POSTOMAT_LABEL }],
+});
+
 const PICKUP_DENIED_ROWS: readonly WarehouseRow[] = [
   buildRow(DROPOFF_NUMBER, {
     CategoryOfWarehouse: DROPOFF_CATEGORY,
@@ -782,6 +824,9 @@ const recordTimeoutSignals = (): TimeoutRecorder => {
 const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 };
+
+const captureWarnLog = (): MockInstance<typeof console.warn> =>
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 const parseItems = (body: string): readonly unknown[] => {
   const payload: unknown = JSON.parse(body);
@@ -1236,6 +1281,8 @@ describe("GET /api/np/warehouses", () => {
   });
 
   it("serves an empty list rather than an outage when it recognises no category on the page, because an unlisted category is a fact about the settlement", async () => {
+    captureWarnLog();
+
     const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
 
@@ -1244,6 +1291,87 @@ describe("GET /api/np/warehouses", () => {
     expect(response.status).toBe(OK_STATUS);
     expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  it("warns about a category the carrier vocabulary does not hold, once, however many pages carry it", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const first = await GET(buildRequest(buildQueryParams(BARE_QUERY)));
+    const second = await GET(buildRequest(buildQueryParams(STREET_QUERY)));
+
+    expect(first.status).toBe(OK_STATUS);
+    expect(await first.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(second.status).toBe(OK_STATUS);
+    expect(await second.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
+    expect(warnLog.mock.calls).toEqual([
+      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
+    ]);
+  });
+
+  it("warns once per distinct unrecognised category rather than once per row that carries one", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(TWO_UNKNOWN_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(warnLog.mock.calls).toEqual([
+      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
+      [UNKNOWN_CATEGORY_MESSAGE, SECOND_RENAMED_CATEGORY],
+    ]);
+  });
+
+  it("stays silent for every one of the six categories the carrier vocabulary really holds", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(SIX_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await readItems(await GET(buildRequest(BRANCH_PARAMS)));
+    const postomats = await readItems(await GET(buildRequest(POSTOMAT_PARAMS)));
+
+    expect(readNumbers(branches)).toEqual(OFFERED_BRANCH_NUMBERS);
+    expect(readNumbers(postomats)).toEqual([POSTOMAT_NUMBER]);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+    expect(warnLog).not.toHaveBeenCalled();
+  });
+
+  it("answers a page of mixed vocabulary with the very bytes it answered before the warning existed", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(MIXED_VOCABULARY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await GET(buildRequest(BRANCH_PARAMS));
+    const postomats = await GET(buildRequest(POSTOMAT_PARAMS));
+
+    expect(branches.status).toBe(OK_STATUS);
+    expect(await branches.text()).toBe(MIXED_VOCABULARY_BRANCH_BODY);
+    expect(postomats.status).toBe(OK_STATUS);
+    expect(await postomats.text()).toBe(MIXED_VOCABULARY_POSTOMAT_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
+    expect(warnLog.mock.calls).toEqual([
+      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
+    ]);
+  });
+
+  it("caps the unrecognised category it remembers and logs, exactly as it caps every other carrier string", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(OVERLONG_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(warnLog.mock.calls).toEqual([
+      [UNKNOWN_CATEGORY_MESSAGE, CAPPED_CATEGORY],
+    ]);
   });
 
   it("still answers 200 with an empty list when every row carries a category np really has but we do not offer", async () => {

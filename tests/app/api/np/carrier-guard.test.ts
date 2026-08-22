@@ -133,6 +133,10 @@ const silenceErrorLog = (): void => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 };
 
+const silenceWarnLog = (): void => {
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+};
+
 const runWarehouseSession = async (
   count: number
 ): Promise<readonly number[]> => {
@@ -265,6 +269,8 @@ describe("the carrier outage damper", () => {
   });
 
   it("is never armed by a page whose categories it does not recognise, which the route now answers rather than refuses", async () => {
+    silenceWarnLog();
+
     const fetchStub = stubRows(UNKNOWN_CATEGORY_ROWS);
     const statuses = await runWarehouseSession(SESSION_QUERY_COUNT);
 
