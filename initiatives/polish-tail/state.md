@@ -1,6 +1,6 @@
 # polish-tail — state (the board)
 
-**Updated:** 2026-08-22 — initiative opened; P1 is next.
+**Updated:** 2026-08-22 — P1 in flight: relay PR #7 open (CI green), deep review running; shop half queued behind it.
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -9,18 +9,25 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 | #  | Step                                                                              | Status                              | Pointer                                  |
 | -- | --------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------- |
-| P1 | Contract pair: channel-vocabulary value pin + relay currency-case + category warn | ⬜ pending — next                   | plan.md · D-1 · ledger UAC-27/UAC-26     |
+| P1 | Contract pair: channel-vocabulary value pin + relay currency-case + category warn | 🔵 active — relay PR #7 open (`0fce526`, CI green), deep review in flight; shop executor queued (one heavy agent at a time) | plan.md · D-1 · ledger UAC-27/UAC-26 · bot PR #7 |
 | P2 | Directory + checkout hardening/hygiene pack                                       | ⬜ pending                          | ledger UAC-20/-14/-19/-21 + 16/22/23     |
 | P3 | place_order policy (UAC-25)                                                       | ⬜ pending — mechanism decision first | ledger UAC-25                            |
 | P4 | DS window (UAC-8 + the UAC-4 backport)                                            | ⬜ pending                          | ledger UAC-8/UAC-4                       |
 
 ## Next action
 
-Run /step P1 — the contract pair. Both halves move in ONE paired step and merge
-together: relay side (`../utg-tg-order-bot`) extends `tests/support/contract.ts` to pin
-the channel VALUES + pins the currency-case read; shop side pins its emitted values in
-its own contract test + adds the unrecognised-category warn (home: the currently-dead
-`KNOWN_CATEGORIES`).
+P1 mid-flight. Relay PR #7 is open and under deep review; when the review round settles,
+route findings, then run the SHOP executor
+(`step-p1-category-warn-prompt.md`) — one heavy agent at a time. Merge as a pair, prod
+smoke, then the close-out promotes: the plan-gate falsification (U8's test already
+reddens map-key renames — the prompt premise was stale; the real gap was the named
+fixture), the executor's relay carry-forwards → bot ledger as BDEF-13 (the same
+rejection class is FATAL on `delivery.mode`: `"NP_BRANCH"` → 400 → order lost), BDEF-14
+(no telemetry when the relay absorbs a shop bug — both lenses want a 3-line handler
+warn), BDEF-15 (hygiene: `generatedField` relies on ICU output being clean, no branded
+currency type, three-decimal currencies like BHD render mispriced). Full detail is
+durable in PR #7's body; the bot tree is NOT to be touched while its review round is
+open.
 
 ## Open decisions awaiting ratification
 
