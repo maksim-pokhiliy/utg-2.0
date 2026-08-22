@@ -449,7 +449,37 @@ const TWO_UNKNOWN_CATEGORY_ROWS: readonly WarehouseRow[] = [
 
 const OVERLONG_CATEGORY_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
+  buildRow(REPEATED_UNKNOWN_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
 ];
+
+const FORGED_LINE_CATEGORY =
+  "Branch\n[error] Order relay authentication failed";
+const CONTROL_CHARACTER_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: FORGED_LINE_CATEGORY }),
+];
+
+const REPORTED_CATEGORY_CAP = 32;
+const OVER_CAP_CATEGORY_COUNT = REPORTED_CATEGORY_CAP + 8;
+const DISTINCT_CATEGORY_PREFIX = "Renamed_";
+
+const buildDistinctCategoryPage = (size: number): WarehouseRow[] => {
+  const rows: WarehouseRow[] = [];
+
+  for (let offset = 0; offset < size; offset += 1) {
+    rows.push(
+      buildRow(String(offset + 1), {
+        CategoryOfWarehouse: `${DISTINCT_CATEGORY_PREFIX}${offset}`,
+      })
+    );
+  }
+
+  return rows;
+};
+
+const OVER_CAP_CATEGORY_ROWS = buildDistinctCategoryPage(
+  OVER_CAP_CATEGORY_COUNT
+);
 
 const MIXED_VOCABULARY_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { Description: CAPTURED_LABEL }),
@@ -827,6 +857,16 @@ const silenceErrorLog = (): void => {
 
 const captureWarnLog = (): MockInstance<typeof console.warn> =>
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+const silenceWarnLog = (): void => {
+  captureWarnLog();
+};
+
+const breakWarnLog = (): void => {
+  vi.spyOn(console, "warn").mockImplementation(() => {
+    throw new Error("log drain refused the record");
+  });
+};
 
 const parseItems = (body: string): readonly unknown[] => {
   const payload: unknown = JSON.parse(body);
@@ -1281,7 +1321,7 @@ describe("GET /api/np/warehouses", () => {
   });
 
   it("serves an empty list rather than an outage when it recognises no category on the page, because an unlisted category is a fact about the settlement", async () => {
-    captureWarnLog();
+    silenceWarnLog();
 
     const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
@@ -1307,7 +1347,7 @@ describe("GET /api/np/warehouses", () => {
     expect(await second.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
     expect(warnLog.mock.calls).toEqual([
-      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
+      [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(RENAMED_CATEGORY)],
     ]);
   });
 
@@ -1322,8 +1362,8 @@ describe("GET /api/np/warehouses", () => {
     expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
     expect(warnLog.mock.calls).toEqual([
-      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
-      [UNKNOWN_CATEGORY_MESSAGE, SECOND_RENAMED_CATEGORY],
+      [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(RENAMED_CATEGORY)],
+      [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(SECOND_RENAMED_CATEGORY)],
     ]);
   });
 
@@ -1355,13 +1395,46 @@ describe("GET /api/np/warehouses", () => {
     expect(await postomats.text()).toBe(MIXED_VOCABULARY_POSTOMAT_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(SHARED_PAGE_CALL_COUNT);
     expect(warnLog.mock.calls).toEqual([
-      [UNKNOWN_CATEGORY_MESSAGE, RENAMED_CATEGORY],
+      [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(RENAMED_CATEGORY)],
     ]);
   });
 
-  it("caps the unrecognised category it remembers and logs, exactly as it caps every other carrier string", async () => {
+  it("caps the unrecognised category it remembers, so an overlong one dedupes across rows and requests instead of logging every time", async () => {
     const warnLog = captureWarnLog();
     const fetchStub = stubSequence([okRows(OVERLONG_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const first = await GET(buildRequest(buildQueryParams(BARE_QUERY)));
+    const second = await GET(buildRequest(buildQueryParams(STREET_QUERY)));
+
+    expect(first.status).toBe(OK_STATUS);
+    expect(await first.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(await second.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
+    expect(warnLog.mock.calls).toEqual([
+      [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(CAPPED_CATEGORY)],
+    ]);
+  });
+
+  it("escapes the carrier's own bytes so a category carrying a newline cannot forge a second log record", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(CONTROL_CHARACTER_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+    const logged = readText(warnLog.mock.calls[0][1]);
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(warnLog).toHaveBeenCalledTimes(1);
+    expect(logged).not.toContain("\n");
+    expect(logged).toBe(JSON.stringify(FORGED_LINE_CATEGORY));
+  });
+
+  it("stops remembering and reporting once a broken vocabulary has spent the cap, so the alarm can never become the outage", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(OVER_CAP_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
 
     const response = await GET(buildRequest(BRANCH_PARAMS));
@@ -1369,9 +1442,20 @@ describe("GET /api/np/warehouses", () => {
     expect(response.status).toBe(OK_STATUS);
     expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
     expect(fetchStub).toHaveBeenCalledTimes(1);
-    expect(warnLog.mock.calls).toEqual([
-      [UNKNOWN_CATEGORY_MESSAGE, CAPPED_CATEGORY],
-    ]);
+    expect(warnLog).toHaveBeenCalledTimes(REPORTED_CATEGORY_CAP);
+  });
+
+  it("still answers the page when the log drain itself refuses the record, because a tripwire may never cause the outage it watches for", async () => {
+    breakWarnLog();
+
+    const fetchStub = stubSequence([okRows(MIXED_VOCABULARY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const branches = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(branches.status).toBe(OK_STATUS);
+    expect(await branches.text()).toBe(MIXED_VOCABULARY_BRANCH_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
   it("still answers 200 with an empty list when every row carries a category np really has but we do not offer", async () => {

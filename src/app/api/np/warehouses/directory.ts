@@ -10,7 +10,7 @@ import {
 } from "../client";
 import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
-import { reportUnknownCategory, type WarehouseCategory } from "./vocabulary";
+import { createCategoryTripwire } from "./tripwire";
 
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
@@ -34,16 +34,26 @@ const EXACT_RANK = 0;
 const PREFIX_RANK = 1;
 const RESIDUAL_RANK = 2;
 
-export type DeliveryMethod = "branch" | "postomat";
+const ROUTED_CATEGORIES = {
+  branch: ["Branch", "DropOff", "Store"],
+  postomat: ["Postomat"],
+} as const;
 
-const NEVER_OFFERED_CATEGORIES = [
-  "Cargo",
-  "Fulfillment",
-] as const satisfies readonly WarehouseCategory[];
+const NEVER_OFFERED_CATEGORIES = ["Cargo", "Fulfillment"] as const;
 
-type NeverOfferedCategory = (typeof NEVER_OFFERED_CATEGORIES)[number];
+export type DeliveryMethod = keyof typeof ROUTED_CATEGORIES;
 
-type OfferableCategory = Exclude<WarehouseCategory, NeverOfferedCategory>;
+type OfferableCategory = Exclude<
+  (typeof ROUTED_CATEGORIES)[DeliveryMethod][number],
+  (typeof NEVER_OFFERED_CATEGORIES)[number]
+>;
+
+const KNOWN_CATEGORIES: readonly string[] = [
+  ...Object.values(ROUTED_CATEGORIES).flat(),
+  ...NEVER_OFFERED_CATEGORIES,
+];
+
+const reportUnknownCategory = createCategoryTripwire(KNOWN_CATEGORIES);
 
 interface DecodedWarehouse {
   number: string;
@@ -67,10 +77,10 @@ interface WarehousePage {
   postomat: readonly WarehouseItem[];
 }
 
-const METHOD_CATEGORIES = {
-  branch: ["Branch", "DropOff", "Store"],
-  postomat: ["Postomat"],
-} as const satisfies Record<DeliveryMethod, readonly OfferableCategory[]>;
+const METHOD_CATEGORIES = ROUTED_CATEGORIES satisfies Record<
+  DeliveryMethod,
+  readonly OfferableCategory[]
+>;
 
 export const isDeliveryMethod = (
   value: string | null
