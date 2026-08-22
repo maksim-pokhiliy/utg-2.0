@@ -183,7 +183,8 @@ that treats every unmarked field as mandatory would reject real orders over
 diagnostics. Concretely, the relay requires only what it cannot render an order
 without: `delivery.mode`, and per mode `city` + (`warehouse` | `street`+`building` |
 `address`), plus `customer.first_name`/`last_name`/`phone`. It must NOT reject on a
-missing `source` (a verify-on-the-call hint — absent renders as "not stated"),
+missing `source` (a verify-on-the-call hint — absent renders as «не вказано —
+уточніть у дзвінку», the relay's `SOURCE_UNSTATED`),
 `warehouse_number` (already contained inside the `warehouse` string), or
 `contact_channel` (a preference; the phone is mandatory anyway and §2 names a call
 the universal fallback). The shop still sends all three — but a shop bug must cost a

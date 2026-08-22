@@ -75,22 +75,30 @@ in-memory rate limit, Vercel WAF rule, or accept the risk and DROP.
 originals stay in `../ua-checkout/deferred.md` for the trail, with full dispositions and the
 measurements behind them.
 
+Since 2026-08-22 this tail is DRIVEN by the `polish-tail` initiative — window
+assignments (P1–P4) are stamped in the Status column below; the plan is
+`../polish-tail/plan.md`. Closures keep landing HERE (canonical), recorded at each
+window's close.
+
 | ID | One-liner | Status |
 | --- | --- | --- |
-| UAC-27 | **The contact-channel vocabulary is a VALUE-level cross-repo coupling that nothing executable pins.** `../utg-tg-order-bot/tests/support/contract.ts` lists keys only; `call \| telegram \| viber` lives in the shop's prose. Rename `call` on either side and the operator quietly reads a raw code with **no test reddening anywhere**. This is the exact class U6 and U8 spent themselves hunting, and it is the one item here worth scheduling rather than filing. Fix: extend `contract.ts` to pin values — both U8 halves were deliberately fenced out of it. The row also carries both U8 reviews' tails | OPEN |
-| UAC-4 | The Claude Design kit lags the repo DS — one `/design-sync` backport pass | OPEN |
-| UAC-7 | Combobox adoption watch-list + the D-6.2 consumer contract; the U7 gate ran and raised nothing from it | OPEN |
-| UAC-8 | DS hygiene pair: the chip cva forked from `SizeSelector`, the duplicated 300ms settle fade — pairs with UAC-4 in one window | OPEN |
-| UAC-14 | The in-flight submit lock has a second, unlocked door: the header cart drawer is mounted in the root layout and live on `/checkout` | OPEN |
-| UAC-16 | Checkout polish pack from the U5a review, each verified unreachable or cosmetic | OPEN |
-| UAC-19 | PR A review set, items (1)(2)(3)(5); (3)'s cost ROSE once a page became often a single row | OPEN |
-| UAC-20 | The client's abort is never linked to the upstream directory fetch — every abandoned keystroke burns a carrier call to completion. **D-20 rules the opposite for the order WRITE on purpose**: a read may inherit the client's abort, a write may not | OPEN |
-| UAC-21 | First-review tail of PR #23: a 209-line hook, dead `INITIAL_DELIVERY` pinned by 7 assertions, duplicated `ERROR_KEYS`, no `maxLength` on free-text fields | OPEN |
-| UAC-22 | 11 below-the-cut items from the same review, named so the tail stays durable | OPEN |
-| UAC-23 | Re-review set — chiefly the ruling that an unparseable carrier success stays "distress", recorded WITH the reviewer's disagreement, to be re-read on carrier drift | OPEN |
-| UAC-24 | One focus guard **no environment we run can cover**: neither jsdom nor Chromium fires `blur` on node removal, only Firefox does. Deliberately kept and deliberately unprovable | OPEN |
-| UAC-25 | `/api/place_order` is public, attaches the relay secret for any caller, and its limiter is a per-lambda `Map`. The bounded half shipped in U6; what remains is POLICY — an origin check and a rate limit that is not per-instance | OPEN |
+| UAC-27 | **The contact-channel vocabulary is a VALUE-level cross-repo coupling that nothing executable pins.** `../utg-tg-order-bot/tests/support/contract.ts` lists keys only; `call \| telegram \| viber` lives in the shop's prose. Rename `call` on either side and the operator quietly reads a raw code with **no test reddening anywhere**. This is the exact class U6 and U8 spent themselves hunting, and it is the one item here worth scheduling rather than filing. Fix: extend `contract.ts` to pin values — both U8 halves were deliberately fenced out of it. The row also carries both U8 reviews' tails | SCHEDULED → polish-tail P1 (the schedulable core: value pin + the category warn; the hygiene tail stays on the row) |
+| UAC-4 | The Claude Design kit lags the repo DS — one `/design-sync` backport pass | SCHEDULED → polish-tail P4 |
+| UAC-7 | Combobox adoption watch-list + the D-6.2 consumer contract; the U7 gate ran and raised nothing from it. CLOSED 2026-08-22 at polish-tail open: the watch was SCHEDULED to that gate, the gate ran (2026-08-21) and raised nothing — completed, not abandoned; the D-6.2 consumer contract stays recorded in ua-checkout | CLOSED |
+| UAC-8 | DS hygiene pair: the chip cva forked from `SizeSelector`, the duplicated 300ms settle fade — pairs with UAC-4 in one window | SCHEDULED → polish-tail P4 |
+| UAC-14 | The in-flight submit lock has a second, unlocked door: the header cart drawer is mounted in the root layout and live on `/checkout` | SCHEDULED → polish-tail P2 |
+| UAC-16 | Checkout polish pack from the U5a review, each verified unreachable or cosmetic | SCHEDULED → polish-tail P2 (triage) |
+| UAC-19 | PR A review set, items (1)(2)(3)(5); (3)'s cost ROSE once a page became often a single row | SCHEDULED → polish-tail P2 |
+| UAC-20 | The client's abort is never linked to the upstream directory fetch — every abandoned keystroke burns a carrier call to completion. **D-20 rules the opposite for the order WRITE on purpose**: a read may inherit the client's abort, a write may not | SCHEDULED → polish-tail P2 |
+| UAC-21 | First-review tail of PR #23: a 209-line hook, dead `INITIAL_DELIVERY` pinned by 7 assertions, duplicated `ERROR_KEYS`, no `maxLength` on free-text fields | SCHEDULED → polish-tail P2 |
+| UAC-22 | 11 below-the-cut items from the same review, named so the tail stays durable | SCHEDULED → polish-tail P2 (triage) |
+| UAC-23 | Re-review set — chiefly the ruling that an unparseable carrier success stays "distress", recorded WITH the reviewer's disagreement, to be re-read on carrier drift | SCHEDULED → polish-tail P2 (triage; (1) stands — its trigger is carrier drift only) |
+| UAC-24 | One focus guard **no environment we run can cover**: neither jsdom nor Chromium fires `blur` on node removal, only Firefox does. Deliberately kept and deliberately unprovable | OPEN (rider — no window by design; rides the day Firefox coverage arrives for another reason) |
+| UAC-25 | `/api/place_order` is public, attaches the relay secret for any caller, and its limiter is a per-lambda `Map`. The bounded half shipped in U6; what remains is POLICY — an origin check and a rate limit that is not per-instance | SCHEDULED → polish-tail P3 |
+| UAC-26 | U6 review tails from BOTH halves, none a defect today. Relay: currency case-sensitivity unpinned ("identical breadth" meant identically blind — the one item worth doing first), keyless-prior loose `==`, stored-payload cap boundary invisible, header unbounded (~1580 chars slack), `generatedField` escape unreachable AND unpinned, a fifteen-item hygiene tail. Shop: the `maxDuration` invariant test compares a constant to its own literal, a malformed buyer body answers 500 with raw CR/LF in the log line, the drip test cannot discriminate the phase, `nosniff` local to one route, the harness `afterEach` ordering. **Omitted from this table at the ua-checkout close-out — restored 2026-08-22** (the original row with full detail: `../ua-checkout/deferred.md`) | OPEN · the currency-case item SCHEDULED → polish-tail P1 |
 
 ## Closed history
 
-(none yet)
+- **UAC-7** (2026-08-22, at polish-tail open) — the combobox watch-list was SCHEDULED to
+  the U7 browser gate; the gate ran 2026-08-21 and raised nothing. Completed, not
+  abandoned; the D-6.2 consumer contract stays recorded in ua-checkout.

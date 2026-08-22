@@ -1,6 +1,6 @@
 # production-polish — state (the board)
 
-**Updated:** 2026-08-02 (initiative COMPLETE; the BOT PHASE is RUNNING — `bot-polish` in `../utg-tg-order-bot/initiatives/bot-polish/`, step B1 in flight)
+**Updated:** 2026-08-22 (initiative COMPLETE; retro CLOSED. The bot phase completed too — `bot-polish` COMPLETE in `../utg-tg-order-bot`. The remaining ledger tail is driven by `../polish-tail/` — resume there)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here.**
@@ -27,19 +27,14 @@ carry-forwards → `deferred.md`. **Resume here.**
 
 ## Next action
 
-1. THE BOT PHASE — RUNNING: the `bot-polish` initiative lives in
-   `../utg-tg-order-bot/initiatives/bot-polish/` (workspace
-   `~/projects/contrib/utg/`); step B1 (relay rewrite incl. the DEF-13
-   `currency` read) drives through /step. This shop repo's turn comes at B2
-   (the `x-relay-secret` sender, `/feature small`). DEF-13 closes here when
-   B1+B2 are live. The initiative here is COMPLETE (charter satisfied
-   2026-08-02) and its retro is CLOSED (three rounds, journal 2026-08-02).
+1. The remaining ledger tail (the inherited UAC rows + DEF-18/DEF-9) is DRIVEN
+   by the `polish-tail` initiative (opened 2026-08-22) — resume in
+   `../polish-tail/state.md`. The bot phase is long COMPLETE (B1+B2 live,
+   DEF-13 CLOSED 2026-08-06); ua-checkout is COMPLETE (2026-08-21) and closed
+   DEF-36/37/39/41 on its way. This board is historical.
 2. Leftover housekeeping: Vercel dashboard → Node.js Version → 24.x (D-13
-   belt-and-braces, still showing 20.x); Rich Results on a live product URL
-   (optional).
-3. Post-initiative windows for the remaining ledger: hardening (DEF-36 +
-   DEF-37 + DEF-39), the next DS window (DEF-41), external (DEF-9), any React
-   Compiler decision (DEF-18).
+   belt-and-braces; `engines.node` governs the build regardless); Rich Results
+   on a live product URL (optional).
 
 ## Open decisions awaiting ratification
 
