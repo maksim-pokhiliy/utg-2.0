@@ -24,3 +24,40 @@ Append-only. One entry per session/step.
   «не вказано — уточніть у дзвінку», not the stale English "not stated") — the doc half
   of UAC-27, a planner-owned file.
 - Next: /step P1.
+
+## 2026-08-22 — P1 shipped: the pair merged, and both halves were reshaped by measurement
+
+- The contract pair merged ten seconds apart and was prod-smoked: relay PR #7 (squash
+  `aa10f56`) + shop PR #26 (squash `e48442a`). Smoke: home 200; settlements 200 with
+  real rows; warehouses 200 THROUGH the restructured directory + tripwire (Ірпінь, 627
+  points, real labels); the relay 401s a secretless caller on the new deploy.
+- **The prompt premise fell at the first plan gate, and the step got better for it.**
+  "Renaming a map key reddens nothing" was stale — U8's message test already catches it
+  (measured: 1 red on master). The real gap was narrower and real: no NAMED cross-repo
+  fixture. `contract.ts` now exports `ORDER_CONTACT_CHANNEL_VALUES`, the display map is
+  pinned through the rendered message, the shop's §5 pin was mutation-confirmed (a
+  consistent rename = 5 red across 3 files), and mutations that were red-on-master-too
+  were reported as proving U8's test, never this step's work.
+- **The currency item was a hole, not a missing pin**: `/^[A-Z]{3}$/` meant an
+  informational field could cost an order. Ruling (bot BD-12): any-case 3-letter
+  accept normalized to uppercase at the read — shape test on the RAW value first (the
+  `toUpperCase` length trap: `"ßa"` → `"SSA"`), garbage still 400s. Identity proven
+  unmoved three ways (frozen `PINNED_HASH`; 17 576 fixed points; the reviewer's own
+  25M-body differential). The relay deep review blocked twice, correctly: moving
+  `"uah"` to accept had deleted the only pattern-typo detector (restored as a property
+  test — decoder-accept ⇒ Intl formats — plus boundary literals), and the hand-written
+  `CurrencyRead` had lost the compiler's null-narrowing (pinned by fixture). The `/m`
+  anchor got its own named pin in a micro-round.
+- **Two planner gate rulings were REVERSED by measurement, which is the process
+  working**: the tripwire Set got its ceiling after 600 log lines from one uncacheable
+  page were measured, and the vocabulary became DERIVED from routing (D-2) after the
+  refuter's A/B showed a literal list is blind to the exact U8 shape. The shop review
+  then caught the killed mutant CHANGING ADDRESS (`"Locker"` into `NEVER_OFFERED`
+  with the alarm off) — closed by pinning the derived set in both directions.
+- Byte-identity of the warehouses route held through every round: 84 snapshots across
+  three independent reproductions, sha256-equal to master.
+- Promotions all landed with this entry: canonical ledger — UAC-27 coupling CLOSED,
+  UAC-26 currency item CLOSED, UAC-28 opened (P1 review tail; RF-3 SCHEDULED → P2);
+  bot repo — BD-12 ratified, BDEF-13 (the same class FATAL on `delivery.mode`),
+  BDEF-14 (absorbed bugs leave no artifact), BDEF-15 (hygiene). CLAUDE.md updated
+  (derived vocabulary + tripwire; value pins + case folding).

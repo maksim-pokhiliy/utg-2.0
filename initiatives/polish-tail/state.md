@@ -1,6 +1,6 @@
 # polish-tail — state (the board)
 
-**Updated:** 2026-08-22 — P1 in flight: relay PR #7 open (CI green), deep review running; shop half queued behind it.
+**Updated:** 2026-08-22 — P1 COMPLETE: the pair merged (relay `aa10f56` + shop `e48442a`) and prod-smoked. Next: P2.
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`;
 carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
@@ -9,29 +9,24 @@ carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-l
 
 | #  | Step                                                                              | Status                              | Pointer                                  |
 | -- | --------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------- |
-| P1 | Contract pair: channel-vocabulary value pin + relay currency-case + category warn | 🔵 active — relay PR #7 open (`0fce526`, CI green), deep review in flight; shop executor queued (one heavy agent at a time) | plan.md · D-1 · ledger UAC-27/UAC-26 · bot PR #7 |
+| P1 | Contract pair: channel-vocabulary value pin + relay currency-case + category warn | ✅ done — pair merged 2026-08-22: relay PR #7 `aa10f56` + shop PR #26 `e48442a`; 2 independent reviews, 3 fix rounds + 1 micro-round, prod-smoked | PR #7 · PR #26 · D-2 · bot BD-12 · journal 2026-08-22 |
 | P2 | Directory + checkout hardening/hygiene pack                                       | ⬜ pending                          | ledger UAC-20/-14/-19/-21 + 16/22/23     |
 | P3 | place_order policy (UAC-25)                                                       | ⬜ pending — mechanism decision first | ledger UAC-25                            |
 | P4 | DS window (UAC-8 + the UAC-4 backport)                                            | ⬜ pending                          | ledger UAC-8/UAC-4                       |
 
 ## Next action
 
-P1 mid-flight. Relay PR #7 is open and under deep review; when the review round settles,
-route findings, then run the SHOP executor
-(`step-p1-category-warn-prompt.md`) — one heavy agent at a time. Merge as a pair, prod
-smoke, then the close-out promotes: the plan-gate falsification (U8's test already
-reddens map-key renames — the prompt premise was stale; the real gap was the named
-fixture), the executor's relay carry-forwards → bot ledger as BDEF-13 (the same
-rejection class is FATAL on `delivery.mode`: `"NP_BRANCH"` → 400 → order lost), BDEF-14
-(no telemetry when the relay absorbs a shop bug — both lenses want a 3-line handler
-warn), BDEF-15 (hygiene: `generatedField` relies on ICU output being clean, no branded
-currency type, three-decimal currencies like BHD render mispriced). Full detail is
-durable in PR #7's body; the bot tree is NOT to be touched while its review round is
-open.
+**P2 — the hardening window.** Contour first, then a full `/feature` executor (shop):
+UAC-20 (abort chaining — the joiner/cache semantics are the plan-gate decision; D-20's
+read/write asymmetry must survive), UAC-14 (the cart-drawer second door), UAC-19(2)(3)
+closed or re-ratified with (1)(5) triaged, UAC-21 paid, triage of UAC-16/22/23, plus
+UAC-28's RF-3 (widening the shared `invisibles.ts` class — adjacent to 19(3), same
+files). P1's promotions are all landed: BDEF-13/14/15 + BD-12 in the bot repo, UAC-27
+coupling + UAC-26 currency item closed in the canonical ledger, D-2 here.
 
 ## Open decisions awaiting ratification
 
-(none — D-1 ratified)
+(none — D-1, D-2 ratified)
 
 ## Live carry-forwards
 
