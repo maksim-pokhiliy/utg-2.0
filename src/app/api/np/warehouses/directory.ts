@@ -10,6 +10,8 @@ import {
 } from "../client";
 import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
+import { reportUnknownCategory, type WarehouseCategory } from "./vocabulary";
+
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
 const WAREHOUSE_CACHE_MAX_ENTRIES = 250;
@@ -21,14 +23,6 @@ const FIRST_PAGE = "1";
 const WORKING_STATUS = "Working";
 const DENIED_FLAGS = ["1", "true"];
 const DENIED_CODE = 1;
-const KNOWN_CATEGORIES = [
-  "Branch",
-  "Postomat",
-  "DropOff",
-  "Store",
-  "Fulfillment",
-  "Cargo",
-] as const;
 const MAX_QUERY_LENGTH = 64;
 const NUMBER_PREFIX = "№";
 const WHITESPACE_PATTERN = /\s+/g;
@@ -41,8 +35,6 @@ const PREFIX_RANK = 1;
 const RESIDUAL_RANK = 2;
 
 export type DeliveryMethod = "branch" | "postomat";
-
-type WarehouseCategory = (typeof KNOWN_CATEGORIES)[number];
 
 const NEVER_OFFERED_CATEGORIES = [
   "Cargo",
@@ -268,6 +260,10 @@ const loadWarehousePage = async (
 
   if (result.rows.length > 0 && decoded.length === 0) {
     return null;
+  }
+
+  for (const warehouse of decoded) {
+    reportUnknownCategory(warehouse.category);
   }
 
   const ranked = rankWarehouses(decoded, query);
