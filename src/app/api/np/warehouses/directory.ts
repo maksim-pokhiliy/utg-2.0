@@ -10,6 +10,8 @@ import {
 } from "../client";
 import { isCarrierRefused, type CarrierRefused } from "../refusal";
 
+import { createCategoryTripwire } from "./tripwire";
+
 const WAREHOUSE_CACHE_TTL_MS = 300_000;
 const WAREHOUSE_NEGATIVE_CACHE_TTL_MS = 30_000;
 const WAREHOUSE_CACHE_MAX_ENTRIES = 250;
@@ -21,14 +23,6 @@ const FIRST_PAGE = "1";
 const WORKING_STATUS = "Working";
 const DENIED_FLAGS = ["1", "true"];
 const DENIED_CODE = 1;
-const KNOWN_CATEGORIES = [
-  "Branch",
-  "Postomat",
-  "DropOff",
-  "Store",
-  "Fulfillment",
-  "Cargo",
-] as const;
 const MAX_QUERY_LENGTH = 64;
 const NUMBER_PREFIX = "№";
 const WHITESPACE_PATTERN = /\s+/g;
@@ -40,18 +34,26 @@ const EXACT_RANK = 0;
 const PREFIX_RANK = 1;
 const RESIDUAL_RANK = 2;
 
-export type DeliveryMethod = "branch" | "postomat";
+const ROUTED_CATEGORIES = {
+  branch: ["Branch", "DropOff", "Store"],
+  postomat: ["Postomat"],
+} as const;
 
-type WarehouseCategory = (typeof KNOWN_CATEGORIES)[number];
+const NEVER_OFFERED_CATEGORIES = ["Cargo", "Fulfillment"] as const;
 
-const NEVER_OFFERED_CATEGORIES = [
-  "Cargo",
-  "Fulfillment",
-] as const satisfies readonly WarehouseCategory[];
+export type DeliveryMethod = keyof typeof ROUTED_CATEGORIES;
 
-type NeverOfferedCategory = (typeof NEVER_OFFERED_CATEGORIES)[number];
+type OfferableCategory = Exclude<
+  (typeof ROUTED_CATEGORIES)[DeliveryMethod][number],
+  (typeof NEVER_OFFERED_CATEGORIES)[number]
+>;
 
-type OfferableCategory = Exclude<WarehouseCategory, NeverOfferedCategory>;
+export const KNOWN_CATEGORIES: readonly string[] = [
+  ...Object.values(ROUTED_CATEGORIES).flat(),
+  ...NEVER_OFFERED_CATEGORIES,
+];
+
+const reportUnknownCategory = createCategoryTripwire(KNOWN_CATEGORIES);
 
 interface DecodedWarehouse {
   number: string;
@@ -75,10 +77,10 @@ interface WarehousePage {
   postomat: readonly WarehouseItem[];
 }
 
-const METHOD_CATEGORIES = {
-  branch: ["Branch", "DropOff", "Store"],
-  postomat: ["Postomat"],
-} as const satisfies Record<DeliveryMethod, readonly OfferableCategory[]>;
+const METHOD_CATEGORIES = ROUTED_CATEGORIES satisfies Record<
+  DeliveryMethod,
+  readonly OfferableCategory[]
+>;
 
 export const isDeliveryMethod = (
   value: string | null
@@ -268,6 +270,10 @@ const loadWarehousePage = async (
 
   if (result.rows.length > 0 && decoded.length === 0) {
     return null;
+  }
+
+  for (const warehouse of decoded) {
+    reportUnknownCategory(warehouse.category);
   }
 
   const ranked = rankWarehouses(decoded, query);
