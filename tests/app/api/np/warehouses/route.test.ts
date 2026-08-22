@@ -231,6 +231,8 @@ interface ResponseGate {
 
 const loadRoute = () => import("@root/app/api/np/warehouses/route");
 
+const loadDirectory = () => import("@root/app/api/np/warehouses/directory");
+
 const readText = (value: unknown): string =>
   typeof value === "string" ? value : EMPTY_TEXT;
 
@@ -447,11 +449,29 @@ const TWO_UNKNOWN_CATEGORY_ROWS: readonly WarehouseRow[] = [
   buildRow(REPEATED_UNKNOWN_NUMBER, { CategoryOfWarehouse: RENAMED_CATEGORY }),
 ];
 
+const PREFIX_TWIN_CATEGORY = `${CAPPED_CATEGORY}${"y".repeat(
+  OVERLONG_CATEGORY_LENGTH - IDENTIFIER_CAP
+)}`;
+
 const OVERLONG_CATEGORY_ROWS: readonly WarehouseRow[] = [
   buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
-  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: PREFIX_TWIN_CATEGORY }),
   buildRow(REPEATED_UNKNOWN_NUMBER, { CategoryOfWarehouse: OVERLONG_CATEGORY }),
 ];
+
+const BLANK_CATEGORY_ROWS: readonly WarehouseRow[] = [
+  buildRow(CAPTURED_NUMBER, { CategoryOfWarehouse: EMPTY_TEXT }),
+  buildRow(POSTOMAT_NUMBER, { CategoryOfWarehouse: BLANK_QUERY }),
+];
+
+const RECOGNISED_CATEGORIES = [
+  BRANCH_CATEGORY,
+  CARGO_CATEGORY,
+  DROPOFF_CATEGORY,
+  FULFILLMENT_CATEGORY,
+  POSTOMAT_CATEGORY,
+  STORE_CATEGORY,
+].sort();
 
 const FORGED_LINE_CATEGORY =
   "Branch\n[error] Order relay authentication failed";
@@ -862,11 +882,10 @@ const silenceWarnLog = (): void => {
   captureWarnLog();
 };
 
-const breakWarnLog = (): void => {
+const breakWarnLog = (): MockInstance<typeof console.warn> =>
   vi.spyOn(console, "warn").mockImplementation(() => {
     throw new Error("log drain refused the record");
   });
-};
 
 const parseItems = (body: string): readonly unknown[] => {
   const payload: unknown = JSON.parse(body);
@@ -1399,7 +1418,7 @@ describe("GET /api/np/warehouses", () => {
     ]);
   });
 
-  it("caps the unrecognised category it remembers, so an overlong one dedupes across rows and requests instead of logging every time", async () => {
+  it("caps the unrecognised category it remembers, so two overlong values sharing a capped prefix dedupe across rows and requests alike", async () => {
     const warnLog = captureWarnLog();
     const fetchStub = stubSequence([okRows(OVERLONG_CATEGORY_ROWS)]);
     const { GET } = await loadRoute();
@@ -1414,6 +1433,39 @@ describe("GET /api/np/warehouses", () => {
     expect(warnLog.mock.calls).toEqual([
       [UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(CAPPED_CATEGORY)],
     ]);
+  });
+
+  it("recognises exactly the six categories the carrier vocabulary holds, so a seventh cannot be declared known without moving this test", async () => {
+    const { KNOWN_CATEGORIES } = await loadDirectory();
+
+    expect([...KNOWN_CATEGORIES].sort()).toEqual(RECOGNISED_CATEGORIES);
+  });
+
+  it("says nothing when the carrier drops the category field, because a blank name diagnoses nothing and would burn a slot of the cap", async () => {
+    const warnLog = captureWarnLog();
+    const fetchStub = stubSequence([okRows(BLANK_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const response = await GET(buildRequest(BRANCH_PARAMS));
+
+    expect(response.status).toBe(OK_STATUS);
+    expect(await response.text()).toBe(EMPTY_ITEMS_BODY);
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+    expect(warnLog).not.toHaveBeenCalled();
+  });
+
+  it("never retries a record the drain refused, so a drain that writes and then throws cannot flood the log past the cap", async () => {
+    const warnLog = breakWarnLog();
+    const fetchStub = stubSequence([okRows(RENAMED_CATEGORY_ROWS)]);
+    const { GET } = await loadRoute();
+
+    const first = await GET(buildRequest(buildQueryParams(BARE_QUERY)));
+    const second = await GET(buildRequest(buildQueryParams(STREET_QUERY)));
+
+    expect(first.status).toBe(OK_STATUS);
+    expect(second.status).toBe(OK_STATUS);
+    expect(fetchStub).toHaveBeenCalledTimes(SEPARATE_QUERY_CALL_COUNT);
+    expect(warnLog).toHaveBeenCalledTimes(1);
   });
 
   it("escapes the carrier's own bytes so a category carrying a newline cannot forge a second log record", async () => {

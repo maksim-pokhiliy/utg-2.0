@@ -48,7 +48,7 @@ type OfferableCategory = Exclude<
   (typeof NEVER_OFFERED_CATEGORIES)[number]
 >;
 
-const KNOWN_CATEGORIES: readonly string[] = [
+export const KNOWN_CATEGORIES: readonly string[] = [
   ...Object.values(ROUTED_CATEGORIES).flat(),
   ...NEVER_OFFERED_CATEGORIES,
 ];

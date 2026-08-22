@@ -3,6 +3,7 @@ import { capIdentifier } from "../client";
 const UNKNOWN_CATEGORY_MESSAGE =
   "Unrecognised Nova Poshta warehouse category, its points are never offered:";
 const MAX_REPORTED_CATEGORIES = 32;
+const EMPTY_TEXT = "";
 
 export type CategoryTripwire = (category: string) => void;
 
@@ -14,20 +15,20 @@ export const createCategoryTripwire = (
   return (category) => {
     const value = capIdentifier(category);
 
-    if (
-      known.some((entry) => entry === value) ||
-      reported.has(value) ||
-      reported.size >= MAX_REPORTED_CATEGORIES
-    ) {
+    if (value === EMPTY_TEXT || known.some((entry) => entry === value)) {
       return;
     }
 
-    reported.add(value);
+    const rendered = JSON.stringify(value);
+
+    if (reported.has(rendered) || reported.size >= MAX_REPORTED_CATEGORIES) {
+      return;
+    }
+
+    reported.add(rendered);
 
     try {
-      console.warn(UNKNOWN_CATEGORY_MESSAGE, JSON.stringify(value));
-    } catch {
-      reported.delete(value);
-    }
+      console.warn(UNKNOWN_CATEGORY_MESSAGE, rendered);
+    } catch {}
   };
 };
